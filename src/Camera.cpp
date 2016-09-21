@@ -56,6 +56,7 @@ float* Camera::getTransformF()
 {
 	return &transform[0][0];
 }
+
 glm::mat4* Camera::getTransformM()
 {
 	return &transform;
@@ -74,14 +75,12 @@ void Camera::translate(glm::vec3* _Translation)
 	position += *_Translation;
 }
 
-
 void Camera::setPosition(glm::vec3* _Position)
 {
 	/*transform[3][0] = (*_Position)[0];
 	transform[3][1] = (*_Position)[1];
 	transform[3][2] = (*_Position)[2];*/
 	position = *_Position;
-	
 }
 
 void Camera::setTransform(glm::mat4* _Transform)
@@ -148,4 +147,5 @@ void Camera::fpsCamera(GLFWwindow* _window, double _dT)
 	}
 
 	glfwSetCursorPos(_window, 960, 540);
+
 }

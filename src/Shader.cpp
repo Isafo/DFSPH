@@ -15,6 +15,64 @@ Shader::~Shader () {
 		glDeleteProgram(programID);
 }
 
+//! Create , loads, compiles a GLSL compute shader 
+
+void Shader::createComputeShader(const char* computeShaderFilePath) {
+	char str[4096]; // for wrinting error msg
+
+	GLint isCompiled = 0;
+	GLint isLinked = 0;
+
+	//Read the source code in shader files into the buffers
+	std::string vertexSource = readFile(computeShaderFilePath);
+
+	// Create empty vertex shader handle
+	GLuint computeShader = glCreateShader(GL_VERTEX_SHADER);
+
+	// Send the source code in teh shader to GL
+	const GLchar *sourceVertex = (const GLchar *)vertexSource.c_str();
+	glShaderSource(computeShader, 1, &sourceVertex, 0);
+
+	glCompileShader(computeShader);
+
+	glGetShaderiv(computeShader, GL_COMPILE_STATUS, &isCompiled);
+
+	if (isCompiled == GL_FALSE) {
+
+		glGetShaderInfoLog(computeShader, sizeof(str), NULL, str);
+		fprintf(stderr, "%s: %s\n", "Vertex shader compile error", str);
+
+		glDeleteShader(computeShader);
+
+		return;
+	}
+	// create program object
+	GLuint program = glCreateProgram();
+
+	glAttachShader(program, computeShader);
+
+	glLinkProgram(program);
+	glGetProgramiv(program, GL_LINK_STATUS, (int *)&isLinked);
+
+	if (isLinked == GL_FALSE) {
+
+		glGetProgramInfoLog(program, sizeof(str), NULL, str);
+		fprintf(stderr, "%s: %s\n", "Program object linking error", str);
+
+		glDeleteProgram(program);
+		glDeleteShader(computeShader);
+
+		return;
+	}
+
+	glDetachShader(program, computeShader);
+
+	glDeleteShader(computeShader);
+
+	programID = program;
+
+}
+
 //! Creates, loads, compiles and links the GLSL shader objects.
 void Shader::createShader(const char *vertexFilePath, const char *fragmentFilePath) {
 	

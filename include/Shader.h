@@ -19,6 +19,7 @@ public:
 	~Shader();
 
 	void createShader();
+	void createComputeShader(const char *computeShaderFilePath);
 	void createShader(const char *vertexFilePath, const char *fragmentFilePath);
 	void createShader(const char *vertexFilePath, const char *fragmentFilePath, const char* geometryFilePath);
 	void createTransformShader(const char * vertexFilePath, const char * fragmentFilePath, const char * geometryFilePath);

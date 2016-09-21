@@ -3,7 +3,7 @@
 #include <glm\vec3.hpp>
 #include <glm\vec2.hpp>
 
-#include "GLFW/glfw3.h"
+#include "GLFW\glfw3.h"
 
 class Camera
 {
