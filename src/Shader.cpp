@@ -24,14 +24,14 @@ void Shader::createComputeShader(const char* computeShaderFilePath) {
 	GLint isLinked = 0;
 
 	//Read the source code in shader files into the buffers
-	std::string vertexSource = readFile(computeShaderFilePath);
+	std::string computeShaderSource = readFile(computeShaderFilePath);
 
 	// Create empty vertex shader handle
-	GLuint computeShader = glCreateShader(GL_VERTEX_SHADER);
+	GLuint computeShader = glCreateShader(GL_COMPUTE_SHADER);
 
 	// Send the source code in teh shader to GL
-	const GLchar *sourceVertex = (const GLchar *)vertexSource.c_str();
-	glShaderSource(computeShader, 1, &sourceVertex, 0);
+	const GLchar *sourceComputeShader = (const GLchar *)computeShaderSource.c_str();
+	glShaderSource(computeShader, 1, &sourceComputeShader, 0);
 
 	glCompileShader(computeShader);
 
