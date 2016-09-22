@@ -4,6 +4,13 @@
 #include "Shader.h"
 #include "MatrixStack.h"
 
+struct Float3
+{
+	float* x;
+	float* y;
+	float* z;
+};
+
 class SPH
 {
 public:
@@ -15,7 +22,7 @@ public:
 	void find_neighborhoods();
 	void calculate_densities();
 	void calculate_factors();
-	
+
 	//in loop
 	void non_pressure_forces();
 	void calculate_time_step();
@@ -30,13 +37,10 @@ public:
 	void correct_divergence_error();
 	void update_velocities();
 
+	unsigned int get_nr_of_particles() const { return m_nr_of_particles; }
+	Float3* get_particle_positions() { return &m_particles.pos; }
+	
 private:
-	struct Float3	
-	{
-		float* x;
-		float* y;
-		float* z;
-	};
 
 	struct Particles
 	{
@@ -49,7 +53,8 @@ private:
 		float* mass;
 		float* alpha;
 	};
-	Particles particles;
+	Particles m_particles;
+	unsigned int m_nr_of_particles;
 
 
 };
