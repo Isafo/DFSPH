@@ -1,9 +1,11 @@
 #include "SPH.h"
 
-#define gravity 9.82
+#define gravity -9,82
 
-SPH::SPH()
-{
+SPH::SPH(){}
+void SPH::render(float dT) {
+	m_particles.vel.y += gravity * dT;
+
 }
 
 void SPH::non_pressure_forces(){}

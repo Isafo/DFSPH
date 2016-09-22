@@ -11,10 +11,11 @@ class SPH
 {
 public:
 	SPH();
+
 	~SPH();
-	
 	//render
-	void render();
+	void render(float dT);
+
 	//before loop
 	void find_neighborhoods();
 	void calculate_densities();
