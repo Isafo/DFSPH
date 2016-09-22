@@ -13,11 +13,20 @@ public:
 	SPH();
 	~SPH();
 	
+	//render
+	void render();
 	//before loop
 	void find_neighborhoods();
 	void calculate_densities();
 	void calculate_factors();
 
+	
+
+	unsigned int get_nr_of_particles() const { return m_nr_of_particles; }
+	Float3* get_particle_positions() { return &m_particles.pos; }
+	
+private:
+	
 	//in loop
 	void non_pressure_forces();
 	void calculate_time_step();
@@ -31,11 +40,6 @@ public:
 	//
 	void correct_divergence_error();
 	void update_velocities();
-
-	unsigned int get_nr_of_particles() const { return m_nr_of_particles; }
-	Float3* get_particle_positions() { return &m_particles.pos; }
-	
-private:
 
 	struct Particles
 	{
