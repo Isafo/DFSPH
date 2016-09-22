@@ -23,7 +23,7 @@ void GLcalls();
 int main(){
 	glfwContext glfw;
 	GLFWwindow* currentWindow = nullptr;
-
+		
 	glfw.init(1920, 1080, "Waves4Life");
 	glfw.getCurrentWindow(currentWindow);
 	glfwSetCursorPos(currentWindow, 960, 540);
