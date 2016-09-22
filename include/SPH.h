@@ -1,9 +1,5 @@
 #pragma once
 
-#include "glfwContext.h"
-#include "Shader.h"
-#include "MatrixStack.h"
-
 struct Float3
 {
 	float* x;
@@ -16,8 +12,7 @@ class SPH
 public:
 	SPH();
 	~SPH();
-	void draw_linebox();
-
+	
 	//before loop
 	void find_neighborhoods();
 	void calculate_densities();
