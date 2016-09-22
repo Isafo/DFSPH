@@ -23,14 +23,14 @@ float* MatrixStack::getCurrentMatrix() {
     if(currentMatrix)
         return &currentMatrix->m[0][0];
     else
-        return NULL;
+        return nullptr;
 };
 
 glm::mat4* MatrixStack::getCurrentMatrixM() {
 	if (currentMatrix)
 		return &currentMatrix->m;
 	else
-		return NULL;
+		return nullptr;
 };
 
 // Set the topmost (current) matrix to the identity matrix
