@@ -15,8 +15,7 @@ Shader::~Shader () {
 		glDeleteProgram(programID);
 }
 
-//! Create , loads, compiles a GLSL compute shader 
-
+//! Create , loads, compiles a GLSL compute shader voi
 void Shader::createComputeShader(const char* computeShaderFilePath) {
 	char str[4096]; // for wrinting error msg
 

@@ -1,4 +1,5 @@
 #include "GL/glew.h"
+
 #include <glm/vec3.hpp> // glm::vec3
 #include <glm/vec4.hpp> // glm::vec4
 #include <glm/mat4x4.hpp> // glm::mat4
@@ -72,7 +73,6 @@ int main(){
 		MVstack.push();//Camera transforms --<
 			glUniformMatrix4fv(locationP, 1, GL_FALSE, mCamera.getPerspective());
 			MVstack.multiply(mCamera.getTransformM());
-		
 			MVstack.push();
 				MVstack.translate(particle.getPosition());
 				glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
@@ -84,8 +84,6 @@ int main(){
 				glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
 				bbox.render();
 			MVstack.pop();
-
-
 		MVstack.pop(); //Camera transforms >--
 
 		glfwSwapBuffers(currentWindow);
