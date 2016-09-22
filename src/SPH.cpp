@@ -16,8 +16,8 @@ void SPH::update_neighbors() {}
 //
 //void find_neighborhoods();
 //
-void SPH::correct_divergence_error();
-void SPH::update_velocities();
+void SPH::correct_divergence_error() {}
+void SPH::update_velocities() {}
 
 SPH::~SPH()
 {
