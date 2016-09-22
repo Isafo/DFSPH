@@ -11,6 +11,7 @@
 #include "MatrixStack.h"
 #include "Camera.h"
 #include "Sphere.h"
+#include "BoundingBox.h"
 
 #include <iostream>
 
@@ -46,6 +47,7 @@ int main(){
 	MatrixStack MVstack; MVstack.init();
 
 	Sphere particle(0.0f, 0.0f, 0.0f, 1.0f);
+	BoundingBox bbox(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 
 	Camera mCamera;
 	mCamera.setPosition(&glm::vec3(0.0f, 0.0f, 0.0f));
@@ -76,6 +78,13 @@ int main(){
 				glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
 				particle.render();
 			MVstack.pop();
+
+			MVstack.push();
+				MVstack.translate(bbox.getPosition());
+				glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
+				bbox.render();
+			MVstack.pop();
+
 
 		MVstack.pop(); //Camera transforms >--
 
