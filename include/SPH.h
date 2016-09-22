@@ -55,7 +55,5 @@ private:
 	};
 	Particles m_particles;
 	unsigned int m_nr_of_particles;
-
-
 };
 
