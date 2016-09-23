@@ -52,15 +52,17 @@ int main(){
 
 	MatrixStack MVstack; MVstack.init();
 
-	BoundingBox bbox(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+	//BoundingBox bbox(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
 
 	SPH s{ 1 };
 	Sphere particle(s.get_particle_positions()->x[0], 
 					s.get_particle_positions()->y[0], 
-					s.get_particle_positions()->z[0], 1.0f);
+					s.get_particle_positions()->z[0], 0.1f);
 
 	Camera mCamera;
-	mCamera.setPosition(&glm::vec3(0.0f, 0.0f, 0.0f));
+	// mCamera.setPosition(&glm::vec3(0f, 0.f, 0.f));
+	mCamera.setPosition(&glm::vec3(0.f, 0.f, 3.f));
 	mCamera.update();
 
 	double lastTime = glfwGetTime() - 0.001f;
