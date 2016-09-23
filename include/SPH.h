@@ -1,4 +1,5 @@
 #pragma once
+#include "glm\glm.hpp"
 
 struct Float3
 {
@@ -21,12 +22,13 @@ public:
 	void find_neighborhoods();
 	void calculate_densities();
 	void calculate_factors();
+	void init_positions(glm::vec3* start_pos, int rows = 3, int cols = 3);
 
 	unsigned int get_nr_of_particles() const { return m_nr_of_particles; }
 	float get_particle_radius() const { return m_particles.rad; }
 	Float3* get_particle_positions() { return &m_particles.pos; }
 
-private:
+private:	
 
 	//in loop
 	void non_pressure_forces();

@@ -22,7 +22,7 @@ void GLcalls();
 
 
 
-int main(){
+int main() {
 
 	glfwContext glfw;
 	GLFWwindow* currentWindow = nullptr;
@@ -34,9 +34,9 @@ int main(){
 	//start GLEW extension handler
 	glewExperimental = GL_TRUE;
 	GLenum l_GlewResult = glewInit();
-	if (l_GlewResult != GLEW_OK) 
+	if (l_GlewResult != GLEW_OK)
 		std::cout << "glewInit() error." << std::endl;
-	
+
 	// Print some info about the OpenGL context...
 	glfw.printGLInfo();
 
@@ -53,14 +53,23 @@ int main(){
 	//BoundingBox bbox(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
 
-	SPH s{ 1 };
-	Sphere particle(s.get_particle_positions()->x[0], 
-					s.get_particle_positions()->y[0], 
-					s.get_particle_positions()->z[0], s.get_particle_radius());
+	const int nParticles = 100;
+	SPH s{ nParticles };
+	s.init_positions(bbox.getPosition(), 5, 5);
+
+	Sphere* spheres[nParticles];
+
+	for (int i = 0; i < nParticles; i++) {
+		/* ugly hax: We should have a ctor based only on radius, instead of
+		initializing with unnecessary positions  that will be overwritten anyway. */
+		spheres[i] = new Sphere(s.get_particle_positions()->x[i],
+			s.get_particle_positions()->y[i],
+			s.get_particle_positions()->z[i], s.get_particle_radius());
+	}
 
 	Camera mCamera;
 	// mCamera.setPosition(&glm::vec3(0f, 0.f, 0.f));
-	mCamera.setPosition(&glm::vec3(0.f, 0.f, 3.f));
+	mCamera.setPosition(&glm::vec3(0.f, 0.f, 1.5f));
 	mCamera.update();
 
 	double lastTime = glfwGetTime() - 0.001f;
@@ -77,32 +86,42 @@ int main(){
 		GLcalls();
 
 		glUseProgram(sceneLight.programID);
-		
-		s.update(dT/10);
-		particle.setPosition( glm::vec3( s.get_particle_positions()->x[0],
-							  s.get_particle_positions()->y[0],
-							  s.get_particle_positions()->z[0] ));
+
+		s.update(dT / 10);
+		for (int i = 0; i < nParticles; ++i) {
+			spheres[i]->setPosition(glm::vec3(s.get_particle_positions()->x[i],
+				s.get_particle_positions()->y[i],
+				s.get_particle_positions()->z[i]));
+		}
 
 		MVstack.push();//Camera transforms --<
-			glUniformMatrix4fv(locationP, 1, GL_FALSE, mCamera.getPerspective());
-			MVstack.multiply(mCamera.getTransformM());
-			MVstack.push();
-				MVstack.translate(particle.getPosition());
-				glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
-				particle.render();
-			MVstack.pop();
+		glUniformMatrix4fv(locationP, 1, GL_FALSE, mCamera.getPerspective());
+		MVstack.multiply(mCamera.getTransformM());
 
+		for (int i = 0; i < nParticles; ++i) {
 			MVstack.push();
-				MVstack.translate(bbox.getPosition());
-				glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
-				bbox.render();
+			MVstack.translate(spheres[i]->getPosition());
+			//MVstack.translate(particle.getPosition());
+			glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
+			spheres[i]->render();
 			MVstack.pop();
+		}
+
+		MVstack.push();
+		MVstack.translate(bbox.getPosition());
+		glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
+		bbox.render();
+		MVstack.pop();
 		MVstack.pop(); //Camera transforms >--
 
 		glfwSwapBuffers(currentWindow);
 		glfwPollEvents();
 	}
-	
+
+	// Delete all spheres
+	for (Sphere* ptr_s : spheres)
+		delete ptr_s;
+
 	return 0;
 }
 
@@ -111,7 +130,7 @@ void inputHandler(GLFWwindow* _window, double _dT)
 	if (glfwGetKey(_window, GLFW_KEY_ESCAPE)) {
 		glfwSetWindowShouldClose(_window, GL_TRUE);
 	}
-	
+
 }
 
 void GLcalls()

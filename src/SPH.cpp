@@ -19,10 +19,10 @@ SPH::SPH(int size) {
 	m_particles.vel.y = new float[size];
 	m_particles.vel.z = new float[size];
 
-	/* The radius should be read from a 
-	settings class with static values 
+	/* The radius should be read from a
+	settings class with static values
 	instead of being defined here. */
-	m_particles.rad = 0.1f;
+	m_particles.rad = 0.01f;
 
 	for (int i = 0; i < m_nr_of_particles; ++i) {
 		m_particles.alpha[i] = 0.f;
@@ -62,6 +62,26 @@ void SPH::calculate_densities()
 void SPH::calculate_factors()
 {
 
+}
+
+void SPH::init_positions(glm::vec3* start_pos, int rows, int cols)
+{
+	float dist_between = 2.f * m_particles.rad;
+	int height = m_nr_of_particles / (rows*cols);
+
+	int x, y, z, ind;
+
+	for (int i = 0; i < m_nr_of_particles; ++i)
+	{
+		z = i / (rows*cols);
+		ind = i - z*rows*cols;
+		y = ind / rows;
+		x = ind % rows;
+
+		m_particles.pos.x[i] = start_pos->x + (float)x*dist_between;
+		m_particles.pos.y[i] = start_pos->y + (float)y*dist_between;
+		m_particles.pos.z[i] = start_pos->z + (float)z*dist_between;
+	}
 }
 
 void SPH::non_pressure_forces()
