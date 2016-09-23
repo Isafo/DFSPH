@@ -12,7 +12,6 @@ SPH::SPH(int size) {
 	m_particles.dens = new float[size];
 	m_particles.mass = new float[size];
 	m_particles.p = new float[size];
-	m_particles.rad = new float[size];
 	m_particles.pos.x = new float[size];
 	m_particles.pos.y = new float[size];
 	m_particles.pos.z = new float[size];
@@ -20,12 +19,16 @@ SPH::SPH(int size) {
 	m_particles.vel.y = new float[size];
 	m_particles.vel.z = new float[size];
 
+	/* The radius should be read from a 
+	settings class with static values 
+	instead of being defined here. */
+	m_particles.rad = 0.1f;
+
 	for (int i = 0; i < m_nr_of_particles; ++i) {
 		m_particles.alpha[i] = 0.f;
 		m_particles.dens[i] = 0.f;
 		m_particles.mass[i] = 0.f;
 		m_particles.p[i] = 0.f;
-		m_particles.rad[i] = 0.f;
 		m_particles.pos.x[i] = 0.f;
 		m_particles.pos.y[i] = 0.f;
 		m_particles.pos.z[i] = 0.f;
@@ -40,7 +43,6 @@ SPH::SPH(int size) {
 void SPH::update(float dT) {
 	update_positions(dT);
 	update_velocities(dT);
-
 }
 
 void SPH::find_neighborhoods()
@@ -75,9 +77,9 @@ void SPH::calculate_time_step() {}
 void SPH::predict_velocities() {}
 void SPH::correct_density_error() {}
 void SPH::correct_strain_rate_error() {}
-void SPH::update_positions(float dT) 
+void SPH::update_positions(float dT)
 {
-	for(unsigned int i = 0; i < m_nr_of_particles; ++i)
+	for (unsigned int i = 0; i < m_nr_of_particles; ++i)
 	{
 		m_particles.pos.x[i] += m_particles.vel.x[i] * dT;
 		m_particles.pos.y[i] += m_particles.vel.y[i] * dT;
@@ -86,7 +88,7 @@ void SPH::update_positions(float dT)
 }
 void SPH::update_neighbors() {}
 void SPH::correct_divergence_error() {}
-void SPH::update_velocities(float dT) 
+void SPH::update_velocities(float dT)
 {
 	for (unsigned int i = 0; i < m_nr_of_particles; ++i)
 	{
@@ -108,5 +110,4 @@ SPH::~SPH()
 	delete[] m_particles.dens;
 	delete[] m_particles.mass;
 	delete[] m_particles.p;
-	delete[] m_particles.rad;
 }

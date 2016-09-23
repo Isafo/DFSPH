@@ -24,8 +24,6 @@ void GLcalls();
 
 int main(){
 
-	
-
 	glfwContext glfw;
 	GLFWwindow* currentWindow = nullptr;
 
@@ -58,7 +56,7 @@ int main(){
 	SPH s{ 1 };
 	Sphere particle(s.get_particle_positions()->x[0], 
 					s.get_particle_positions()->y[0], 
-					s.get_particle_positions()->z[0], 0.1f);
+					s.get_particle_positions()->z[0], s.get_particle_radius());
 
 	Camera mCamera;
 	// mCamera.setPosition(&glm::vec3(0f, 0.f, 0.f));

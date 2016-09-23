@@ -22,13 +22,12 @@ public:
 	void calculate_densities();
 	void calculate_factors();
 
-	
-
 	unsigned int get_nr_of_particles() const { return m_nr_of_particles; }
+	float get_particle_radius() const { return m_particles.rad; }
 	Float3* get_particle_positions() { return &m_particles.pos; }
-	
+
 private:
-	
+
 	//in loop
 	void non_pressure_forces();
 	void calculate_time_step();
@@ -48,7 +47,7 @@ private:
 		Float3 pos;
 		Float3 vel;
 
-		float* rad;
+		float rad;
 		float* p;
 		float* dens;
 		float* mass;
