@@ -13,14 +13,19 @@
 #include "Camera.h"
 #include "Sphere.h"
 #include "BoundingBox.h"
-
+#include "SPH.h"
 #include <iostream>
 
 void inputHandler(GLFWwindow* _window, double _dT);
 void cameraHandler(GLFWwindow* _window, double _dT, Camera* _cam);
 void GLcalls();
 
+
+
 int main(){
+
+	
+
 	glfwContext glfw;
 	GLFWwindow* currentWindow = nullptr;
 
@@ -47,8 +52,12 @@ int main(){
 
 	MatrixStack MVstack; MVstack.init();
 
-	Sphere particle(0.0f, 0.0f, 0.0f, 1.0f);
 	BoundingBox bbox(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+	SPH s{ 1 };
+	Sphere particle(s.get_particle_positions()->x[0], 
+					s.get_particle_positions()->y[0], 
+					s.get_particle_positions()->z[0], 1.0f);
 
 	Camera mCamera;
 	mCamera.setPosition(&glm::vec3(0.0f, 0.0f, 0.0f));
@@ -69,7 +78,11 @@ int main(){
 
 		glUseProgram(sceneLight.programID);
 		
-		
+		s.update(dT/10);
+		particle.setPosition(glm::vec3( s.get_particle_positions()->x[0],
+							  s.get_particle_positions()->y[0],
+							  s.get_particle_positions()->z[0] ));
+
 		MVstack.push();//Camera transforms --<
 			glUniformMatrix4fv(locationP, 1, GL_FALSE, mCamera.getPerspective());
 			MVstack.multiply(mCamera.getTransformM());

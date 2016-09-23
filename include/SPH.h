@@ -11,10 +11,11 @@ class SPH
 {
 public:
 	SPH();
+	SPH(int size);
 
 	~SPH();
 	//render
-	void render(float dT);
+	void update(float dT);
 
 	//before loop
 	void find_neighborhoods();
@@ -34,13 +35,13 @@ private:
 	void predict_velocities();
 	void correct_density_error();
 	void correct_strain_rate_error();
-	void update_positions();
+	void update_positions(float dT);
 	void update_neighbors();
 	//
 	//void find_neighborhoods();
 	//
 	void correct_divergence_error();
-	void update_velocities();
+	void update_velocities(float dT);
 
 	struct Particles
 	{

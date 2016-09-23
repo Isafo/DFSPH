@@ -1,10 +1,45 @@
 #include "SPH.h"
 
-#define gravity -9,82
+#define gravity -9.82f
 
-SPH::SPH(){}
-void SPH::render(float dT) {
-	m_particles.vel.y += gravity * dT;
+SPH::SPH()
+{
+}
+
+SPH::SPH(int size) {
+	m_nr_of_particles = size;
+	m_particles.alpha = new float[size];
+	m_particles.dens = new float[size];
+	m_particles.mass = new float[size];
+	m_particles.p = new float[size];
+	m_particles.rad = new float[size];
+	m_particles.pos.x = new float[size];
+	m_particles.pos.y = new float[size];
+	m_particles.pos.z = new float[size];
+	m_particles.vel.x = new float[size];
+	m_particles.vel.y = new float[size];
+	m_particles.vel.z = new float[size];
+
+	for (int i = 0; i < m_nr_of_particles; ++i) {
+		m_particles.alpha[i] = 0.f;
+		m_particles.dens[i] = 0.f;
+		m_particles.mass[i] = 0.f;
+		m_particles.p[i] = 0.f;
+		m_particles.rad[i] = 0.f;
+		m_particles.pos.x[i] = 0.f;
+		m_particles.pos.y[i] = 0.f;
+		m_particles.pos.z[i] = 0.f;
+		m_particles.vel.x[i] = 0.f;
+		m_particles.vel.y[i] = 0.f;
+		m_particles.vel.z[i] = 0.f;
+	}
+}
+
+//v = v0+a*dt
+//s = v*dt
+void SPH::update(float dT) {
+	update_positions(dT);
+	update_velocities(dT);
 
 }
 
@@ -13,13 +48,26 @@ void SPH::calculate_time_step() {}
 void SPH::predict_velocities() {}
 void SPH::correct_density_error() {}
 void SPH::correct_strain_rate_error() {}
-void SPH::update_positions() {}
+void SPH::update_positions(float dT) 
+{
+	for(unsigned int i = 0; i < m_nr_of_particles; ++i)
+	{
+		m_particles.pos.x[i] += m_particles.vel.x[i] * dT;
+		m_particles.pos.y[i] += m_particles.vel.y[i] * dT;
+		m_particles.pos.z[i] += m_particles.vel.z[i] * dT;
+	}
+}
 void SPH::update_neighbors() {}
-//
-//void find_neighborhoods();
-//
 void SPH::correct_divergence_error() {}
-void SPH::update_velocities() {}
+void SPH::update_velocities(float dT) 
+{
+	for (unsigned int i = 0; i < m_nr_of_particles; ++i)
+	{
+		//m_particles.vel.x[i] += 0.f * dT;
+		m_particles.vel.y[i] += gravity * dT;
+		//m_particles.pos.z[i] += 0.f * dT;
+	}
+}
 
 SPH::~SPH()
 {
