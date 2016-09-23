@@ -79,7 +79,7 @@ int main(){
 		glUseProgram(sceneLight.programID);
 		
 		s.update(dT/10);
-		particle.setPosition(glm::vec3( s.get_particle_positions()->x[0],
+		particle.setPosition( glm::vec3( s.get_particle_positions()->x[0],
 							  s.get_particle_positions()->y[0],
 							  s.get_particle_positions()->z[0] ));
 

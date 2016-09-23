@@ -71,4 +71,15 @@ void SPH::update_velocities(float dT)
 
 SPH::~SPH()
 {
+	delete[] m_particles.vel.x;
+	delete[] m_particles.vel.y;
+	delete[] m_particles.vel.z;
+	delete[] m_particles.pos.x;
+	delete[] m_particles.pos.y;
+	delete[] m_particles.pos.z;
+	delete[] m_particles.alpha;
+	delete[] m_particles.dens;
+	delete[] m_particles.mass;
+	delete[] m_particles.p;
+	delete[] m_particles.rad;
 }
