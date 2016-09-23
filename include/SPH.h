@@ -56,5 +56,7 @@ private:
 	};
 	Particles m_particles;
 	unsigned int m_nr_of_particles;
+
+	const float REST_DENS = 0.1f;
 };
 

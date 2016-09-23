@@ -43,7 +43,34 @@ void SPH::update(float dT) {
 
 }
 
-void SPH::non_pressure_forces(){}
+void SPH::find_neighborhoods()
+{
+
+}
+void SPH::calculate_densities()
+{
+	// TODO: LATER UPDATE THIS TO ONLY LOOP OVER NEIGHBOURS
+	/*for (int i = 0; i < m_nr_of_particles; ++i)
+	{*/
+	m_particles.dens[0] = m_particles.mass[1];
+	m_particles.dens[1] = m_particles.mass[0];
+	//}
+}
+
+void SPH::calculate_factors()
+{
+
+}
+
+void SPH::non_pressure_forces()
+{
+	// calculate the particle pressure
+	for (int i = 0; i < m_nr_of_particles; ++i)
+	{
+		m_particles.p[i] = m_particles.dens[i] - REST_DENS;
+	}
+}
+
 void SPH::calculate_time_step() {}
 void SPH::predict_velocities() {}
 void SPH::correct_density_error() {}
