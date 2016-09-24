@@ -67,7 +67,7 @@ void SPH::calculate_factors()
 void SPH::init_positions(glm::vec3* start_pos, int rows, int cols)
 {
 	float dist_between = 2.f * m_particles.rad;
-	int height = m_nr_of_particles / (rows*cols);
+	float padding_factor = 1.1f;
 
 	int x, y, z, ind;
 
@@ -78,9 +78,9 @@ void SPH::init_positions(glm::vec3* start_pos, int rows, int cols)
 		y = ind / rows;
 		x = ind % rows;
 
-		m_particles.pos.x[i] = start_pos->x + (float)x*dist_between;
-		m_particles.pos.y[i] = start_pos->y + (float)y*dist_between;
-		m_particles.pos.z[i] = start_pos->z + (float)z*dist_between;
+		m_particles.pos.x[i] = start_pos->x + static_cast<float>(x)*dist_between*padding_factor;
+		m_particles.pos.y[i] = start_pos->y + static_cast<float>(y)*dist_between*padding_factor;
+		m_particles.pos.z[i] = start_pos->z + static_cast<float>(z)*dist_between*padding_factor;
 	}
 }
 
