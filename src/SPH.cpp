@@ -1,6 +1,7 @@
 #include "SPH.h"
 
 #define gravity -9.82f
+#define neighbor_rad 0.3f;
 
 SPH::SPH()
 {
@@ -8,17 +9,19 @@ SPH::SPH()
 
 SPH::SPH(int size) {
 	m_nr_of_particles = size;
-	m_particles.alpha = new float[size];
-	m_particles.dens = new float[size];
-	m_particles.mass = new float[size];
-	m_particles.p = new float[size];
-	m_particles.pos.x = new float[size];
-	m_particles.pos.y = new float[size];
-	m_particles.pos.z = new float[size];
-	m_particles.vel.x = new float[size];
-	m_particles.vel.y = new float[size];
-	m_particles.vel.z = new float[size];
 
+	m_particles.alpha = new float[m_nr_of_particles];
+	m_particles.dens = new float[m_nr_of_particles];
+	m_particles.mass = new float[m_nr_of_particles];
+	m_particles.p = new float[m_nr_of_particles];
+	m_particles.pos.x = new float[m_nr_of_particles];
+	m_particles.pos.y = new float[m_nr_of_particles];
+	m_particles.pos.z = new float[m_nr_of_particles];
+	m_particles.vel.x = new float[m_nr_of_particles];
+	m_particles.vel.y = new float[m_nr_of_particles];
+	m_particles.vel.z = new float[m_nr_of_particles];
+	m_neighboors = new int*[m_nr_of_particles];
+	
 	/* The radius should be read from a
 	settings class with static values
 	instead of being defined here. */
@@ -35,6 +38,7 @@ SPH::SPH(int size) {
 		m_particles.vel.x[i] = 0.f;
 		m_particles.vel.y[i] = 0.f;
 		m_particles.vel.z[i] = 0.f;
+		m_neighboors[i] = new int[100];
 	}
 }
 
@@ -106,7 +110,34 @@ void SPH::update_positions(float dT)
 		m_particles.pos.z[i] += m_particles.vel.z[i] * dT;
 	}
 }
-void SPH::update_neighbors() {}
+//TODO, update with lookuptable. instead of bruteforcing it. 
+void SPH::update_neighbors() 
+{
+	float vector_i_n[3];
+	float dist_i_n_2;
+	const float neigborhod_rad_2 = neighbor_rad;
+	int count = 0;
+	for (int i = 0; i < m_nr_of_particles; i++) 
+	{
+		for(int n = 0; n < m_nr_of_particles; n++)
+		{
+			if (i != n )
+			{
+				vector_i_n[0] = m_particles.pos.x[n] - m_particles.pos.x[i];
+				vector_i_n[1] = m_particles.pos.y[n] - m_particles.pos.y[i];
+				vector_i_n[2] = m_particles.pos.z[n] - m_particles.pos.z[i];
+				dist_i_n_2 = vector_i_n[0] * vector_i_n[0] + vector_i_n[1] * vector_i_n[1] + vector_i_n[0] * vector_i_n[0];
+				
+				if (dist_i_n_2 < neigborhod_rad_2*neigborhod_rad_2)
+				{
+					m_neighboors[i][count] = n;
+					++count;
+				}
+			}
+			count = 0;
+		}
+	}
+}
 void SPH::correct_divergence_error() {}
 void SPH::update_velocities(float dT)
 {

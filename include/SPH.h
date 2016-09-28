@@ -1,6 +1,6 @@
 #pragma once
 #include "glm\glm.hpp"
-
+#include "glm\glm.hpp"
 struct Float3
 {
 	float* x;
@@ -43,6 +43,7 @@ private:
 	//
 	void correct_divergence_error();
 	void update_velocities(float dT);
+	int **m_neighboors;
 
 	struct Particles
 	{
