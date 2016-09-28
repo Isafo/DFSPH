@@ -24,6 +24,8 @@ public:
 	void calculate_factors();
 	void init_positions(glm::vec3* start_pos, int rows = 3, int cols = 3);
 
+
+
 	unsigned int get_nr_of_particles() const { return m_nr_of_particles; }
 	float get_particle_radius() const { return m_particles.rad; }
 	Float3* get_particle_positions() { return &m_particles.pos; }
@@ -38,6 +40,10 @@ private:
 	void correct_strain_rate_error();
 	void update_positions(float dT);
 	void update_neighbors();
+	float get_q(const int ind_pos, const int ind_neigh) const;
+	float get_g(const int ind_pos, const int ind_neigh, const float q) const;
+	float kernel(const float q) const;
+	glm::vec3 grad_kernel(const int ind_pos, const float g) const;
 	//
 	//void find_neighborhoods();
 	//

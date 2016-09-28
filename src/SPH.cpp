@@ -2,6 +2,7 @@
 
 #define gravity -9.82f
 #define neighbor_rad 0.3f;
+#define PI 3.1415926559f;
 
 SPH::SPH()
 {
@@ -138,6 +139,71 @@ void SPH::update_neighbors()
 		}
 	}
 }
+
+float SPH::get_q(const int ind_pos, const int ind_neigh) const
+{
+	auto dx = m_particles.pos.x[ind_pos] - m_particles.pos.x[ind_neigh];
+	auto dy = m_particles.pos.y[ind_pos] - m_particles.pos.y[ind_neigh];
+	auto dz = m_particles.pos.z[ind_pos] - m_particles.pos.z[ind_neigh];
+
+	auto dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+	
+	return dist / m_particles.rad;
+}
+
+float SPH::get_g(const int ind_pos, const int ind_neigh, const float q) const
+{
+	float kernel_prime;
+	if (q >= 0 || q <= 0.5f)
+	{
+		kernel_prime *= (-12.f*q + 18.f*q*q);
+	}
+	else if (q > 0.5f || q <= 1.0f)
+	{
+		kernel_prime *= -6.0f*(1 - q)*(1 - q);
+	}
+	else
+	{
+		kernel_prime = 0;
+	}
+	
+	auto dx = m_particles.pos.x[ind_pos] - m_particles.pos.x[ind_neigh];
+	auto dy = m_particles.pos.y[ind_pos] - m_particles.pos.y[ind_neigh];
+	auto dz = m_particles.pos.z[ind_pos] - m_particles.pos.z[ind_neigh];
+
+	auto dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+
+	return kernel_prime / (m_particles.rad*dist);
+}
+
+float SPH::kernel(const float q) const
+{
+	auto kernel = 1 / PI;
+	if (q >= 0 || q <= 0.5f)
+	{
+		kernel *= (1 - 6.f*q*q + 6.f*q*q*q);
+	}
+	else if (q > 0.5f || q <= 1.0f)
+	{
+		kernel *= 2.0f*(1 - q)*(1 - q)*(1 - q);
+	}
+	else
+	{
+		kernel = 0;
+	}
+
+	return kernel;
+}
+
+glm::vec3 SPH::grad_kernel(const int ind_pos, const float g) const
+{
+	auto x = m_particles.pos.x[ind_pos];
+	auto y = m_particles.pos.y[ind_pos];
+	auto z = m_particles.pos.z[ind_pos];
+
+	return glm::vec3(x, y, z) * g;
+}
+
 void SPH::correct_divergence_error() {}
 void SPH::update_velocities(float dT)
 {
