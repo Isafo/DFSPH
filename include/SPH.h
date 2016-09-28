@@ -8,6 +8,14 @@ struct Float3
 	float* z;
 };
 
+struct Neighbor_Data
+{
+	int *neighbor;
+	float *g_value;
+	int n;
+};
+
+
 class SPH
 {
 public:
@@ -41,16 +49,15 @@ private:
 	void correct_strain_rate_error();
 	void update_positions(float dT);
 	void update_neighbors();
-	float get_q(const int ind_pos, const int ind_neigh) const;
-	float get_g(const int ind_pos, const int ind_neigh, const float q) const;
-	float kernel(const float q) const;
-	glm::vec3 grad_kernel(const int ind_pos, const float g) const;
+	void update_function_g();
+
 	//
 	//void find_neighborhoods();
 	//
 	void correct_divergence_error();
 	void update_velocities(float dT);
 	int **m_neighboors;
+	Neighbor_Data *m_neighbor_data;
 	struct Particles
 	{
 		Float3 pos;
