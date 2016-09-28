@@ -57,15 +57,7 @@ int main() {
 	SPH s{ nParticles };
 	s.init_positions(bbox.getPosition(), 5, 5);
 
-	Sphere* spheres[nParticles];
-
-	for (int i = 0; i < nParticles; i++) {
-		/* ugly hax: We should have a ctor based only on radius, instead of
-		initializing with unnecessary positions  that will be overwritten anyway. */
-		spheres[i] = new Sphere(s.get_particle_positions()->x[i],
-			s.get_particle_positions()->y[i],
-			s.get_particle_positions()->z[i], s.get_particle_radius());
-	}
+	Sphere sphere(0.0f, 0.0f, 0.0f, s.get_particle_radius());
 
 	Camera mCamera;
 	// mCamera.setPosition(&glm::vec3(0f, 0.f, 0.f));
@@ -88,22 +80,23 @@ int main() {
 		glUseProgram(sceneLight.programID);
 
 		s.update(dT / 10);
-		for (int i = 0; i < nParticles; ++i) {
-			spheres[i]->setPosition(glm::vec3(s.get_particle_positions()->x[i],
-				s.get_particle_positions()->y[i],
-				s.get_particle_positions()->z[i]));
-		}
-
+		
 		MVstack.push();//Camera transforms --<
 		glUniformMatrix4fv(locationP, 1, GL_FALSE, mCamera.getPerspective());
 		MVstack.multiply(mCamera.getTransformM());
 
+		glm::vec3 particlePos;
 		for (int i = 0; i < nParticles; ++i) {
 			MVstack.push();
-			MVstack.translate(spheres[i]->getPosition());
+			particlePos = glm::vec3(
+				s.get_particle_positions()->x[i],
+				s.get_particle_positions()->y[i],
+				s.get_particle_positions()->z[i]
+			);
+			MVstack.translate(&particlePos);
 			//MVstack.translate(particle.getPosition());
 			glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
-			spheres[i]->render();
+			sphere.render();
 			MVstack.pop();
 		}
 
@@ -117,10 +110,6 @@ int main() {
 		glfwSwapBuffers(currentWindow);
 		glfwPollEvents();
 	}
-
-	// Delete all spheres
-	for (Sphere* ptr_s : spheres)
-		delete ptr_s;
 
 	return 0;
 }
