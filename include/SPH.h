@@ -33,6 +33,7 @@ public:
 private:	
 
 	//in loop
+	void pressure_forces();
 	void non_pressure_forces();
 	void calculate_time_step();
 	void predict_velocities();
@@ -50,11 +51,11 @@ private:
 	void correct_divergence_error();
 	void update_velocities(float dT);
 	int **m_neighboors;
-
 	struct Particles
 	{
 		Float3 pos;
 		Float3 vel;
+		Float3 F_adv;
 
 		float rad;
 		float* p;
