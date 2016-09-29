@@ -32,8 +32,6 @@ public:
 	void calculate_factors();
 	void init_positions(glm::vec3* start_pos, int rows = 3, int cols = 3);
 
-
-
 	unsigned int get_nr_of_particles() const { return m_nr_of_particles; }
 	float get_particle_radius() const { return m_particles.rad; }
 	Float3* get_particle_positions() { return &m_particles.pos; }
@@ -44,20 +42,16 @@ private:
 	void pressure_forces();
 	void non_pressure_forces();
 	void calculate_time_step();
-	void predict_velocities();
+	void predict_velocities(float dT);
 	void correct_density_error();
 	void correct_strain_rate_error();
 	void update_positions(float dT);
-	void update_neighbors();
 	void update_function_g();
-
-	//
-	//void find_neighborhoods();
-	//
 	void correct_divergence_error();
 	void update_velocities(float dT);
-	int **m_neighboors;
-	Neighbor_Data *m_neighbor_data;
+	
+	
+	
 	struct Particles
 	{
 		Float3 pos;
@@ -71,8 +65,10 @@ private:
 		float* alpha;
 	};
 	Particles m_particles;
-	unsigned int m_nr_of_particles;
+	Neighbor_Data *m_neighbor_data;
 
-	const float REST_DENS = 0.1f;
+	unsigned int m_nr_of_particles;
+	const float C_REST_DENS = 0.1f;
+
 };
 

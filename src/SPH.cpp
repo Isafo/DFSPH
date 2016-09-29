@@ -1,9 +1,9 @@
 #include "SPH.h"
 
-#define gravity -9.82f
-#define neighbor_rad 0.3f;
-#define PI 3.1415926559f;
-#define EPSILON 0.000000000000001f;
+#define D_GRAVITY -9.82f
+#define D_NEIGHBOR_RAD 0.3f;
+#define D_PI 3.1415926559f;
+#define D_EPSILON 0.000000000000001f;
 
 SPH::SPH()
 {
@@ -63,11 +63,11 @@ void SPH::find_neighborhoods()
 {
 	float vector_i_n[3];
 	float dist_i_n_2;
-	const float neigborhod_rad_2 = neighbor_rad;
+	const float neigborhod_rad_2 = D_NEIGHBOR_RAD;
 	int count = 0;
-	for (int i = 0; i < m_nr_of_particles; i++)
+	for (int i = 0; i < m_nr_of_particles; ++i)
 	{
-		for (int n = 0; n < m_nr_of_particles; n++)
+		for (int n = 0; n < m_nr_of_particles; ++n)
 		{
 			if (i != n)
 			{
@@ -82,14 +82,14 @@ void SPH::find_neighborhoods()
 					++count;
 				}
 			}
-			//save nr of neighbor to first position 
-			m_neighbor_data[i].n = count;
-			count = 0;
 		}
+		//save nr of neighbor to first position 
+		m_neighbor_data[i].n = count;
+		count = 0;
 	}
 }
-// TODO: Add kernal function
 
+// TODO: Add kernal function
 void SPH::calculate_densities()
 {
 	int n_neighbors;
@@ -150,7 +150,7 @@ void SPH::non_pressure_forces()
 	for (int i = 0; i < m_nr_of_particles; i++) 
 	{
 		m_particles.F_adv.x[i] = 0.f;
-		m_particles.F_adv.y[i] = gravity;
+		m_particles.F_adv.y[i] = D_GRAVITY;
 		m_particles.F_adv.z[i] = 0.f;
 	}
 }
@@ -174,10 +174,18 @@ void SPH::calculate_time_step()
 		z = m_particles.pos.z[i] * m_particles.pos.z[i];
 		if (v_max_2 < (x + y + z))v_max_2 = (x + y + z);
 	}
-	delta_t = 0.4f*(m_particles.rad * 2) / sqrtf(v_max_2) - EPSILON;
+	delta_t = 0.4f*(m_particles.rad * 2) / sqrtf(v_max_2) - D_EPSILON;
 }
 
-void SPH::predict_velocities() {}
+void SPH::predict_velocities(float dT) 
+{
+	for (unsigned int i = 0; i < m_nr_of_particles; ++i)
+	{
+		m_particles.vel.x[i] += m_particles.F_adv.x[i] * dT;
+		m_particles.vel.y[i] += m_particles.F_adv.y[i] * dT;
+		m_particles.pos.z[i] += m_particles.F_adv.z[i] * dT;
+	}
+}
 
 void SPH::correct_density_error() {}
 
@@ -192,11 +200,10 @@ void SPH::update_positions(float dT)
 		m_particles.pos.z[i] += m_particles.vel.z[i] * dT;
 	}
 }
-//TODO, update with lookuptable. instead of bruteforcing it. 
-void SPH::update_neighbors() {}
 
 void SPH::update_function_g()
 {
+	float kernel_derive;
 	//Loop through all particles
 	for (int particle = 0; particle < m_nr_of_particles; ++particle)
 	{
@@ -213,7 +220,7 @@ void SPH::update_function_g()
 			auto q = dist / m_particles.rad;
 
 			//Compute the derivitive of the kernel function
-			float kernel_derive;
+			
 			if (q >= 0 || q <= 0.5f)
 			{
 				kernel_derive = (-12.f*q + 18.f*q*q);
@@ -254,6 +261,7 @@ float SPH::kernel(const float q) const
 
 void SPH::correct_divergence_error() {}
 
+//TODO: remake this function using the predicted velocity
 void SPH::update_velocities(float dT)
 {
 	for (unsigned int i = 0; i < m_nr_of_particles; ++i)
@@ -279,5 +287,9 @@ SPH::~SPH()
 	delete[] m_particles.dens;
 	delete[] m_particles.mass;
 	delete[] m_particles.p;
+
+	delete[] m_neighbor_data->g_value;
+	delete[] m_neighbor_data->neighbor;
+	delete[] m_neighbor_data;
 	
 }
