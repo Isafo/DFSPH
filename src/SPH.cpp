@@ -159,7 +159,7 @@ void SPH::pressure_forces()
 	// calculate the particle pressure
 	for (int i = 0; i < m_nr_of_particles; ++i)
 	{
-		m_particles.p[i] = m_particles.dens[i] - REST_DENS;
+		m_particles.p[i] = m_particles.dens[i] - C_REST_DENS;
 	}
 }
 void SPH::calculate_time_step() 

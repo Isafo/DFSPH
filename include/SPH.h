@@ -49,9 +49,15 @@ private:
 	void update_function_g();
 	void correct_divergence_error();
 	void update_velocities(float dT);
+<<<<<<< Updated upstream
 	
 	
 	
+=======
+	int **m_neighboors;
+	float m_delta_t;
+
+>>>>>>> Stashed changes
 	struct Particles
 	{
 		Float3 pos;
