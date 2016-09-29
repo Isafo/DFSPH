@@ -125,7 +125,7 @@ void SPH::calculate_factors()
 			abs_sum_denom += temp*temp;
 		}
 		//this addition is suggested in the report as an alternative to clamping
-		denom = D_EPSILON + sum_abs_denom*sum_abs_denom + abs_sum_denom;
+		denom = (sum_abs_denom*sum_abs_denom + abs_sum_denom < 0.000001f) ? 0.000001f : sum_abs_denom*sum_abs_denom;
 		m_particles.alpha[i] = m_particles.dens[i]/denom;
 	}
 }
