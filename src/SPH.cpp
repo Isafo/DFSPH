@@ -113,6 +113,7 @@ void SPH::calculate_factors()
 	float abs_sum_denom = 0;
 	float temp;
 	float sum_abs_denom = 0;
+	float denom;
 
 	for (int i = 0; i < m_nr_of_particles; i++)
 	{
@@ -123,7 +124,9 @@ void SPH::calculate_factors()
 			sum_abs_denom += temp; 
 			abs_sum_denom += temp*temp;
 		}
-		m_particles.alpha[i] = m_particles.dens[i]/(sum_abs_denom*sum_abs_denom + abs_sum_denom);
+		//this addition is suggested in the report as an alternative to clamping
+		denom = D_EPSILON + sum_abs_denom*sum_abs_denom + abs_sum_denom;
+		m_particles.alpha[i] = m_particles.dens[i]/denom;
 	}
 }
 
