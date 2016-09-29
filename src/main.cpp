@@ -53,8 +53,7 @@ int main() {
 	//BoundingBox bbox(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
 
-	const int nParticles = 100;
-	SPH s{ nParticles };
+	SPH s;
 	s.init_positions(bbox.getPosition(), 5, 5);
 
 	Sphere sphere(0.0f, 0.0f, 0.0f, s.get_particle_radius());
@@ -86,7 +85,7 @@ int main() {
 		MVstack.multiply(mCamera.getTransformM());
 
 		glm::vec3 particlePos;
-		for (int i = 0; i < nParticles; ++i) {
+		for (int i = 0; i < D_NR_OF_PARTICLES; ++i) {
 			MVstack.push();
 			particlePos = glm::vec3(
 				s.get_particle_positions()->x[i],
