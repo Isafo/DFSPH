@@ -5,7 +5,8 @@
 #define D_PI 3.1415926559f;
 #define D_EPSILON 0.000000000000001f;
 
-SPH::SPH() {
+SPH::SPH() 
+{
 	//m_particles.alpha = new float[D_NR_OF_PARTICLES];
 	m_particles.dens = new float[D_NR_OF_PARTICLES];
 	m_particles.mass = new float[D_NR_OF_PARTICLES];
