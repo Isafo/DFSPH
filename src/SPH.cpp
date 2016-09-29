@@ -1,5 +1,7 @@
 #include "SPH.h"
 
+#include <math.h>
+
 #define D_GRAVITY -9.82f
 #define D_NEIGHBOR_RAD 0.3f;
 #define D_PI 3.1415926559f;
@@ -50,13 +52,21 @@ SPH::SPH(int size) {
 
 void SPH::update(float dT) 
 {
+	static float** kernel_values = new float*[m_nr_of_particles];
+	for (int i = 0; i < m_nr_of_particles; ++i)
+	{
+		kernel_values[i] = new float[100];
+	}
+
 	find_neighborhoods();
+
+	update_kernel_values(kernel_values);
+
 	calculate_densities();
 	calculate_factors();
 	non_pressure_forces();
 	update_positions(dT);
 	update_velocities(dT);
-
 }
 
 void SPH::find_neighborhoods()
@@ -107,20 +117,30 @@ void SPH::calculate_densities()
 void SPH::calculate_factors()
 {
 	int nr_neighbors;
-	float abs_sum_denom = 0;
+	float abs_sum_denom{ 0 };
 	float temp;
-	float sum_abs_denom = 0;
+	float particle_mass;
+	glm::vec3 particle_pos;
+	glm::vec3 kernel_gradient;
+	glm::vec3 sum_abs_denom{ 0 };
 
 	for (int i = 0; i < m_nr_of_particles; i++)
 	{
 		nr_neighbors = m_neighbor_data[i].n;
-		for (int n = 0; n < nr_neighbors; ++n)
+		for (int neighbor = 0; neighbor < nr_neighbors; ++neighbor)
 		{
-			temp = m_particles.mass[m_neighbor_data[i].neighbor[n]];// * gradient kernel function
-			sum_abs_denom += temp; 
-			abs_sum_denom += temp*temp;
+			particle_mass = m_particles.mass[m_neighbor_data[i].neighbor[neighbor]];
+
+			particle_pos = glm::vec3(m_particles.pos.x[m_neighbor_data[i].neighbor[neighbor]],
+									m_particles.pos.y[m_neighbor_data[i].neighbor[neighbor]],
+									m_particles.pos.z[m_neighbor_data[i].neighbor[neighbor]]);
+
+			kernel_gradient = particle_pos * m_neighbor_data[i].g_value[neighbor];
+
+			sum_abs_denom = glm::abs(particle_mass*kernel_gradient);
+			abs_sum_denom += glm::length(particle_mass*kernel_gradient)*glm::length(particle_mass*kernel_gradient);
 		}
-		m_particles.alpha[i] = sum_abs_denom*sum_abs_denom + abs_sum_denom;
+		m_particles.alpha[i] = glm::length(sum_abs_denom)*glm::length(sum_abs_denom) + abs_sum_denom;
 	}
 }
 
@@ -238,26 +258,49 @@ void SPH::update_function_g()
 		}
 	}
 }
-/*
-float SPH::kernel(const float q) const
+
+void SPH::update_kernel_values(float** kernel_values)
 {
-	auto kernel = 1 / PI;
-	if (q >= 0 || q <= 0.5f)
+	unsigned int ind;
+	float x, y, z, q;
+	float kernel_val;
+	for (int particle = 0; particle < m_nr_of_particles; ++particle)
 	{
-		kernel *= (1 - 6.f*q*q + 6.f*q*q*q);
-	}
-	else if (q > 0.5f || q <= 1.0f)
-	{
-		kernel *= 2.0f*(1 - q)*(1 - q)*(1 - q);
-	}
-	else
-	{
-		kernel = 0;
+		float particle_pos_x = m_particles.pos.x[particle];
+		float particle_pos_y = m_particles.pos.y[particle];
+		float particle_pos_z = m_particles.pos.z[particle];
+		for (int neighbor = 0; neighbor < m_neighbor_data[particle].n; ++neighbor)
+		{
+			// compute q
+			ind = m_neighbor_data[particle].neighbor[neighbor];
+			x = m_particles.pos.x[ind] - particle_pos_x;
+			y = m_particles.pos.y[ind] - particle_pos_y;
+			z = m_particles.pos.z[ind] - particle_pos_z;
+
+			float len = x*x + y*y + z*z;
+			q = sqrt(x*x + y*y + z*z) / D_NEIGHBOR_RAD;
+
+			kernel_val = 8.0f / D_PI;
+
+			if (q >= 0 || q <= 0.5f)
+			{
+				kernel_val *= (1 - 6.f*q*q + 6.f*q*q*q);
+			}
+			else if (q > 0.5f || q <= 1.0f)
+			{
+				kernel_val *= 2.0f*(1 - q)*(1 - q)*(1 - q);
+			}
+			else
+			{
+				kernel_val = 0;
+			}
+
+			kernel_values[particle][neighbor] = kernel_val;
+		}
 	}
 
-	return kernel;
 }
-*/
+
 
 void SPH::correct_divergence_error() {}
 

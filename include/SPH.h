@@ -47,6 +47,7 @@ private:
 	void correct_strain_rate_error();
 	void update_positions(float dT);
 	void update_function_g();
+	void update_kernel_values(float** kernel_values);
 	void correct_divergence_error();
 	void update_velocities(float dT);
 	
