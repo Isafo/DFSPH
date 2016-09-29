@@ -27,7 +27,6 @@ SPH::SPH() {
 	m_particles.rad = 0.01f;
 	  
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i) {
-		//m_particles.alpha[i] = 0.f;
 		m_particles.dens[i] = 0.f;
 		m_particles.mass[i] = 0.f;
 		m_particles.p[i] = 0.f;
