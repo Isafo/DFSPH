@@ -49,7 +49,6 @@ private:
 	void update_positions(float dT);
 	void update_function_g();
 	void correct_divergence_error(float* alpha);
-	void update_kernel_values(float** kernel_values);
 	void correct_divergence_error();
 	void update_velocities(float dT);
 	//void calculate_kvi();
@@ -76,6 +75,7 @@ private:
 	const float C_NEIGHBOR_RAD = 0.3f;
 };
 
+inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data, const float NEIGHBOR_RAD);
 inline void calculate_factors(float* mass, Float3* pos, float* dens, float nr_particles, Neighbor_Data* neighbor_data, float* alpha);
 inline void calculate_kvi(float* alpha, Float3* vel, float* mass, int nr_particles, float delta_t, float* k_v_i);
 inline void update_function_g(Float3* pos, Neighbor_Data* neighbor_data, const float NEIGHBOR_RADIUS);
