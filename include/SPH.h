@@ -1,6 +1,5 @@
 #pragma once
-#include "glm\glm.hpp"
-#include "glm\glm.hpp"
+#include "glm/glm.hpp"
 
 #define D_NR_OF_PARTICLES 100
 #define D_MAX_NR_OF_NEIGHBORS 100
@@ -24,7 +23,6 @@ class SPH
 {
 public:
 	SPH();
-	SPH(int size);
 
 	~SPH();
 	//render
@@ -33,7 +31,6 @@ public:
 	//before loop
 	void find_neighborhoods();
 	void calculate_densities();
-	//void calculate_factors();
 	void init_positions(glm::vec3* start_pos, int rows = 3, int cols = 3);
 
 	unsigned int get_nr_of_particles() const { return m_nr_of_particles; }
@@ -69,6 +66,7 @@ private:
 		float* dens;
 		float* mass;
 	};
+
 	float m_delta_t;
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
