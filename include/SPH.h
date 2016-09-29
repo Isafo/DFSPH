@@ -63,7 +63,9 @@ private:
 		float* dens;
 		float* mass;
 		float* alpha;
+		float* k_v_i;
 	};
+	float m_delta_t;
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
 	unsigned int m_nr_of_particles;

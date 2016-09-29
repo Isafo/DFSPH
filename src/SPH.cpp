@@ -16,6 +16,7 @@ SPH::SPH(int size) {
 	m_particles.dens = new float[m_nr_of_particles];
 	m_particles.mass = new float[m_nr_of_particles];
 	m_particles.p = new float[m_nr_of_particles];
+	m_particles.k_v_i = new float[m_nr_of_particles];
 	m_particles.pos.x = new float[m_nr_of_particles];
 	m_particles.pos.y = new float[m_nr_of_particles];
 	m_particles.pos.z = new float[m_nr_of_particles];
@@ -120,7 +121,7 @@ void SPH::calculate_factors()
 			sum_abs_denom += temp; 
 			abs_sum_denom += temp*temp;
 		}
-		m_particles.alpha[i] = sum_abs_denom*sum_abs_denom + abs_sum_denom;
+		m_particles.alpha[i] = m_particles.dens[i]/(sum_abs_denom*sum_abs_denom + abs_sum_denom);
 	}
 }
 
@@ -164,7 +165,6 @@ void SPH::pressure_forces()
 }
 void SPH::calculate_time_step() 
 {
-	float delta_t;
 	float v_max_2 = 0;
 	float x, y, z;
 	for (int i = 0; i < m_nr_of_particles; ++i)
@@ -174,7 +174,7 @@ void SPH::calculate_time_step()
 		z = m_particles.pos.z[i] * m_particles.pos.z[i];
 		if (v_max_2 < (x + y + z))v_max_2 = (x + y + z);
 	}
-	delta_t = 0.4f*(m_particles.rad * 2) / sqrtf(v_max_2) - D_EPSILON;
+	m_delta_t = 0.4f*(m_particles.rad * 2) / sqrtf(v_max_2) - D_EPSILON;
 }
 
 void SPH::predict_velocities(float dT) 
@@ -187,7 +187,11 @@ void SPH::predict_velocities(float dT)
 	}
 }
 
-void SPH::correct_density_error() {}
+//TODO: add kernel function
+void SPH::correct_density_error()
+{
+
+}
 
 void SPH::correct_strain_rate_error() {}
 
@@ -259,7 +263,24 @@ float SPH::kernel(const float q) const
 }
 */
 
-void SPH::correct_divergence_error() {}
+void SPH::correct_divergence_error()
+{
+	float d_dens;
+	float x, y, z;
+	for (int i = 0; i < m_nr_of_particles; ++i)
+	{
+		for (int n = 0; n < m_nr_of_particles; ++n)
+		{
+			x = (m_particles.vel.x[n] - m_particles.vel.x[i]); // here 
+			y = (m_particles.vel.y[n] - m_particles.vel.y[i]); // here
+			z = (m_particles.vel.z[n] - m_particles.vel.z[i]); // and here
+			d_dens += m_particles.mass[n] * (x + y + z);
+
+		}
+		
+		m_particles.k_v_i[i]  = (1.f / m_delta_t)* d_dens *  m_particles.alpha[i]);
+	}
+}
 
 //TODO: remake this function using the predicted velocity
 void SPH::update_velocities(float dT)
