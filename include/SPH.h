@@ -46,7 +46,6 @@ private:
 	void correct_density_error(float* alpha);
 	void correct_strain_rate_error();
 	void update_positions(float dT);
-	void update_function_g();
 	void correct_divergence_error(float* alpha);
 	void correct_divergence_error();
 	void update_velocities(float dT);
