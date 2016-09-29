@@ -1,6 +1,5 @@
 #pragma once
-#include "glm\glm.hpp"
-#include "glm\glm.hpp"
+#include "glm/glm.hpp"
 
 #define D_NR_OF_PARTICLES 100
 #define D_MAX_NR_OF_NEIGHBORS 100
@@ -24,7 +23,6 @@ class SPH
 {
 public:
 	SPH();
-	SPH(int size);
 
 	~SPH();
 	//render
@@ -33,7 +31,6 @@ public:
 	//before loop
 	void find_neighborhoods();
 	void calculate_densities();
-	//void calculate_factors();
 	void init_positions(glm::vec3* start_pos, int rows = 3, int cols = 3);
 
 	unsigned int get_nr_of_particles() const { return m_nr_of_particles; }
@@ -52,6 +49,8 @@ private:
 	void update_positions(float dT);
 	void update_function_g();
 	void correct_divergence_error(float* alpha);
+	void update_kernel_values(float** kernel_values);
+	void correct_divergence_error();
 	void update_velocities(float dT);
 	//void calculate_kvi();
 	
@@ -67,6 +66,7 @@ private:
 		float* dens;
 		float* mass;
 	};
+
 	float m_delta_t;
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
@@ -76,5 +76,5 @@ private:
 };
 
 
-inline void calculate_factors(float* mass, float* dens, float nr_particles, Neighbor_Data* neighbor_data, float* alpha);
+inline void calculate_factors(float* mass, Float3* pos, float* dens, float nr_particles, Neighbor_Data* neighbor_data, float* alpha);
 inline void calculate_kvi(float* alpha, Float3* vel, float* mass, int nr_particles, float delta_t, float* k_v_i);
