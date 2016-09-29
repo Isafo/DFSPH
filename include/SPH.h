@@ -14,7 +14,6 @@ struct Float3
 struct Neighbor_Data
 {
 	int neighbor[D_MAX_NR_OF_NEIGHBORS];
-	float g_value[D_MAX_NR_OF_NEIGHBORS];
 	unsigned int n;
 };
 
@@ -70,11 +69,10 @@ private:
 	float m_delta_t;
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
-	unsigned int m_nr_of_particles;
 
+	unsigned int m_nr_of_particles;
 	const float C_REST_DENS = 0.1f;
 };
 
-
-inline void calculate_factors(float* mass, Float3* pos, float* dens, float nr_particles, Neighbor_Data* neighbor_data, float* alpha);
+inline void calculate_factors(float* mass, Float3* pos, float* dens, float* g_value, float nr_particles, Neighbor_Data* neighbor_data, float* alpha);
 inline void calculate_kvi(float* alpha, Float3* vel, float* mass, int nr_particles, float delta_t, float* k_v_i);

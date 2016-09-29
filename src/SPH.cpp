@@ -44,7 +44,8 @@ SPH::SPH()
 
 void SPH::update(float dT) 
 {
-	float alpha[D_NR_OF_PARTICLES];
+	static float alpha[D_NR_OF_PARTICLES];
+	static float g_value[D_NR_OF_PARTICLES * D_NR_OF_PARTICLES];
 
 	find_neighborhoods();
 
@@ -60,7 +61,7 @@ void SPH::update(float dT)
 
 	calculate_densities();
 
-	calculate_factors(m_particles.mass, &m_particles.pos, m_particles.dens, D_NR_OF_PARTICLES, m_neighbor_data, alpha);
+	calculate_factors(m_particles.mass, &m_particles.pos, m_particles.dens, g_value, D_NR_OF_PARTICLES, m_neighbor_data, alpha);
 	
 	non_pressure_forces();
 	
@@ -116,7 +117,7 @@ void SPH::calculate_densities()
 }
 
 // TODO: Add gradient kernal function
-inline void calculate_factors(float* mass, Float3* pos, float* dens, float nr_particles, Neighbor_Data* neighbor_data, float* alpha)
+inline void calculate_factors(float* mass, Float3* pos, float* dens, float* g_value, float nr_particles, Neighbor_Data* neighbor_data, float* alpha)
 {
 	int nr_neighbors;
 	float abs_sum_denom{ 0 };
@@ -136,7 +137,7 @@ inline void calculate_factors(float* mass, Float3* pos, float* dens, float nr_pa
 		nr_neighbors = neighbor_data[i].n;
 		for (int neighbor = 0; neighbor < nr_neighbors; ++neighbor)
 		{
-			neighbor_index = neighbor_data[i].neighbor[neighbor];
+			neighbor_index = neighbor_data[i].neighbor[neighbor] + i * D_MAX_NR_OF_NEIGHBORS;
 
 			particle_mass = mass[neighbor_index];
 
@@ -144,7 +145,7 @@ inline void calculate_factors(float* mass, Float3* pos, float* dens, float nr_pa
 									pos->y[neighbor_index],
 									pos->z[neighbor_index]);
 
-			kernel_gradient = particle_pos * neighbor_data[i].g_value[neighbor_index];
+			kernel_gradient = particle_pos * g_value[neighbor_index];
 
 			sum_abs_denom = glm::length(particle_mass*kernel_gradient);
 			abs_sum_denom += glm::length(particle_mass*kernel_gradient)*glm::length(particle_mass*kernel_gradient);
