@@ -18,7 +18,7 @@ public:
 		m_nverts = 0;
 		m_ntris = 0;
 	};
-
+	void setRadius(float r) { m_radius = r; }
 	void createSphere(float m_radius, int m_segments);
 	void clean();
 	void render();

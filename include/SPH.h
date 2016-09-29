@@ -30,14 +30,27 @@ public:
 	void find_neighborhoods();
 	void calculate_densities();
 	void calculate_factors();
+<<<<<<< Updated upstream
 	void init_positions(glm::vec3* start_pos, int rows = 3, int cols = 3);
+=======
+	void spawn_particles();
+
+	
+>>>>>>> Stashed changes
 
 	unsigned int get_nr_of_particles() const { return m_nr_of_particles; }
 	float get_particle_radius() const { return m_particles.rad; }
 	Float3* get_particle_positions() { return &m_particles.pos; }
+<<<<<<< Updated upstream
 
 private:	
 
+=======
+	const float get_particle_radius() { return m_particles.rad; }
+	
+private:
+	
+>>>>>>> Stashed changes
 	//in loop
 	void pressure_forces();
 	void non_pressure_forces();
