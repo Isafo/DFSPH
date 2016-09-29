@@ -60,6 +60,8 @@ void SPH::update(float dT)
 
 }
 
+
+
 void SPH::find_neighborhoods()
 {
 	float vector_i_n[3];
@@ -263,7 +265,35 @@ float SPH::kernel(const float q) const
 }
 */
 
+//TODO add kernelgradient
 void SPH::correct_divergence_error()
+{
+	float k_v_i;
+	float div_i;
+	float dens_i;
+	float sum;
+	int neighbor_index;
+	calculate_kvi();
+	for (int i = 0; i < m_nr_of_particles; ++i)
+	{
+		k_v_i = m_particles.k_v_i[i];
+		dens_i = m_particles.dens[i];
+		div_i = k_v_i / dens_i;
+
+		for (int j = 0; j < m_neighbor_data[i].n; ++j)
+		{
+			neighbor_index = m_neighbor_data[i].neighbor[j];
+			sum += m_particles.mass[neighbor_index] * (div_i + m_particles.k_v_i[neighbor_index] / m_particles.dens[neighbor_index]); //here
+		}
+		sum = m_delta_t * sum;
+		m_particles.vel.x[i] -= sum;
+		m_particles.vel.y[i] -= sum;
+		m_particles.vel.z[i] -= sum;
+	}
+	
+
+}
+void SPH::calculate_kvi()
 {
 	float d_dens;
 	float x, y, z;
@@ -277,8 +307,8 @@ void SPH::correct_divergence_error()
 			d_dens += m_particles.mass[n] * (x + y + z);
 
 		}
-		
-		m_particles.k_v_i[i]  = (1.f / m_delta_t)* d_dens *  m_particles.alpha[i]);
+
+		m_particles.k_v_i[i] = (1.f / m_delta_t)* d_dens *  m_particles.alpha[i];
 	}
 }
 

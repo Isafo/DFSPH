@@ -49,7 +49,7 @@ private:
 	void update_function_g();
 	void correct_divergence_error();
 	void update_velocities(float dT);
-	
+	void calculate_kvi();
 	
 	
 	struct Particles
