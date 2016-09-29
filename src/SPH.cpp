@@ -46,18 +46,13 @@ void SPH::update(float dT)
 {
 	static float alpha[D_NR_OF_PARTICLES];
 	static float g_value[D_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
+	static float kernel_values[D_NR_OF_PARTICLES*D_MAX_NR_OF_NEIGHBORS];
 
 	find_neighborhoods();
 
-	static float** kernel_values = new float*[m_nr_of_particles];
-	for (int i = 0; i < m_nr_of_particles; ++i)
-	{
-		kernel_values[i] = new float[100];
-	}
-
 	find_neighborhoods();
 
-	//update_kernel_values(kernel_values);
+	update_kernel_values(kernel_values, &m_particles.pos, m_neighbor_data);
 
 	calculate_densities();
 
@@ -272,23 +267,23 @@ void SPH::update_function_g()
 	}
 }
 
-void SPH::update_kernel_values(float** kernel_values)
+inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data)
 {
 	unsigned int ind;
 	float x, y, z, q;
 	float kernel_val;
 	for (int particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
 	{
-		float particle_pos_x = m_particles.pos.x[particle];
-		float particle_pos_y = m_particles.pos.y[particle];
-		float particle_pos_z = m_particles.pos.z[particle];
-		for (int neighbor = 0; neighbor < m_neighbor_data[particle].n; ++neighbor)
+		float particle_pos_x = pos->x[particle];
+		float particle_pos_y = pos->y[particle];
+		float particle_pos_z = pos->z[particle];
+		for (int neighbor = 0; neighbor < neighbor_data[particle].n; ++neighbor)
 		{
 			// compute q
-			ind = m_neighbor_data[particle].neighbor[neighbor];
-			x = m_particles.pos.x[ind] - particle_pos_x;
-			y = m_particles.pos.y[ind] - particle_pos_y;
-			z = m_particles.pos.z[ind] - particle_pos_z;
+			ind = neighbor_data[particle].neighbor[neighbor];
+			x = pos->x[ind] - particle_pos_x;
+			y = pos->y[ind] - particle_pos_y;
+			z = pos->z[ind] - particle_pos_z;
 
 			float len = x*x + y*y + z*z;
 			q = sqrt(x*x + y*y + z*z) / D_NEIGHBOR_RAD;
@@ -308,7 +303,7 @@ void SPH::update_kernel_values(float** kernel_values)
 				kernel_val = 0;
 			}
 
-			kernel_values[particle][neighbor] = kernel_val;
+			kernel_values[particle*D_NR_OF_PARTICLES + ind] = kernel_val;
 		}
 	}
 }

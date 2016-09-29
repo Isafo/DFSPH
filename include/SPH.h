@@ -48,7 +48,6 @@ private:
 	void update_positions(float dT);
 	void update_function_g();
 	void correct_divergence_error(float* alpha);
-	void update_kernel_values(float** kernel_values);
 	void correct_divergence_error();
 	void update_velocities(float dT);
 	//void calculate_kvi();
@@ -75,4 +74,5 @@ private:
 };
 
 inline void calculate_factors(float* mass, Float3* pos, float* dens, float* g_value, float nr_particles, Neighbor_Data* neighbor_data, float* alpha);
+inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data);
 inline void calculate_kvi(float* alpha, Float3* vel, float* mass, int nr_particles, float delta_t, float* k_v_i);
