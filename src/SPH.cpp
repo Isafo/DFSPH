@@ -45,7 +45,7 @@ SPH::SPH()
 void SPH::update(float dT) 
 {
 	static float alpha[D_NR_OF_PARTICLES];
-	static float g_value[D_NR_OF_PARTICLES * D_NR_OF_PARTICLES];
+	static float g_value[D_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
 
 	find_neighborhoods();
 
