@@ -3,11 +3,10 @@
 #include <math.h>
 
 #define D_GRAVITY -9.82f
-#define D_NEIGHBOR_RAD 0.3f;
 #define D_PI 3.1415926559f;
 #define D_EPSILON 0.000000000000001f;
 
-SPH::SPH() 
+SPH::SPH()
 {
 	//m_particles.alpha = new float[D_NR_OF_PARTICLES];
 	m_particles.dens = new float[D_NR_OF_PARTICLES];
@@ -28,7 +27,7 @@ SPH::SPH()
 	settings class with static values
 	instead of being defined here. */
 	m_particles.rad = 0.01f;
-	  
+
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i) {
 		//m_particles.alpha[i] = 0.f;
 		m_particles.dens[i] = 0.f;
@@ -43,7 +42,7 @@ SPH::SPH()
 	}
 }
 
-void SPH::update(float dT) 
+void SPH::update(float dT)
 {
 	float alpha[D_NR_OF_PARTICLES];
 
@@ -62,11 +61,11 @@ void SPH::update(float dT)
 	calculate_densities();
 
 	calculate_factors(m_particles.mass, &m_particles.pos, m_particles.dens, D_NR_OF_PARTICLES, m_neighbor_data, alpha);
-	
+
 	non_pressure_forces();
-	
+
 	update_positions(dT);
-	
+
 	update_velocities(dT);
 }
 
@@ -107,9 +106,9 @@ void SPH::calculate_densities()
 {
 	int n_neighbors;
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
-	{	
+	{
 		n_neighbors = m_neighbor_data[i].n;
-		for (int n = 0; n < n_neighbors ; ++n)
+		for (int n = 0; n < n_neighbors; ++n)
 		{
 			m_particles.dens[i] += m_particles.mass[m_neighbor_data[i].neighbor[n]]; // * kernel function
 		}
@@ -142,8 +141,8 @@ inline void calculate_factors(float* mass, Float3* pos, float* dens, float nr_pa
 			particle_mass = mass[neighbor_index];
 
 			particle_pos = glm::vec3(pos->x[neighbor_index],
-									pos->y[neighbor_index],
-									pos->z[neighbor_index]);
+				pos->y[neighbor_index],
+				pos->z[neighbor_index]);
 
 			kernel_gradient = particle_pos * neighbor_data[i].g_value[neighbor_index];
 
@@ -177,7 +176,7 @@ void SPH::init_positions(glm::vec3* start_pos, int rows, int cols)
 
 void SPH::non_pressure_forces()
 {
-	for (int i = 0; i < D_NR_OF_PARTICLES; i++) 
+	for (int i = 0; i < D_NR_OF_PARTICLES; i++)
 	{
 		m_particles.F_adv.x[i] = 0.f;
 		m_particles.F_adv.y[i] = D_GRAVITY;
@@ -192,7 +191,7 @@ void SPH::pressure_forces()
 		m_particles.p[i] = m_particles.dens[i] - C_REST_DENS;
 	}
 }
-void SPH::calculate_time_step() 
+void SPH::calculate_time_step()
 {
 	float v_max_2 = 0;
 	float x, y, z;
@@ -206,7 +205,7 @@ void SPH::calculate_time_step()
 	m_delta_t = 0.4f*(m_particles.rad * 2) / sqrtf(v_max_2) - D_EPSILON;
 }
 
-void SPH::predict_velocities(float dT) 
+void SPH::predict_velocities(float dT)
 {
 	for (unsigned int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
@@ -234,26 +233,26 @@ void SPH::update_positions(float dT)
 	}
 }
 
-void SPH::update_function_g()
+inline void update_function_g(Float3* pos, Neighbor_Data* neighbor_data, const float NEIGHBOR_RADIUS)
 {
 	float kernel_derive;
 	//Loop through all particles
 	for (int particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
 	{
 		//Loop through particle neibors
-		for (int neighbor = 0; neighbor < m_neighbor_data[particle].n; ++neighbor)
+		for (int neighbor = 0; neighbor < neighbor_data[particle].n; ++neighbor)
 		{
-			auto neighbor_ind = m_neighbor_data[particle].neighbor[neighbor];
+			auto neighbor_ind = neighbor_data[particle].neighbor[neighbor];
 
-			auto dx = m_particles.pos.x[particle] - m_particles.pos.x[neighbor_ind];
-			auto dy = m_particles.pos.y[particle] - m_particles.pos.y[neighbor_ind];
-			auto dz = m_particles.pos.z[particle] - m_particles.pos.z[neighbor_ind];
+			auto dx = pos->x[particle] - pos->x[neighbor_ind];
+			auto dy = pos->y[particle] - pos->y[neighbor_ind];
+			auto dz = pos->z[particle] - pos->z[neighbor_ind];
 
 			auto dist = std::sqrt(dx*dx + dy*dy + dz*dz);
-			auto q = dist / m_particles.rad;
+			auto q = dist / NEIGHBOR_RADIUS;
 
 			//Compute the derivitive of the kernel function
-			
+
 			if (q >= 0 || q <= 0.5f)
 			{
 				kernel_derive = (-12.f*q + 18.f*q*q);
@@ -267,7 +266,7 @@ void SPH::update_function_g()
 				kernel_derive = 0;
 			}
 
-			m_neighbor_data[particle].g_value[neighbor] = kernel_derive / (m_particles.rad*dist);
+			neighbor_data[particle].g_value[neighbor] = kernel_derive / (dist * NEIGHBOR_RADIUS);
 		}
 	}
 }

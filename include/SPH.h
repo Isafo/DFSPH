@@ -37,7 +37,7 @@ public:
 	float get_particle_radius() const { return m_particles.rad; }
 	Float3* get_particle_positions() { return &m_particles.pos; }
 
-private:	
+private:
 
 	//in loop
 	void pressure_forces();
@@ -53,8 +53,8 @@ private:
 	void correct_divergence_error();
 	void update_velocities(float dT);
 	//void calculate_kvi();
-	
-	
+
+
 	struct Particles
 	{
 		Float3 pos;
@@ -73,8 +73,9 @@ private:
 	unsigned int m_nr_of_particles;
 
 	const float C_REST_DENS = 0.1f;
+	const float C_NEIGHBOR_RAD = 0.3f;
 };
-
 
 inline void calculate_factors(float* mass, Float3* pos, float* dens, float nr_particles, Neighbor_Data* neighbor_data, float* alpha);
 inline void calculate_kvi(float* alpha, Float3* vel, float* mass, int nr_particles, float delta_t, float* k_v_i);
+inline void update_function_g(Float3* pos, Neighbor_Data* neighbor_data, const float NEIGHBOR_RADIUS);
