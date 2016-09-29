@@ -57,20 +57,7 @@ int main() {
 	SPH s{ nParticles };
 	s.init_positions(bbox.getPosition(), 5, 5);
 
-<<<<<<< Updated upstream
 	Sphere sphere(0.0f, 0.0f, 0.0f, s.get_particle_radius());
-=======
-	//using nr_particles particles
-	const int nr_particles = 10;
-	SPH s{ nr_particles };
-
-	Sphere spheres[nr_particles];
-	for(int i = 0; i < nr_particles; i++)
-	{
-		spheres[i] = Sphere(0.f, 0.f, 0.f, s.get_particle_radius());
-	}
-
->>>>>>> Stashed changes
 
 	Camera mCamera;
 	// mCamera.setPosition(&glm::vec3(0f, 0.f, 0.f));
@@ -91,31 +78,12 @@ int main() {
 		GLcalls();
 
 		glUseProgram(sceneLight.programID);
-<<<<<<< Updated upstream
-=======
-		
-		s.update(dT/10);
-		
-		spheres[0].setPosition( glm::vec3( s.get_particle_positions()->x[0],
-							  s.get_particle_positions()->y[0],
-							  s.get_particle_positions()->z[0] ));
->>>>>>> Stashed changes
 
 		s.update(dT / 10);
-		
+
 		MVstack.push();//Camera transforms --<
-<<<<<<< Updated upstream
 		glUniformMatrix4fv(locationP, 1, GL_FALSE, mCamera.getPerspective());
 		MVstack.multiply(mCamera.getTransformM());
-=======
-			glUniformMatrix4fv(locationP, 1, GL_FALSE, mCamera.getPerspective());
-			MVstack.multiply(mCamera.getTransformM());
-			MVstack.push();
-				MVstack.translate(spheres[0].getPosition());
-				glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
-				spheres[0].render();
-			MVstack.pop();
->>>>>>> Stashed changes
 
 		glm::vec3 particlePos;
 		for (int i = 0; i < nParticles; ++i) {

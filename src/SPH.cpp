@@ -11,20 +11,6 @@ SPH::SPH()
 
 SPH::SPH(int size) {
 	m_nr_of_particles = size;
-<<<<<<< Updated upstream
-=======
-	m_particles.alpha = new float[size];
-	m_particles.dens = new float[size];
-	m_particles.mass = new float[size];
-	m_particles.p = new float[size];
-	m_particles.rad = 1.f;
-	m_particles.pos.x = new float[size];
-	m_particles.pos.y = new float[size];
-	m_particles.pos.z = new float[size];
-	m_particles.vel.x = new float[size];
-	m_particles.vel.y = new float[size];
-	m_particles.vel.z = new float[size];
->>>>>>> Stashed changes
 
 	m_particles.alpha = new float[m_nr_of_particles];
 	m_particles.dens = new float[m_nr_of_particles];
@@ -73,7 +59,6 @@ void SPH::update(float dT)
 
 }
 
-<<<<<<< Updated upstream
 void SPH::find_neighborhoods()
 {
 	float vector_i_n[3];
@@ -202,24 +187,6 @@ void SPH::predict_velocities(float dT)
 	}
 }
 
-=======
-void SPH::spawn_particles() {
-	for (int i = 0; i < 2; i++) 
-	{
-		for(int i = 0; i < 2; i++)
-		{
-			for (int i = 0; i < 2; i++)
-			{
-
-			}
-		}
-	}
-}
-
-void SPH::non_pressure_forces(){}
-void SPH::calculate_time_step() {}
-void SPH::predict_velocities() {}
->>>>>>> Stashed changes
 void SPH::correct_density_error() {}
 
 void SPH::correct_strain_rate_error() {}
@@ -233,7 +200,6 @@ void SPH::update_positions(float dT)
 		m_particles.pos.z[i] += m_particles.vel.z[i] * dT;
 	}
 }
-<<<<<<< Updated upstream
 
 void SPH::update_function_g()
 {
@@ -293,12 +259,6 @@ float SPH::kernel(const float q) const
 }
 */
 
-=======
-void SPH::update_neighbors() 
-{
-	
-}
->>>>>>> Stashed changes
 void SPH::correct_divergence_error() {}
 
 //TODO: remake this function using the predicted velocity
@@ -327,12 +287,9 @@ SPH::~SPH()
 	delete[] m_particles.dens;
 	delete[] m_particles.mass;
 	delete[] m_particles.p;
-<<<<<<< Updated upstream
 
 	delete[] m_neighbor_data->g_value;
 	delete[] m_neighbor_data->neighbor;
 	delete[] m_neighbor_data;
 	
-=======
->>>>>>> Stashed changes
 }
