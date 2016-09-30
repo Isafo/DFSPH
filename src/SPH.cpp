@@ -59,7 +59,19 @@ void SPH::update(float dT)
 
 	non_pressure_forces();
 
+	predict_velocities(dT);
+
+	//correct_density_error();
+
 	update_positions(dT);
+
+	//find_neighborhoods(t + dt);
+
+	// calculate densities(t + dt)
+
+	//calculate_factors(t + dt);
+
+	correct_divergence_error(alpha);
 
 	update_velocities(dT);
 }
