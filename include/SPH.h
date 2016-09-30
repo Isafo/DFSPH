@@ -10,6 +10,12 @@ struct Float3
 	float* y;
 	float* z;
 };
+struct Float3s
+{
+	float x;
+	float y;
+	float z;
+};
 
 struct Neighbor_Data
 {
@@ -43,10 +49,10 @@ private:
 	void non_pressure_forces();
 	void calculate_time_step();
 	void predict_velocities(float dT);
-	void correct_density_error(float* alpha,float dT);
+	void correct_density_error(float* alpha,float dT, float* g_values, Float3s* f_tot, Float3s* k_v_i);
 	void correct_strain_rate_error();
 	void update_positions(float dT);
-	void correct_divergence_error(float* alpha);
+	void correct_divergence_error(float* alpha, Float3* k_v_i);
 	void update_velocities(float dT);
 	//void calculate_kvi();
 
@@ -66,7 +72,7 @@ private:
 	float m_delta_t;
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
-	Float3 m_k_v_i;
+
 	unsigned int m_nr_of_particles;
 	const float C_REST_DENS = 0.1f;
 	const float C_NEIGHBOR_RAD = 0.3f;
@@ -74,6 +80,7 @@ private:
 
 inline void calculate_factors(float* mass, Float3* pos, float* dens, float* g_value, float nr_particles, Neighbor_Data* neighbor_data, float* alpha);
 inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data, const float NEIGHBOR_RAD);
-inline void calculate_kvi(float* alpha, Float3* vel, Float3* pos, float* mass, int nr_particles, float delta_t, Float3* k_v_i, Neighbor_Data* neighbor_data, float* g_value);
+inline void calculate_kvi(float* alpha, Float3* vel, Float3* pos, float* mass, int nr_particles, float delta_t, Float3s *k_v_i, Neighbor_Data* neighbor_data, float* g_value);
 inline void update_function_g(Float3* pos, Neighbor_Data* neighbor_data, float* g, const float NEIGHBOR_RADIUS);
-inline void calculate_force_calculation(float acc,float* k_v_i, Float3*mass, float*g, float* dens);
+inline void calculate_pressure_force(Float3s* f_p, Float3s* k_v_i, Float3* pos, float* mass, float* g_val, Neighbor_Data* neighbor_data, float* dens);
+inline void calculate_predicted_pressure(Float3s * predicted_pressure, Float3s* f_p, float* mass, float_t*dens, float* g_val, float delta_t, Neighbor_Data* n_data, Float3 * pos, const float rest_Dens);
