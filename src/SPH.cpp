@@ -48,7 +48,7 @@ void SPH::update(float dT)
 	static float kernel_values[D_NR_OF_PARTICLES*D_MAX_NR_OF_NEIGHBORS];
 
 	find_neighborhoods();
-	update_function_g( &m_particles.pos, m_neighbor_data, g_value, C_NEIGHBOR_RAD);
+	update_scalar_function( &m_particles.pos, m_neighbor_data, g_value, C_NEIGHBOR_RAD);
 
 	update_kernel_values(kernel_values, &m_particles.pos, m_neighbor_data, C_NEIGHBOR_RAD);
 
@@ -232,7 +232,7 @@ void SPH::update_positions(float dT)
 	}
 }
 
-inline void update_function_g(Float3* pos, Neighbor_Data* neighbor_data, float* g, const float NEIGHBOR_RADIUS)
+inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* g, const float NEIGHBOR_RADIUS)
 {
 	float kernel_derive;
 	//Loop through all particles

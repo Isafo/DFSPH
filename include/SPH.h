@@ -4,6 +4,7 @@
 #define D_NR_OF_PARTICLES 100
 #define D_MAX_NR_OF_NEIGHBORS 100
 
+// A struct containing three arrays (SoA)
 struct Float3
 {
 	float* x;
@@ -11,6 +12,8 @@ struct Float3
 	float* z;
 };
 
+// Containing information about the index of each neighbor to a particle 
+// and the number of neighbors the particle has
 struct Neighbor_Data
 {
 	int neighbor[D_MAX_NR_OF_NEIGHBORS];
@@ -24,33 +27,41 @@ public:
 	SPH();
 
 	~SPH();
-	//render
+	// performs the simulation steps and updates the particles
 	void update(float dT);
-
-	//before loop
-	void find_neighborhoods();
-	void calculate_densities();
+	
+	// initializes the particles in a given grid formation
 	void init_positions(glm::vec3* start_pos, int rows = 3, int cols = 3);
 
-	unsigned int get_nr_of_particles() const { return m_nr_of_particles; }
+	unsigned int get_nr_of_particles() const { return D_NR_OF_PARTICLES; }
 	float get_particle_radius() const { return m_particles.rad; }
 	Float3* get_particle_positions() { return &m_particles.pos; }
 
 private:
 
-	//in loop
-	void pressure_forces();
-	void non_pressure_forces();
-	void calculate_time_step();
-	void predict_velocities(float dT);
-	void correct_density_error(float* alpha);
-	void correct_strain_rate_error();
-	void update_positions(float dT);
-	void correct_divergence_error(float* alpha);
-	void correct_divergence_error();
-	void update_velocities(float dT);
-	//void calculate_kvi();
+	// Finds the neighbors of a particle within the given radius D_NEIGBBOR_RAD
+	void find_neighborhoods();
+	// Calculates the densities for all particles
+	void calculate_densities();
 
+
+	void pressure_forces();
+	// Calculates the non-pressure forces: Gravity, surface-tension and vicosity
+	void non_pressure_forces();
+	// Calculates a stable time-step
+	void calculate_time_step();
+	// Calculates an unstable predicted velocity
+	void predict_velocities(float dT);
+	// Correct the density error in the predicted velocity
+	void correct_density_error(float* alpha);
+
+	void correct_strain_rate_error();
+	// Update the particle positions
+	void update_positions(float dT);
+	// correct the divergence error in the predicted velocity
+	void correct_divergence_error(float* alpha);
+	// Update the velocity with the stable corrected predicted velocity
+	void update_velocities(float dT);
 
 	struct Particles
 	{
@@ -68,12 +79,14 @@ private:
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
 
-	unsigned int m_nr_of_particles;
 	const float C_REST_DENS = 0.1f;
 	const float C_NEIGHBOR_RAD = 0.3f;
 };
 
+// calculates the alpha particle factors
 inline void calculate_factors(float* mass, Float3* pos, float* dens, float* g_value, float nr_particles, Neighbor_Data* neighbor_data, float* alpha);
 inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data, const float NEIGHBOR_RAD);
+// calculates the k^v_i variable for all particles
 inline void calculate_kvi(float* alpha, Float3* vel, float* mass, int nr_particles, float delta_t, float* k_v_i);
-inline void update_function_g(Float3* pos, Neighbor_Data* neighbor_data, float* g, const float NEIGHBOR_RADIUS);
+// updates the scalar values g(q) for all particles
+inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* g, const float NEIGHBOR_RADIUS);
