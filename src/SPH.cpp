@@ -23,6 +23,10 @@ SPH::SPH()
 	m_particles.F_adv.z = new float[D_NR_OF_PARTICLES];
 	m_neighbor_data = new Neighbor_Data[D_NR_OF_PARTICLES];
 
+
+	m_k_v_i.x = new float[D_NR_OF_PARTICLES];
+	m_k_v_i.y = new float[D_NR_OF_PARTICLES];
+	m_k_v_i.z = new float[D_NR_OF_PARTICLES];
 	/* The radius should be read from a
 	settings class with static values
 	instead of being defined here. */
@@ -47,7 +51,10 @@ void SPH::update(float dT)
 	static float g_value[D_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
 	static float kernel_values[D_NR_OF_PARTICLES*D_MAX_NR_OF_NEIGHBORS];
 
+	calculate_time_step();
+
 	find_neighborhoods();
+	
 	update_function_g( &m_particles.pos, m_neighbor_data, g_value, C_NEIGHBOR_RAD);
 
 	update_kernel_values(kernel_values, &m_particles.pos, m_neighbor_data, C_NEIGHBOR_RAD);
@@ -55,6 +62,8 @@ void SPH::update(float dT)
 	calculate_densities();
 
 	calculate_factors(m_particles.mass, &m_particles.pos, m_particles.dens, g_value, D_NR_OF_PARTICLES, m_neighbor_data, alpha);
+
+	calculate_kvi(alpha, &m_particles.vel, &m_particles.pos, m_particles.mass, D_NR_OF_PARTICLES, m_delta_t , &m_k_v_i, m_neighbor_data, g_value);
 
 	non_pressure_forces();
 
@@ -215,11 +224,30 @@ void SPH::predict_velocities(float dT)
 }
 
 //TODO: add kernel function
-void SPH::correct_density_error(float* alpha)
+void SPH::correct_density_error(float* alpha, float dT)
 {
+	int neighbor_length;
+	float res;
+	float mass_j;
+	float mass_i;
+	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
+	{
+		neighbor_length = m_neighbor_data[i].n;
+		for (int j = 0; j < neighbor_length; ++j)
+		{
+			mass_j = m_particles.mass[j];
+			mass_i = m_particles.mass[i];
 
+
+		}
+	}
 }
-
+/*
+inline void calculate_force_acceleration(float acc,float* k_v_i, Float3*mass, float*g, float* dens)
+{
+	
+}
+*/
 void SPH::correct_strain_rate_error() {}
 
 void SPH::update_positions(float dT)
@@ -314,45 +342,86 @@ inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Dat
 //TODO add kernelgradient
 void SPH::correct_divergence_error(float* alpha)
 {
-	float div_i;
 	float dens_i;
-	float sum;
+	float div_i_x;
+	float div_i_y;
+	float div_i_z;
+	float sum_x = .0f;
+	float sum_y = .0f;
+	float sum_z = .0f;
 	int neighbor_index;
-	float k_v_i[D_NR_OF_PARTICLES];
 
-	calculate_kvi(alpha, &m_particles.vel, m_particles.mass, D_NR_OF_PARTICLES, m_delta_t, k_v_i);
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		dens_i = m_particles.dens[i];
-		div_i = k_v_i[i] / dens_i;
+		div_i_x = m_k_v_i.x[i] / dens_i;
+		div_i_y = m_k_v_i.y[i] / dens_i;
+		div_i_z = m_k_v_i.z[i] / dens_i;
 
 		for (int j = 0; j < m_neighbor_data[i].n; ++j)
 		{
 			neighbor_index = m_neighbor_data[i].neighbor[j];
-			sum += m_particles.mass[neighbor_index] * (div_i + k_v_i[neighbor_index] / m_particles.dens[neighbor_index]); //here
+			sum_x += m_particles.mass[neighbor_index] * (div_i_x + m_k_v_i.x[neighbor_index] / m_particles.dens[neighbor_index]); //here
+			sum_y += m_particles.mass[neighbor_index] * (div_i_y + m_k_v_i.y[neighbor_index] / m_particles.dens[neighbor_index]); //here
+			sum_z += m_particles.mass[neighbor_index] * (div_i_z + m_k_v_i.z[neighbor_index] / m_particles.dens[neighbor_index]); //here
+
 		}
-		sum = m_delta_t * sum;
-		m_particles.vel.x[i] -= sum;
-		m_particles.vel.y[i] -= sum;
-		m_particles.vel.z[i] -= sum;
+		m_particles.vel.x[i] -= m_delta_t * sum_x;
+		m_particles.vel.y[i] -= m_delta_t * sum_y;
+		m_particles.vel.z[i] -= m_delta_t * sum_z;
+		sum_x = .0f;
+		sum_y = .0f;
+		sum_z = .0f;
 	}
 }
 
-inline void calculate_kvi(float* alpha, Float3* vel, float* mass, int nr_particles, float delta_t, float* k_v_i)
+//TODO: add gradient kernal
+inline void calculate_kvi(float* alpha, Float3* vel, Float3* pos, float* mass, int nr_particles, 
+						  float delta_t, Float3* k_v_i, Neighbor_Data* neighbor_data, float* g_value)
 {
-	float d_dens = 0.0f;
 	float x, y, z;
+	unsigned int neighbor_index;
+	unsigned int n_neighbors;
+	float particle_mass;
+	float kernel_gradient_x;
+	float kernel_gradient_y;
+	float kernel_gradient_z;
+	float d_dens_x = 0.f;
+	float d_dens_y = 0.f; 
+	float d_dens_z = 0.f; 
+	
 	for (int i = 0; i < nr_particles; ++i)
-	{
-		for (int n = 0; n < nr_particles; ++n)
+	{	
+		n_neighbors = neighbor_data[i].n;
+		for (int n = 0; n < n_neighbors; ++n)
 		{
-			x = (vel->x[n] - vel->x[i]); // here 
-			y = (vel->y[n] - vel->y[i]); // here
-			z = (vel->z[n] - vel->z[i]); // and here
-			d_dens += mass[n] * (x + y + z);
+			neighbor_index = neighbor_data[i].neighbor[n] + i * D_MAX_NR_OF_NEIGHBORS;
+
+			particle_mass = mass[neighbor_index];
+			x = pos->x[neighbor_index];
+			y = pos->y[neighbor_index];
+			z = pos->z[neighbor_index];
+
+
+			kernel_gradient_x = x * g_value[n + D_MAX_NR_OF_NEIGHBORS*i];
+			kernel_gradient_y = y * g_value[n + D_MAX_NR_OF_NEIGHBORS*i];
+			kernel_gradient_z = z * g_value[n + D_MAX_NR_OF_NEIGHBORS*i];
+
+
+			x = (vel->x[n] - vel->x[i])*kernel_gradient_x;  
+			y = (vel->y[n] - vel->y[i])*kernel_gradient_y; 
+			z = (vel->z[n] - vel->z[i])*kernel_gradient_z; 
+			
+			d_dens_x += mass[n] * (x);
+			d_dens_y += mass[n] * (y);
+			d_dens_z += mass[n] * (z);
+
 		}
 
-		k_v_i[i] = (1.f / delta_t)* d_dens *  alpha[i];
+		k_v_i->x[i] = (1.f / delta_t)* d_dens_x *  alpha[i];
+		k_v_i->y[i] = (1.f / delta_t)* d_dens_y *  alpha[i];
+		k_v_i->z[i] = (1.f / delta_t)* d_dens_z *  alpha[i];
+		d_dens_x = d_dens_y = d_dens_z = 0.f;
 	}
 }
 
