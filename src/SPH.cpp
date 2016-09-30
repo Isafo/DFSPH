@@ -53,8 +53,9 @@ void SPH::update(float dT)
 
 	update_kernel_values(kernel_values, &m_particles.pos, m_neighbor_data, C_NEIGHBOR_RAD);
 
+	// TODO: the densities and factors could be calculated in the same for loop, might want to merge these functions to
+	// remove one for loop
 	calculate_densities();
-
 	calculate_factors(m_particles.mass, &m_particles.pos, m_particles.dens, g_value, D_NR_OF_PARTICLES, m_neighbor_data, alpha);
 
 	non_pressure_forces();
@@ -65,13 +66,13 @@ void SPH::update(float dT)
 
 	update_positions(dT);
 
-	//find_neighborhoods(t + dt);
+	find_neighborhoods();  // t + dt
 
-	// calculate densities(t + dt)
+	calculate_densities(); // t + dt
+	calculate_factors(m_particles.mass, &m_particles.pos, m_particles.dens, g_value, D_NR_OF_PARTICLES, m_neighbor_data, alpha);  // t + dt
 
-	//calculate_factors(t + dt);
-
-	correct_divergence_error(alpha);
+	// TODO: this function is incorretly implemented correct
+	//correct_divergence_error(alpha);
 
 	update_velocities(dT);
 }
