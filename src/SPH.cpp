@@ -48,6 +48,7 @@ void SPH::update(float dT)
 	static float kernel_values[D_NR_OF_PARTICLES*D_MAX_NR_OF_NEIGHBORS];
 
 	find_neighborhoods();
+
 	update_scalar_function( &m_particles.pos, m_neighbor_data, g_value, C_NEIGHBOR_RAD);
 
 	update_kernel_values(kernel_values, &m_particles.pos, m_neighbor_data, C_NEIGHBOR_RAD);
@@ -116,39 +117,44 @@ inline void calculate_factors(float* mass, Float3* pos, float* dens, float* g_va
 	float abs_sum_denom{ 0 };
 	float temp;
 
-	float sum_abs_denom = 0;
+	float sum_abs_denom{ 0 };
 	float denom;
 
-	float particle_mass;
-	float x, y, z;
+	float neighbor_mass;
+	float dx, dy, dz;
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
 	float sqrt_val;
 	unsigned int neighbor_index;
 
-	for (int i = 0; i < nr_particles; i++)
+	const float min_denom{ 0.000001f };
+
+	for (int particle = 0; particle < nr_particles; ++particle)
 	{
-		nr_neighbors = neighbor_data[i].n;
+		nr_neighbors = neighbor_data[particle].n;
 		for (int neighbor = 0; neighbor < nr_neighbors; ++neighbor)
 		{
-			neighbor_index = neighbor_data[i].neighbor[neighbor] + i * D_MAX_NR_OF_NEIGHBORS;
+			neighbor_index = neighbor_data[particle].neighbor[neighbor] + particle * D_MAX_NR_OF_NEIGHBORS;
 
-			particle_mass = mass[neighbor_index];
-			x = pos->x[neighbor_index];
-			y = pos->y[neighbor_index];
-			z = pos->z[neighbor_index];
-			
+			neighbor_mass = mass[neighbor_index];
+			dx = pos->x[neighbor_index] - pos->x[particle];
+			dy = pos->y[neighbor_index] - pos->y[particle];
+			dz = pos->z[neighbor_index] - pos->y[particle];
 
-			kernel_gradient_x = x * g_value[neighbor + D_MAX_NR_OF_NEIGHBORS*i];
-			kernel_gradient_y = y * g_value[neighbor + D_MAX_NR_OF_NEIGHBORS*i];
-			kernel_gradient_z = z * g_value[neighbor + D_MAX_NR_OF_NEIGHBORS*i];
+			kernel_gradient_x = dx * g_value[neighbor + D_MAX_NR_OF_NEIGHBORS*particle];
+			kernel_gradient_y = dy * g_value[neighbor + D_MAX_NR_OF_NEIGHBORS*particle];
+			kernel_gradient_z = dz * g_value[neighbor + D_MAX_NR_OF_NEIGHBORS*particle];
 
-			sqrt_val = ( kernel_gradient_x*kernel_gradient_x + kernel_gradient_y*kernel_gradient_y
-						+ kernel_gradient_z*kernel_gradient_z);
-				 
-			sum_abs_denom = particle_mass*sqrt(sqrt_val);
+			sqrt_val = (kernel_gradient_x*kernel_gradient_x + kernel_gradient_y*kernel_gradient_y
+				+ kernel_gradient_z*kernel_gradient_z);
+
+			sum_abs_denom = neighbor_mass*neighbor_mass*sqrt(sqrt_val);
 			abs_sum_denom += sum_abs_denom*sum_abs_denom;
 		}
-		alpha[i] = sum_abs_denom*sum_abs_denom + abs_sum_denom;
+		denom = sum_abs_denom*sum_abs_denom + abs_sum_denom;
+
+		// set alpha to max(denom,min_denom)
+		denom = denom > min_denom ? denom : min_denom;
+		alpha[particle] = dens[particle] / denom;
 	}
 }
 
