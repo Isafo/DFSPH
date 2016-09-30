@@ -44,19 +44,16 @@ SPH::SPH()
 void SPH::update(float dT)
 {
 	static float alpha[D_NR_OF_PARTICLES];
-	static float g_value[D_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
+	static float scalar_values[D_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
 	static float kernel_values[D_NR_OF_PARTICLES*D_MAX_NR_OF_NEIGHBORS];
 
 	find_neighborhoods();
 
-	update_scalar_function( &m_particles.pos, m_neighbor_data, g_value, C_NEIGHBOR_RAD);
+	update_scalar_function( &m_particles.pos, m_neighbor_data, scalar_values, C_NEIGHBOR_RAD);
 
 	update_kernel_values(kernel_values, &m_particles.pos, m_neighbor_data, C_NEIGHBOR_RAD);
 
-	// TODO: the densities and factors could be calculated in the same for loop, might want to merge these functions to
-	// remove one for loop
-	calculate_densities();
-	calculate_factors(m_particles.mass, &m_particles.pos, m_particles.dens, g_value, D_NR_OF_PARTICLES, m_neighbor_data, alpha);
+	update_density_and_factors(m_particles.mass, &m_particles.pos, m_particles.dens, scalar_values, D_NR_OF_PARTICLES, m_neighbor_data, alpha, kernel_values);
 
 	non_pressure_forces();
 
@@ -68,16 +65,13 @@ void SPH::update(float dT)
 
 	find_neighborhoods();  // t + dt
 
-	calculate_densities(); // t + dt
-	calculate_factors(m_particles.mass, &m_particles.pos, m_particles.dens, g_value, D_NR_OF_PARTICLES, m_neighbor_data, alpha);  // t + dt
+	update_density_and_factors(m_particles.mass, &m_particles.pos, m_particles.dens, scalar_values, D_NR_OF_PARTICLES, m_neighbor_data, alpha, kernel_values);
 
 	// TODO: this function is incorretly implemented correct
 	//correct_divergence_error(alpha);
 
 	update_velocities(dT);
 }
-
-
 
 void SPH::find_neighborhoods()
 {
@@ -109,22 +103,9 @@ void SPH::find_neighborhoods()
 	}
 }
 
-// TODO: Add kernal function
-void SPH::calculate_densities()
-{
-	int n_neighbors;
-	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
-	{
-		n_neighbors = m_neighbor_data[i].n;
-		for (int n = 0; n < n_neighbors; ++n)
-		{
-			m_particles.dens[i] += m_particles.mass[m_neighbor_data[i].neighbor[n]]; // * kernel function
-		}
-	}
-}
 
-// TODO: Add gradient kernal function
-inline void calculate_factors(float* mass, Float3* pos, float* dens, float* g_value, float nr_particles, Neighbor_Data* neighbor_data, float* alpha)
+inline void update_density_and_factors(float* mass, Float3* pos, float* dens, float* scalar_values, float nr_particles, 
+										Neighbor_Data* neighbor_data, float* alpha, float* kernel_values)
 {
 	int nr_neighbors;
 	float abs_sum_denom{ 0 };
@@ -146,16 +127,21 @@ inline void calculate_factors(float* mass, Float3* pos, float* dens, float* g_va
 		nr_neighbors = neighbor_data[particle].n;
 		for (int neighbor = 0; neighbor < nr_neighbors; ++neighbor)
 		{
-			neighbor_index = neighbor_data[particle].neighbor[neighbor] + particle * D_MAX_NR_OF_NEIGHBORS;
-
+			neighbor_index = neighbor_data[particle].neighbor[neighbor];
 			neighbor_mass = mass[neighbor_index];
+
+			int linear_ind = neighbor + D_MAX_NR_OF_NEIGHBORS*particle;
+
+			//Update density
+			dens[particle] += neighbor_mass*kernel_values[linear_ind];
+
 			dx = pos->x[neighbor_index] - pos->x[particle];
 			dy = pos->y[neighbor_index] - pos->y[particle];
 			dz = pos->z[neighbor_index] - pos->y[particle];
 
-			kernel_gradient_x = dx * g_value[neighbor + D_MAX_NR_OF_NEIGHBORS*particle];
-			kernel_gradient_y = dy * g_value[neighbor + D_MAX_NR_OF_NEIGHBORS*particle];
-			kernel_gradient_z = dz * g_value[neighbor + D_MAX_NR_OF_NEIGHBORS*particle];
+			kernel_gradient_x = dx * scalar_values[linear_ind];
+			kernel_gradient_y = dy * scalar_values[linear_ind];
+			kernel_gradient_z = dz * scalar_values[linear_ind];
 
 			sqrt_val = (kernel_gradient_x*kernel_gradient_x + kernel_gradient_y*kernel_gradient_y
 				+ kernel_gradient_z*kernel_gradient_z);

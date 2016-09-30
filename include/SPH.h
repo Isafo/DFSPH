@@ -41,9 +41,6 @@ private:
 
 	// Finds the neighbors of a particle within the given radius D_NEIGBBOR_RAD
 	void find_neighborhoods();
-	// Calculates the densities for all particles
-	void calculate_densities();
-
 
 	void pressure_forces();
 	// Calculates the non-pressure forces: Gravity, surface-tension and vicosity
@@ -83,8 +80,10 @@ private:
 	const float C_NEIGHBOR_RAD = 0.3f;
 };
 
-// calculates the alpha particle factors
-inline void calculate_factors(float* mass, Float3* pos, float* dens, float* g_value, float nr_particles, Neighbor_Data* neighbor_data, float* alpha);
+// calculates the density and the alpha particle factors
+inline void update_density_and_factors(float* mass, Float3* pos, float* dens, float* g_value, float nr_particles, 
+										Neighbor_Data* neighbor_data, float* alpha, float* kernel_values);
+
 inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data, const float NEIGHBOR_RAD);
 // calculates the k^v_i variable for all particles
 inline void calculate_kvi(float* alpha, Float3* vel, float* mass, int nr_particles, float delta_t, float* k_v_i);
