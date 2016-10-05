@@ -54,7 +54,7 @@ int main() {
 	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
 
 	SPH s;
-	s.init_positions(bbox.getPosition(), 5, 5);
+	s.init_positions(bbox.getPosition(), 1, 2);
 
 	Sphere sphere(0.0f, 0.0f, 0.0f, s.get_particle_radius());
 

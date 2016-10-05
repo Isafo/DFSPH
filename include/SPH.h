@@ -1,7 +1,7 @@
 #pragma once
 #include "glm/glm.hpp"
 
-#define D_NR_OF_PARTICLES 100
+#define D_NR_OF_PARTICLES 2
 #define D_MAX_NR_OF_NEIGHBORS 100
 
 // A struct containing three arrays (SoA)
