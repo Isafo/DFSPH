@@ -26,16 +26,14 @@ class SPH
 public:
 	SPH();
 
-	void update_velocities(float dT) const;
-
 	~SPH();
 	// performs the simulation steps and updates the particles
 	void update(float dT);
 	
 	// initializes the particles in a given grid formation
-	void init_positions(glm::vec3* start_pos, int rows = 3, int cols = 3) const;
+	void init_positions(glm::vec3* start_pos, int rows = 3, int cols = 3);
 
-	static unsigned int get_nr_of_particles() { return D_NR_OF_PARTICLES; }
+	unsigned int get_nr_of_particles() const { return D_NR_OF_PARTICLES; }
 	float get_particle_radius() const { return m_particles.rad; }
 	Float3* get_particle_positions() { return &m_particles.pos; }
 
@@ -44,19 +42,19 @@ private:
 	// Finds the neighbors of a particle within the given radius D_NEIGBBOR_RAD
 	void find_neighborhoods() const;
 
-	void pressure_forces() const;
+	void pressure_forces();
 	// Calculates the non-pressure forces: Gravity, surface-tension and vicosity
-	void non_pressure_forces() const;
+	void non_pressure_forces();
 	// Calculates a stable time-step
 	void calculate_time_step();
 	// Calculates an unstable predicted velocity
-	void predict_velocities(float dT) const;
+	void predict_velocities(float dT);
 	// Correct the density error in the predicted velocity
 	void correct_density_error(float* alpha);
 
 	void correct_strain_rate_error();
 	// Update the particle positions
-	void update_positions(float dT) const;
+	void update_positions(float dT);
 	// correct the divergence error in the predicted velocity
 	void correct_divergence_error(float* alpha);
 	// Update the velocity with the stable corrected predicted velocity
