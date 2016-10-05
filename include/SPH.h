@@ -1,6 +1,6 @@
 #pragma once
 #include "glm/glm.hpp"
-
+#include "iostream"
 #define D_NR_OF_PARTICLES 100
 #define D_MAX_NR_OF_NEIGHBORS 100
 

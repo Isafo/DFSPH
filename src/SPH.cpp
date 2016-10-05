@@ -60,7 +60,6 @@ void SPH::update(float dT)
 	calculate_densities();
 
 	calculate_factors(m_particles.mass, &m_particles.pos, m_particles.dens, g_value, D_NR_OF_PARTICLES, m_neighbor_data, alpha);
-	//TODO: FIX FUCKING ARRAY INPUT PARAMETER K_V_I
 
 	calculate_kvi(alpha, &m_particles.vel, &m_particles.pos, m_particles.mass, D_NR_OF_PARTICLES, m_delta_t , k_v_i, m_neighbor_data, g_value);
 
@@ -153,7 +152,10 @@ inline void calculate_factors(float* mass, Float3* pos, float* dens, float* g_va
 
 			sqrt_val = ( kernel_gradient_x*kernel_gradient_x + kernel_gradient_y*kernel_gradient_y
 						+ kernel_gradient_z*kernel_gradient_z);
-				 
+			
+			//lock to minimum 0
+			//sqrt_val = sqrt_val < 0 ? 0 : sqrt_val;
+			
 			sum_abs_denom = particle_mass*sqrt(sqrt_val);
 			abs_sum_denom += sum_abs_denom*sum_abs_denom;
 		}
@@ -228,9 +230,49 @@ void SPH::predict_velocities(float dT)
 void SPH::correct_density_error(float* alpha, float dT, float* g_values, Float3s* f_tot, Float3s* k_v_i)
 {
 	static Float3s predicted_pressure[D_NR_OF_PARTICLES];
-	
+	static Float3s k[D_NR_OF_PARTICLES];
+
+	float dens_i;
+	float k_i_x;
+	float k_i_y;
+	float k_i_z;
+	float sum_x = .0f;
+	float sum_y = .0f;
+	float sum_z = .0f;
+	int neighbor_index;
+
+
 	calculate_pressure_force(f_tot, k_v_i,&m_particles.pos, m_particles.mass, g_values, m_neighbor_data, m_particles.dens);
 	calculate_predicted_pressure(predicted_pressure,f_tot, m_particles.mass, m_particles.dens, g_values, m_delta_t, m_neighbor_data, &m_particles.pos, C_REST_DENS);	
+
+	for (int i = 0; i < D_NR_OF_PARTICLES; i++)
+	{
+		k[i].x = predicted_pressure[i].x * alpha[i] / (m_delta_t*m_delta_t);
+		k[i].y = predicted_pressure[i].y * alpha[i] / (m_delta_t*m_delta_t);
+		k[i].z = predicted_pressure[i].z * alpha[i] / (m_delta_t*m_delta_t);
+	}
+	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
+	{
+		dens_i = m_particles.dens[i];
+		k_i_x = k[i].x / dens_i;
+		k_i_y = k[i].y / dens_i;
+		k_i_z = k[i].z / dens_i;
+
+		for (int j = 0; j < m_neighbor_data[i].n; ++j)
+		{
+			neighbor_index = m_neighbor_data[i].neighbor[j];
+			sum_x += m_particles.mass[neighbor_index] * (k_i_x + k[neighbor_index].x / m_particles.dens[neighbor_index]); //here
+			sum_y += m_particles.mass[neighbor_index] * (k_i_y + k[neighbor_index].y / m_particles.dens[neighbor_index]); //here
+			sum_z += m_particles.mass[neighbor_index] * (k_i_z + k[neighbor_index].z / m_particles.dens[neighbor_index]); //here
+
+		}
+		m_particles.vel.x[i] -= m_delta_t * sum_x;
+		m_particles.vel.y[i] -= m_delta_t * sum_y;
+		m_particles.vel.z[i] -= m_delta_t * sum_z;
+		sum_x = .0f;
+		sum_y = .0f;
+		sum_z = .0f;
+	}
 }
 
 
@@ -296,9 +338,9 @@ inline void calculate_predicted_pressure(Float3s* predicted_pressure,Float3s* f_
 			kernel_gradient_y = y * g_val[j + D_MAX_NR_OF_NEIGHBORS*i];
 			kernel_gradient_z = z * g_val[j + D_MAX_NR_OF_NEIGHBORS*i];
 
-			res_x += mass[j] * (f_p[i].x / dens[i] - f_p[i].x / dens[i])*kernel_gradient_x;
-			res_y += mass[j] * (f_p[i].y / dens[i] - f_p[i].y / dens[i])*kernel_gradient_y;
-			res_z += mass[j] * (f_p[i].z / dens[i] - f_p[i].z / dens[i])*kernel_gradient_z;
+			res_x += mass[j] * (f_p[i].x / dens[i] - f_p[j].x / dens[i])*kernel_gradient_x;
+			res_y += mass[j] * (f_p[i].y / dens[i] - f_p[j].y / dens[i])*kernel_gradient_y;
+			res_z += mass[j] * (f_p[i].z / dens[i] - f_p[j].z / dens[i])*kernel_gradient_z;
 		}
 		predicted_pressure[i].x = d_t_2 *res_x + rest_dens;
 		predicted_pressure[i].y = d_t_2 *res_y + rest_dens;
