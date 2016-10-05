@@ -57,7 +57,7 @@ void SPH::update(float dT)
 
 	non_pressure_forces();
 
-	calculate_time_step();
+	calculate_time_step(dT);
 
 	predict_velocities(dT);
 
@@ -189,6 +189,7 @@ void SPH::non_pressure_forces() const
 		m_particles.F_adv.z[i] = 0.f;
 	}
 }
+
 void SPH::pressure_forces() const
 {
 	// calculate the particle pressure
@@ -197,7 +198,8 @@ void SPH::pressure_forces() const
 		m_particles.p[i] = m_particles.dens[i] - C_REST_DENS;
 	}
 }
-void SPH::calculate_time_step()
+
+void SPH::calculate_time_step(float dT)
 {
 	float v_max_2 = 0;
 	float x, y, z;
@@ -209,9 +211,12 @@ void SPH::calculate_time_step()
 		if (v_max_2 < (x + y + z))v_max_2 = (x + y + z);
 	}
 	m_delta_t = 0.4f*(m_particles.rad * 2) / sqrtf(v_max_2) - D_EPSILON;
+
+	if (dT < m_delta_t)
+		m_delta_t = dT;
 }
 
-void SPH::predict_velocities(float dT) const
+void SPH::predict_velocities(float dT)
 {
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{

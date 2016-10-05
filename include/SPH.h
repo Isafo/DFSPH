@@ -47,9 +47,9 @@ private:
 	// Calculates the non-pressure forces: Gravity, surface-tension and vicosity
 	void non_pressure_forces() const;
 	// Calculates a stable time-step
-	void calculate_time_step();
+	void calculate_time_step(float dT);
 	// Calculates an unstable predicted velocity
-	void predict_velocities(float dT) const;
+	void predict_velocities(float dT);
 	// Correct the density error in the predicted velocity
 	void correct_density_error(float* alpha);
 
