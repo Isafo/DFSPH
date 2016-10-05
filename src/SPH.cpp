@@ -30,7 +30,7 @@ SPH::SPH()
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i) {
 		m_particles.dens[i] = 0.f;
-		m_particles.mass[i] = 0.f;
+		m_particles.mass[i] = 1.f;
 		m_particles.p[i] = 0.f;
 		m_particles.pos.x[i] = 0.f;
 		m_particles.pos.y[i] = 0.f;
@@ -211,7 +211,7 @@ void SPH::calculate_time_step()
 
 void SPH::predict_velocities(float dT) const
 {
-	for (unsigned int i = 0; i < D_NR_OF_PARTICLES; ++i)
+	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		m_particles.vel.x[i] += m_particles.F_adv.x[i] * dT;
 		m_particles.vel.y[i] += m_particles.F_adv.y[i] * dT;
@@ -226,7 +226,7 @@ void SPH::correct_strain_rate_error() {}
 
 void SPH::update_positions(float dT) const
 {
-	for (unsigned int i = 0; i < D_NR_OF_PARTICLES; ++i)
+	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		m_particles.pos.x[i] += m_particles.vel.x[i] * dT;
 		m_particles.pos.y[i] += m_particles.vel.y[i] * dT;
@@ -365,7 +365,7 @@ inline void calculate_kvi(float* alpha, Float3* vel, float* mass, int nr_particl
 //TODO: remake this function using the predicted velocity
 void SPH::update_velocities(float dT)
 {
-	for (unsigned int i = 0; i < D_NR_OF_PARTICLES; ++i)
+	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		m_particles.vel.x[i] += m_particles.F_adv.x[i] * dT;
 		m_particles.vel.y[i] += m_particles.F_adv.y[i] * dT;
