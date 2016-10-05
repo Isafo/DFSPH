@@ -1,8 +1,8 @@
 #pragma once
 #include "glm/glm.hpp"
 
-#define D_NR_OF_PARTICLES 100
-#define D_MAX_NR_OF_NEIGHBORS 100
+#define D_NR_OF_PARTICLES 10
+#define D_MAX_NR_OF_NEIGHBORS 10
 
 // A struct containing three arrays (SoA)
 struct Float3
