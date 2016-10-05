@@ -57,6 +57,8 @@ void SPH::update(float dT)
 
 	non_pressure_forces();
 
+	calculate_time_step();
+
 	predict_velocities(dT);
 
 	//correct_density_error();
@@ -213,9 +215,9 @@ void SPH::predict_velocities(float dT) const
 {
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		m_particles.vel.x[i] += m_particles.F_adv.x[i] * dT;
-		m_particles.vel.y[i] += m_particles.F_adv.y[i] * dT;
-		m_particles.pos.z[i] += m_particles.F_adv.z[i] * dT;
+		m_particles.vel.x[i] += m_particles.F_adv.x[i] * m_delta_t;
+		m_particles.vel.y[i] += m_particles.F_adv.y[i] * m_delta_t;
+		m_particles.pos.z[i] += m_particles.F_adv.z[i] * m_delta_t;
 	}
 }
 
@@ -228,9 +230,9 @@ void SPH::update_positions(float dT) const
 {
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		m_particles.pos.x[i] += m_particles.vel.x[i] * dT;
-		m_particles.pos.y[i] += m_particles.vel.y[i] * dT;
-		m_particles.pos.z[i] += m_particles.vel.z[i] * dT;
+		m_particles.pos.x[i] += m_particles.vel.x[i] * m_delta_t;
+		m_particles.pos.y[i] += m_particles.vel.y[i] * m_delta_t;
+		m_particles.pos.z[i] += m_particles.vel.z[i] * m_delta_t;
 	}
 }
 
@@ -367,21 +369,21 @@ void SPH::update_velocities(float dT)
 {
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		m_particles.vel.x[i] += m_particles.F_adv.x[i] * dT;
-		m_particles.vel.y[i] += m_particles.F_adv.y[i] * dT;
-		m_particles.vel.z[i] += m_particles.F_adv.z[i] * dT;
+		m_particles.vel.x[i] += m_particles.F_adv.x[i] * m_delta_t;
+		m_particles.vel.y[i] += m_particles.F_adv.y[i] * m_delta_t;
+		m_particles.vel.z[i] += m_particles.F_adv.z[i] * m_delta_t;
 
-		if (abs(m_particles.pos.x[i] + m_particles.vel.x[i] * dT) >= 0.5)
+		if (abs(m_particles.pos.x[i] + m_particles.vel.x[i] * m_delta_t) >= 0.5)
 		{
 			m_particles.vel.x[i] = 0.0f;
 		}
 
-		if (m_particles.pos.y[i] + m_particles.vel.y[i] * dT <= -0.5)
+		if (m_particles.pos.y[i] + m_particles.vel.y[i] * m_delta_t <= -0.5)
 		{
 			m_particles.vel.y[i] = 0.0f;
 		}
 
-		if (abs(m_particles.pos.z[i] + m_particles.vel.z[i] * dT) >= 0.5)
+		if (abs(m_particles.pos.z[i] + m_particles.vel.z[i] * m_delta_t) >= 0.5)
 		{
 			m_particles.vel.z[i] = 0.0f;
 		}
