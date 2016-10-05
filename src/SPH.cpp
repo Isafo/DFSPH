@@ -77,8 +77,8 @@ void SPH::find_neighborhoods() const
 {
 	float vector_i_n[3];
 	float dist_i_n_2;
-	const float neigborhod_rad_2 = C_NEIGHBOR_RAD;
-	int count = 0;
+	const float neigborhod_rad_2{ C_NEIGHBOR_RAD };
+	int count{ 0 };
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		for (auto n = 0; n < D_NR_OF_PARTICLES; ++n)
@@ -159,8 +159,8 @@ inline void update_density_and_factors(float* mass, Float3* pos, float* dens, fl
 
 void SPH::init_positions(glm::vec3* start_pos, int rows, int cols) const
 {
-	float dist_between = 2.f * m_particles.rad;
-	float padding_factor = 1.1f;
+	float dist_between{ 2.f * m_particles.rad };
+	float padding_factor{ 1.1f };
 
 	float x, y, z;
 	int ind;
@@ -199,7 +199,7 @@ void SPH::calculate_time_step()
 {
 	float v_max_2 = 0;
 	float x, y, z;
-	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
+	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		x = m_particles.pos.x[i] * m_particles.pos.x[i];
 		y = m_particles.pos.y[i] * m_particles.pos.y[i];
@@ -318,7 +318,7 @@ void SPH::correct_divergence_error(float* alpha)
 {
 	float div_i;
 	float dens_i;
-	float sum;
+	float sum{ 0.f };
 	int neighbor_index;
 	float k_v_i[D_NR_OF_PARTICLES];
 
@@ -346,7 +346,7 @@ void SPH::update_velocities(float dT) const
 
 inline void calculate_kvi(float* alpha, Float3* vel, float* mass, int nr_particles, float delta_t, float* k_v_i)
 {
-	float d_dens = 0.0f;
+	float d_dens{ 0.0f };
 	float x, y, z;
 	for (auto i = 0; i < nr_particles; ++i)
 	{

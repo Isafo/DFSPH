@@ -20,7 +20,6 @@ struct Neighbor_Data
 	unsigned int n;
 };
 
-
 class SPH
 {
 public:
@@ -78,8 +77,8 @@ private:
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
 
-	const float C_REST_DENS = 0.1f;
-	const float C_NEIGHBOR_RAD = 0.3f;
+	const float C_REST_DENS{ 0.1f };
+	const float C_NEIGHBOR_RAD{ 0.3f };
 };
 
 // calculates the density and the alpha particle factors
