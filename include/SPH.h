@@ -52,7 +52,7 @@ private:
 	void correct_density_error(float* alpha,float dT, float* g_values, Float3s* f_tot, Float3s* k_v_i);
 	void correct_strain_rate_error();
 	void update_positions(float dT);
-	void correct_divergence_error(float* alpha, Float3* k_v_i);
+	void correct_divergence_error(float* alpha, Float3s* k_v_i);
 	void update_velocities(float dT);
 	//void calculate_kvi();
 
