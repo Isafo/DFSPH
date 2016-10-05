@@ -82,5 +82,5 @@ inline void calculate_factors(float* mass, Float3* pos, float* dens, float* g_va
 inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data, const float NEIGHBOR_RAD);
 inline void calculate_kvi(float* alpha, Float3* vel, Float3* pos, float* mass, int nr_particles, float delta_t, Float3s *k_v_i, Neighbor_Data* neighbor_data, float* g_value);
 inline void update_function_g(Float3* pos, Neighbor_Data* neighbor_data, float* g, const float NEIGHBOR_RADIUS);
-inline void calculate_pressure_force(Float3s* f_p, Float3s* k_v_i, Float3* pos, float* mass, float* g_val, Neighbor_Data* neighbor_data, float* dens);
+inline void calculate_pressure_force(Float3s* f_tot, Float3s* k_v_i, Float3* pos, float* mass, float* g_val, Neighbor_Data* neighbor_data, float* dens);
 inline void calculate_predicted_pressure(Float3s * predicted_pressure, Float3s* f_p, float* mass, float_t*dens, float* g_val, float delta_t, Neighbor_Data* n_data, Float3 * pos, const float rest_Dens);

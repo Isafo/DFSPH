@@ -234,7 +234,7 @@ void SPH::correct_density_error(float* alpha, float dT, float* g_values, Float3s
 }
 
 
-inline void calculate_pressure_force(Float3* f_tot, Float3* k_v_i, Float3* pos, float* mass,  float*g_val, Neighbor_Data* neighbor_data, float* dens)
+inline void calculate_pressure_force(Float3s* f_tot, Float3s* k_v_i, Float3* pos, float* mass,  float* g_val, Neighbor_Data* neighbor_data, float* dens)
 {
 	unsigned int neighbor_index;
 	unsigned int n_neighbors;
@@ -260,20 +260,20 @@ inline void calculate_pressure_force(Float3* f_tot, Float3* k_v_i, Float3* pos, 
 			kernel_gradient_y = y * g_val[j + D_MAX_NR_OF_NEIGHBORS*i];
 			kernel_gradient_z = z * g_val[j + D_MAX_NR_OF_NEIGHBORS*i];
 
-			x += mass[j] * (k_v_i->x[i] / dens[i] + k_v_i->x[j] / dens[j])*kernel_gradient_x;
-			y += mass[j] * (k_v_i->y[i] / dens[i] + k_v_i->y[j] / dens[j])*kernel_gradient_y;
-			z += mass[j] * (k_v_i->z[i] / dens[i] + k_v_i->z[j] / dens[j])*kernel_gradient_z;
+			x += mass[j] * (k_v_i[i].x / dens[i] + k_v_i[i].x / dens[j])*kernel_gradient_x;
+			y += mass[j] * (k_v_i[i].y / dens[i] + k_v_i[i].y / dens[j])*kernel_gradient_y;
+			z += mass[j] * (k_v_i[i].z / dens[i] + k_v_i[i].z / dens[j])*kernel_gradient_z;
 		}
-		f_tot->x[i] = -mass[i] * x;
-		f_tot->y[i] = -mass[i] * y;
-		f_tot->z[i] = -mass[i] * z;
+		f_tot[i].x = -mass[i] * x;
+		f_tot[i].y = -mass[i] * y;
+		f_tot[i].z = -mass[i] * z;
 		x = y = z = 0.f;
 
 	}
 
 }
 //TODO: add gradient
-inline void calculate_predicted_pressure(Float3 * predicted_pressure,Float3* f_p, float* mass, float_t*dens, float* g_val, float delta_t, Neighbor_Data* n_data, Float3 * pos, const float rest_dens)
+inline void calculate_predicted_pressure(Float3s* predicted_pressure,Float3s* f_p, float* mass, float_t*dens, float* g_val, float delta_t, Neighbor_Data* n_data, Float3 * pos, const float rest_dens)
 {
 	int neighbor_length;
 	float x, y, z;
@@ -296,13 +296,13 @@ inline void calculate_predicted_pressure(Float3 * predicted_pressure,Float3* f_p
 			kernel_gradient_y = y * g_val[j + D_MAX_NR_OF_NEIGHBORS*i];
 			kernel_gradient_z = z * g_val[j + D_MAX_NR_OF_NEIGHBORS*i];
 
-			res_x += mass[j] * (f_p->x[i] / dens[i] - f_p->x[j] / dens[i])*kernel_gradient_x;
-			res_y += mass[j] * (f_p->y[i] / dens[i] - f_p->y[j] / dens[i])*kernel_gradient_y;
-			res_z += mass[j] * (f_p->z[i] / dens[i] - f_p->z[j] / dens[i])*kernel_gradient_z;
+			res_x += mass[j] * (f_p[i].x / dens[i] - f_p[i].x / dens[i])*kernel_gradient_x;
+			res_y += mass[j] * (f_p[i].y / dens[i] - f_p[i].y / dens[i])*kernel_gradient_y;
+			res_z += mass[j] * (f_p[i].z / dens[i] - f_p[i].z / dens[i])*kernel_gradient_z;
 		}
-		predicted_pressure->x[i] = d_t_2 *res_x + rest_dens;
-		predicted_pressure->x[i] = d_t_2 *res_y + rest_dens;
-		predicted_pressure->x[i] = d_t_2 *res_z + rest_dens;
+		predicted_pressure[i].x = d_t_2 *res_x + rest_dens;
+		predicted_pressure[i].y = d_t_2 *res_y + rest_dens;
+		predicted_pressure[i].z = d_t_2 *res_z + rest_dens;
 
 	}
 
