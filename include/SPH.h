@@ -85,7 +85,7 @@ private:
 };
 
 // calculates the density and the alpha particle factors
-inline void update_density_and_factors(float* mass, Float3* pos, float* dens, float* g_value, 
+inline void update_density_and_factors(float* mass, Float3* pos, float* dens, float* scalar_values,
 										Neighbor_Data* neighbor_data, float* alpha, float* kernel_values);
 
 inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data, const float NEIGHBOR_RAD);
