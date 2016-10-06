@@ -3,7 +3,6 @@
 
 #include "iostream"
 
-
 #define D_NR_OF_PARTICLES 2
 #define D_MAX_NR_OF_NEIGHBORS 100
 
@@ -40,7 +39,6 @@ public:
 	// initializes the particles in a given grid formation
 	void init_positions(glm::vec3* start_pos, int rows = 3, int cols = 3) const;
 
-
 	static unsigned int get_nr_of_particles() { return D_NR_OF_PARTICLES; }
 	float get_particle_radius() const { return m_particles.rad; }
 	Float3* get_particle_positions() { return &m_particles.pos; }
@@ -60,7 +58,7 @@ private:
 	void correct_density_error(float* alpha,float dT, float* g_values, Float3s* f_tot, Float3s* k_v_i);
 	void correct_strain_rate_error();
 	void update_positions(float dT) const;
-	void correct_divergence_error(float* alpha, Float3s* k_v_i);
+	void correct_divergence_error(Float3s* k_v_i);
 
 	void update_velocities(float dT);
 
@@ -88,7 +86,7 @@ private:
 inline void update_density_and_factors(float* mass, Float3* pos, float* dens, float* scalar_values,
 										Neighbor_Data* neighbor_data, float* alpha, float* kernel_values);
 
-inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data, const float NEIGHBOR_RAD);
+inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data);
 
 inline void calculate_pressure_force(Float3s* f_tot, Float3s* k_v_i, Float3* pos, float* mass, float* g_val, Neighbor_Data* neighbor_data, float* dens);
 inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3s* f_p, float* mass, float_t*dens, float* g_val, float delta_t, Neighbor_Data* n_data, Float3 * pos, const float rest_dens);
@@ -96,4 +94,4 @@ inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3s* f
 // calculates the k^v_i variable for all particles
 inline void calculate_kvi(float* alpha, Float3* vel, Float3* pos, float* mass, float delta_t, Float3s *k_v_i, Neighbor_Data* neighbor_data, float* g_value);
 // updates the scalar values g(q) for all particles
-inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* g, const float NEIGHBOR_RADIUS);
+inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* g);
