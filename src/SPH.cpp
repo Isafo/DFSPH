@@ -44,8 +44,8 @@ SPH::SPH()
 void SPH::update(float dT)
 {
 	static float alpha[D_NR_OF_PARTICLES];
-	static float scalar_values[D_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
-	static float kernel_values[D_NR_OF_PARTICLES*D_MAX_NR_OF_NEIGHBORS];
+	static float scalar_values[D_NR_OF_PARTICLES * D_NR_OF_PARTICLES];
+	static float kernel_values[D_NR_OF_PARTICLES*D_NR_OF_PARTICLES];
 
 	find_neighborhoods();
 
@@ -132,7 +132,7 @@ inline void update_density_and_factors(float* mass, Float3* pos, float* dens, fl
 			neighbor_index = neighbor_data[particle].neighbor[neighbor];
 			neighbor_mass = mass[neighbor_index];
 
-			int linear_ind = neighbor + D_MAX_NR_OF_NEIGHBORS*particle;
+			int linear_ind = neighbor_index + D_NR_OF_PARTICLES*particle;
 
 			//Update density
 			dens[particle] += neighbor_mass*kernel_values[linear_ind];
@@ -273,7 +273,7 @@ inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, fl
 			{
 				kernel_derive = 0;
 			}
-			g[neighbor + particle*D_MAX_NR_OF_NEIGHBORS] = kernel_derive / (dist * NEIGHBOR_RADIUS);
+			g[neighbor_ind + particle*D_NR_OF_PARTICLES] = kernel_derive / (dist * NEIGHBOR_RADIUS);
 		}
 	}
 }
