@@ -7,7 +7,7 @@
 #define D_EPSILON 0.000000000000001f;
 #define D_RAD 0.03f;
 
-SPH::SPH()
+SPH::SPH(glm::vec3* start_pos)
 {
 	m_particles.dens = new float[D_NR_OF_PARTICLES];
 	m_particles.mass = new float[D_NR_OF_PARTICLES];
@@ -39,6 +39,8 @@ SPH::SPH()
 		m_particles.vel.y[i] = 0.f;
 		m_particles.vel.z[i] = 0.f;
 	}
+
+	init_positions(start_pos);
 }
 
 SPH::~SPH()
@@ -74,7 +76,7 @@ void SPH::update(float dT)
 
 	update_density_and_factors(m_particles.mass, &m_particles.pos, m_particles.dens, scalar_values, m_neighbor_data, alpha, kernel_values);
 
-	calculate_kvi(alpha, &m_particles.vel, &m_particles.pos, m_particles.mass, m_delta_t, k_v_i, m_neighbor_data, scalar_values);
+	calculate_kv(alpha, &m_particles.vel, &m_particles.pos, m_particles.mass, m_delta_t, k_v_i, m_neighbor_data, scalar_values);
 
 	non_pressure_forces();
 
@@ -451,7 +453,6 @@ inline void calculate_pressure_force(Float3s* f_tot, Float3s* k_v_i, Float3* pos
 	}
 }
 
-//TODO: add gradient
 inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3s* f_p, float* mass, float_t*dens, float* scalar_value,
 	float delta_t, Neighbor_Data* neighbor_data, Float3 * pos, const float rest_dens)
 {
@@ -488,8 +489,7 @@ inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3s* f
 	}
 }
 
-//TODO: add gradient kernal
-inline void calculate_kvi(float* alpha, Float3* vel, Float3* pos, float* mass,
+inline void calculate_kv(float* alpha, Float3* vel, Float3* pos, float* mass,
 	float delta_t, Float3s* k_v_i, Neighbor_Data* neighbor_data, float* scalar_value)
 {
 	float x, y, z;

@@ -46,8 +46,8 @@ int main() {
 	//BoundingBox bbox(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
 
-	SPH s;
-	s.init_positions(bbox.getPosition(), 1, 2);
+	SPH s(bbox.getPosition());
+	//s.init_positions(bbox.getPosition(), 1, 2);
 
 	Sphere sphere(0.0f, 0.0f, 0.0f, s.get_particle_radius());
 
@@ -57,7 +57,7 @@ int main() {
 	mCamera.update();
 
 	double lastTime = glfwGetTime() - 0.001f;
-	double dT = 0.f;
+	double dT = 0.0;
 	while (!glfwWindowShouldClose(currentWindow))
 	{
 		dT = glfwGetTime() - lastTime;
