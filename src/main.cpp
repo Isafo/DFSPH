@@ -64,7 +64,7 @@ int main() {
 	mCamera.update();
 
 	double lastTime = glfwGetTime() - 0.001f;
-	double dT = 0.0;
+	double dT = 0.f;
 	while (!glfwWindowShouldClose(currentWindow))
 	{
 		dT = glfwGetTime() - lastTime;
@@ -78,7 +78,8 @@ int main() {
 
 		glUseProgram(sceneLight.programID);
 
-		s.update(dT / 10);
+		 
+		s.update(dT);
 
 		MVstack.push();//Camera transforms --<
 		glUniformMatrix4fv(locationP, 1, GL_FALSE, mCamera.getPerspective());
