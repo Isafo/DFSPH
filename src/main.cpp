@@ -72,7 +72,7 @@ int main() {
 		glUseProgram(sceneLight.programID);
 
 		 
-		s.update(dT);
+		s.update(dT/10.f);
 
 		MVstack.push();//Camera transforms --<
 		glUniformMatrix4fv(locationP, 1, GL_FALSE, mCamera.getPerspective());
