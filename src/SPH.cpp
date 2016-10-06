@@ -46,7 +46,7 @@ void SPH::update(float dT)
 {
 	static float alpha[D_NR_OF_PARTICLES];
 	static float scalar_values[D_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
-	static float kernel_values[D_NR_OF_PARTICLES*D_MAX_NR_OF_NEIGHBORS];
+	static float kernel_values[D_NR_OF_PARTICLES*D_NR_OF_PARTICLES];
 	static Float3s k_v_i[D_NR_OF_PARTICLES];
 	static Float3s f_tot[D_NR_OF_PARTICLES];
 	
@@ -59,7 +59,7 @@ void SPH::update(float dT)
 	update_density_and_factors(m_particles.mass, &m_particles.pos, m_particles.dens, scalar_values, D_NR_OF_PARTICLES, m_neighbor_data, alpha, kernel_values);
 
 	calculate_kvi(alpha, &m_particles.vel, &m_particles.pos, m_particles.mass, D_NR_OF_PARTICLES, m_delta_t, k_v_i, m_neighbor_data, scalar_values);
-	//if (k_v_i[0].y != 0)std::cout << k_v_i[0].y;
+
 	non_pressure_forces();
 
 	calculate_time_step(dT);
@@ -74,7 +74,7 @@ void SPH::update(float dT)
 
 	update_density_and_factors(m_particles.mass, &m_particles.pos, m_particles.dens, scalar_values, D_NR_OF_PARTICLES, m_neighbor_data, alpha, kernel_values);
 
-	// TODO: this function is incorretly implemented correct
+	// TODO: this function is incorretly, implemented correct
 	//correct_divergence_error(alpha);
 
 	update_velocities(dT);
@@ -138,8 +138,8 @@ inline void update_density_and_factors(float* mass, Float3* pos, float* dens, fl
 			neighbor_index = neighbor_data[particle].neighbor[neighbor];
 			neighbor_mass = mass[neighbor_index];
 
-			int linear_ind = neighbor + D_MAX_NR_OF_NEIGHBORS*particle;
-
+			int linear_ind = neighbor_index + D_MAX_NR_OF_NEIGHBORS*particle;
+			//std::cout << linear_ind << std::endl;
 			//Update density
 			dens[particle] += neighbor_mass*kernel_values[linear_ind];
 
@@ -150,6 +150,9 @@ inline void update_density_and_factors(float* mass, Float3* pos, float* dens, fl
 			kernel_gradient_x = dx * scalar_values[linear_ind];
 			kernel_gradient_y = dy * scalar_values[linear_ind];
 			kernel_gradient_z = dz * scalar_values[linear_ind];
+			
+			std::cout << scalar_values[linear_ind]  << '\n';
+			
 
 			sqrt_val = (kernel_gradient_x*kernel_gradient_x + kernel_gradient_y*kernel_gradient_y
 				+ kernel_gradient_z*kernel_gradient_z);
@@ -277,9 +280,10 @@ void SPH::correct_density_error(float* alpha, float dT, float* g_values, Float3s
 			sum_z += m_particles.mass[neighbor_index] * (k_i_z + k[neighbor_index].z / m_particles.dens[neighbor_index]); //here
 
 		}
-		m_particles.vel.x[i] -= m_delta_t * sum_x;
-		m_particles.vel.y[i] -= m_delta_t * sum_y;
-		m_particles.vel.z[i] -= m_delta_t * sum_z;
+
+		//m_particles.vel.x[i] -= m_delta_t * sum_x;
+		//m_particles.vel.y[i] -= m_delta_t * sum_y;
+		//m_particles.vel.z[i] -= m_delta_t * sum_z;
 		sum_x = .0f;
 		sum_y = .0f;
 		sum_z = .0f;
@@ -317,7 +321,7 @@ inline void calculate_pressure_force(Float3s* f_tot, Float3s* k_v_i, Float3* pos
 			sum_x += mass[neighbor_index] * (k_v_i[i].x /( dens[i]+  1.000f) + k_v_i[neighbor_index].x / ( dens[neighbor_index] +1.000f) )*kernel_gradient_x;
 			sum_y += mass[neighbor_index] * (k_v_i[i].y / (dens[i] + 1.000f) + k_v_i[neighbor_index].y / (dens[neighbor_index] + 1.000f))*kernel_gradient_y;
 			sum_z += mass[neighbor_index] * (k_v_i[i].z / (dens[i] + 1.000f) + k_v_i[neighbor_index].z / (dens[neighbor_index] + 1.000f))*kernel_gradient_z;
-			std::cout << dens[i] << " :  dens[i]" << std::endl;
+			//std::cout << dens[i] << " :  dens[i]" << std::endl;
 		}
 		f_tot[i].x = -mass[i] * sum_x;
 		f_tot[i].y = -mass[i] * sum_y;
@@ -426,6 +430,7 @@ inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Dat
 		float particle_pos_x = pos->x[particle];
 		float particle_pos_y = pos->y[particle];
 		float particle_pos_z = pos->z[particle];
+
 		for (auto neighbor = 0; neighbor < neighbor_data[particle].n; ++neighbor)
 		{
 			// compute q
@@ -435,7 +440,7 @@ inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Dat
 			z = pos->z[ind] - particle_pos_z;
 
 			float len = x*x + y*y + z*z;
-			q = sqrt(x*x + y*y + z*z) / NEIGHBOR_RAD;
+			q = sqrt(len) / NEIGHBOR_RAD;
 
 			kernel_val = 8.0f / D_PI;
 
@@ -498,7 +503,7 @@ void SPH::correct_divergence_error(float* alpha, Float3s* k_v_i)
 
 //TODO: add gradient kernal
 inline void calculate_kvi(float* alpha, Float3* vel, Float3* pos, float* mass, int nr_particles, 
-						  float delta_t, Float3s* k_v_i, Neighbor_Data* neighbor_data, float* g_value)
+						  float delta_t, Float3s* k_v_i, Neighbor_Data* neighbor_data, float* scalar_value)
 {
 	float x, y, z;
 	unsigned int neighbor_index;
@@ -525,9 +530,9 @@ inline void calculate_kvi(float* alpha, Float3* vel, Float3* pos, float* mass, i
 			z = pos->z[neighbor_index];
 
 
-			kernel_gradient_x = x * g_value[n + D_MAX_NR_OF_NEIGHBORS*i];
-			kernel_gradient_y = y * g_value[n + D_MAX_NR_OF_NEIGHBORS*i];
-			kernel_gradient_z = z * g_value[n + D_MAX_NR_OF_NEIGHBORS*i];
+			kernel_gradient_x = x * scalar_value[n + D_MAX_NR_OF_NEIGHBORS*i];
+			kernel_gradient_y = y * scalar_value[n + D_MAX_NR_OF_NEIGHBORS*i];
+			kernel_gradient_z = z * scalar_value[n + D_MAX_NR_OF_NEIGHBORS*i];
 
 
 
