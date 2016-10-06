@@ -33,15 +33,13 @@ class SPH
 {
 public:
 	SPH();
-
-	void update_velocities(float dT) const;
-
 	~SPH();
 	// performs the simulation steps and updates the particles
 	void update(float dT);
 	
 	// initializes the particles in a given grid formation
 	void init_positions(glm::vec3* start_pos, int rows = 3, int cols = 3) const;
+
 
 	static unsigned int get_nr_of_particles() { return D_NR_OF_PARTICLES; }
 	float get_particle_radius() const { return m_particles.rad; }
@@ -87,7 +85,7 @@ private:
 };
 
 // calculates the density and the alpha particle factors
-inline void update_density_and_factors(float* mass, Float3* pos, float* dens, float* g_value, float nr_particles, 
+inline void update_density_and_factors(float* mass, Float3* pos, float* dens, float* g_value, 
 										Neighbor_Data* neighbor_data, float* alpha, float* kernel_values);
 
 inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data, const float NEIGHBOR_RAD);
@@ -96,6 +94,6 @@ inline void calculate_pressure_force(Float3s* f_tot, Float3s* k_v_i, Float3* pos
 inline void calculate_predicted_pressure(Float3s * predicted_pressure, Float3s* f_p, float* mass, float_t*dens, float* g_val, float delta_t, Neighbor_Data* n_data, Float3 * pos, const float rest_Dens);
 
 // calculates the k^v_i variable for all particles
-inline void calculate_kvi(float* alpha, Float3* vel, Float3* pos, float* mass, int nr_particles, float delta_t, Float3s *k_v_i, Neighbor_Data* neighbor_data, float* g_value);
+inline void calculate_kvi(float* alpha, Float3* vel, Float3* pos, float* mass, float delta_t, Float3s *k_v_i, Neighbor_Data* neighbor_data, float* g_value);
 // updates the scalar values g(q) for all particles
 inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* g, const float NEIGHBOR_RADIUS);

@@ -48,7 +48,7 @@ void SPH::update(float dT)
 	static Float3s k_v_i[D_NR_OF_PARTICLES];
 	static Float3s f_tot[D_NR_OF_PARTICLES];
 	static float scalar_values[D_NR_OF_PARTICLES * D_NR_OF_PARTICLES];
-	static float kernel_values[D_NR_OF_PARTICLES*D_NR_OF_PARTICLES];
+	static float kernel_values[D_NR_OF_PARTICLES * D_NR_OF_PARTICLES];
 
 	find_neighborhoods();
 
@@ -56,9 +56,9 @@ void SPH::update(float dT)
 
 	update_kernel_values(kernel_values, &m_particles.pos, m_neighbor_data, C_NEIGHBOR_RAD);
 
-	update_density_and_factors(m_particles.mass, &m_particles.pos, m_particles.dens, scalar_values, D_NR_OF_PARTICLES, m_neighbor_data, alpha, kernel_values);
+	update_density_and_factors(m_particles.mass, &m_particles.pos, m_particles.dens, scalar_values, m_neighbor_data, alpha, kernel_values);
 
-	calculate_kvi(alpha, &m_particles.vel, &m_particles.pos, m_particles.mass, D_NR_OF_PARTICLES, m_delta_t, k_v_i, m_neighbor_data, scalar_values);
+	calculate_kvi(alpha, &m_particles.vel, &m_particles.pos, m_particles.mass, m_delta_t, k_v_i, m_neighbor_data, scalar_values);
 
 	non_pressure_forces();
 
@@ -72,7 +72,7 @@ void SPH::update(float dT)
 
 	find_neighborhoods();  // t + dt
 
-	update_density_and_factors(m_particles.mass, &m_particles.pos, m_particles.dens, scalar_values, D_NR_OF_PARTICLES, m_neighbor_data, alpha, kernel_values);
+	update_density_and_factors(m_particles.mass, &m_particles.pos, m_particles.dens, scalar_values, m_neighbor_data, alpha, kernel_values);
 
 	// TODO: this function is incorretly, implemented correct
 	//correct_divergence_error(alpha);
@@ -111,7 +111,7 @@ void SPH::find_neighborhoods() const
 }
 
 
-inline void update_density_and_factors(float* mass, Float3* pos, float* dens, float* scalar_values, float nr_particles, 
+inline void update_density_and_factors(float* mass, Float3* pos, float* dens, float* scalar_values, 
 										Neighbor_Data* neighbor_data, float* alpha, float* kernel_values)
 {
 	int nr_neighbors;
@@ -129,7 +129,7 @@ inline void update_density_and_factors(float* mass, Float3* pos, float* dens, fl
 
 	const float min_denom{ 0.000001f };
 
-	for (auto particle = 0; particle < nr_particles; ++particle)
+	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
 	{
 		nr_neighbors = neighbor_data[particle].n;
 		for (auto neighbor = 0; neighbor < nr_neighbors; ++neighbor)
@@ -254,10 +254,8 @@ void SPH::correct_density_error(float* alpha, float dT, float* g_values, Float3s
 
 
 	calculate_pressure_force(f_tot, k_v_i,&m_particles.pos, m_particles.mass, g_values, m_neighbor_data, m_particles.dens);
-	//if (f_tot[0].y != 0)std::cout << f_tot[0].y << std::endl;
 	calculate_predicted_pressure(predicted_pressure, f_tot, m_particles.mass, m_particles.dens, g_values, m_delta_t, m_neighbor_data, &m_particles.pos, C_REST_DENS);	
-	//std::cout << f_tot[0].x
-	
+
 	for (int i = 0; i < D_NR_OF_PARTICLES; i++)
 	{
 		k[i].x = predicted_pressure[i].x * alpha[i] / (m_delta_t*m_delta_t);
@@ -340,6 +338,7 @@ inline void calculate_predicted_pressure(Float3s* predicted_pressure,Float3s* f_
 	float d_t_2 = delta_t*delta_t;
 	float res_x = 0.f, res_y = 0.f, res_z = 0.0f;
 	unsigned int neighbor_index;
+
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		neighbor_length = n_data[i].n;
@@ -502,7 +501,7 @@ void SPH::correct_divergence_error(float* alpha, Float3s* k_v_i)
 }
 
 //TODO: add gradient kernal
-inline void calculate_kvi(float* alpha, Float3* vel, Float3* pos, float* mass, int nr_particles, 
+inline void calculate_kvi(float* alpha, Float3* vel, Float3* pos, float* mass, 
 						  float delta_t, Float3s* k_v_i, Neighbor_Data* neighbor_data, float* scalar_value)
 {
 	float x, y, z;
@@ -516,7 +515,7 @@ inline void calculate_kvi(float* alpha, Float3* vel, Float3* pos, float* mass, i
 	float d_dens_y = 0.f; 
 	float d_dens_z = 0.f; 
 	
-	for (int i = 0; i < nr_particles; ++i)
+	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{	
 		n_neighbors = neighbor_data[i].n;
 		for (int n = 0; n < n_neighbors; ++n)
