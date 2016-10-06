@@ -62,7 +62,7 @@ private:
 	void update_positions(float dT) const;
 	void correct_divergence_error(float* alpha, Float3s* k_v_i);
 
-	void update_velocities(float dT);
+	void update_velocities();
 
 	struct Particles
 	{

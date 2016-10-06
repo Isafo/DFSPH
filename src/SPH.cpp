@@ -92,7 +92,7 @@ void SPH::update(float dT)
 	// TODO: this function is incorretly, implemented correct
 	//correct_divergence_error(alpha);
 
-	update_velocities(dT);
+	update_velocities();
 }
 
 void SPH::init_positions(glm::vec3* start_pos, int rows, int cols) const
@@ -176,7 +176,8 @@ void SPH::calculate_time_step(float dT)
 		x = m_particles.pos.x[i] * m_particles.pos.x[i];
 		y = m_particles.pos.y[i] * m_particles.pos.y[i];
 		z = m_particles.pos.z[i] * m_particles.pos.z[i];
-		if (v_max_2 < (x + y + z))v_max_2 = (x + y + z);
+		if (v_max_2 < (x + y + z))
+			v_max_2 = (x + y + z);
 	}
 	m_delta_t = 0.4f*(m_particles.rad * 2) / sqrtf(v_max_2) - D_EPSILON;
 
@@ -300,7 +301,7 @@ void SPH::correct_divergence_error(float* alpha, Float3s* k_v_i)
 
 
 //TODO: remake this function using the predicted velocity
-void SPH::update_velocities(float dT)
+void SPH::update_velocities()
 {
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
@@ -309,19 +310,13 @@ void SPH::update_velocities(float dT)
 		m_particles.vel.z[i] += m_particles.F_adv.z[i] * m_delta_t;
 	
 		if (abs(m_particles.pos.x[i] + m_particles.vel.x[i] * m_delta_t) >= 0.5)
-		{
 			m_particles.vel.x[i] = 0.0f;
-		}
 
 		if (m_particles.pos.y[i] + m_particles.vel.y[i] * m_delta_t <= -0.5)
-		{
 			m_particles.vel.y[i] = 0.0f;
-		}
 
 		if (abs(m_particles.pos.z[i] + m_particles.vel.z[i] * m_delta_t) >= 0.5)
-		{
 			m_particles.vel.z[i] = 0.0f;
-		}
 	}
 }
 
@@ -360,8 +355,6 @@ inline void update_density_and_factors(float* mass, Float3* pos, float* dens, fl
 			kernel_gradient_x = dx * scalar_values[linear_ind];
 			kernel_gradient_y = dy * scalar_values[linear_ind];
 			kernel_gradient_z = dz * scalar_values[linear_ind];
-
-			//std::cout << scalar_values[linear_ind] << '\n';
 
 			sqrt_val = (kernel_gradient_x*kernel_gradient_x + kernel_gradient_y*kernel_gradient_y
 						+ kernel_gradient_z*kernel_gradient_z);
@@ -402,17 +395,11 @@ inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Dat
 			kernel_val = 8.0f / D_PI;
 
 			if (q >= 0 || q <= 0.5f)
-			{
 				kernel_val *= (1 - 6.f*q*q + 6.f*q*q*q);
-			}
 			else if (q > 0.5f || q <= 1.0f)
-			{
 				kernel_val *= 2.0f*(1 - q)*(1 - q)*(1 - q);
-			}
 			else
-			{
 				kernel_val = 0;
-			}
 
 			kernel_values[particle*D_NR_OF_PARTICLES + neighbor] = kernel_val;
 		}
@@ -451,6 +438,7 @@ inline void calculate_pressure_force(Float3s* f_tot, Float3s* k_v_i, Float3* pos
 			sum_y += mass[neighbor_index] * (k_v_i[i].y / dens[i]  + k_v_i[neighbor_index].y / dens[neighbor_index] )*kernel_gradient_y;
 			sum_z += mass[neighbor_index] * (k_v_i[i].z / dens[i]  + k_v_i[neighbor_index].z / dens[neighbor_index] )*kernel_gradient_z;
 		}
+
 		f_tot[i].x = -mass[i] * sum_x;
 		f_tot[i].y = -mass[i] * sum_y;
 		f_tot[i].z = -mass[i] * sum_z;
@@ -485,13 +473,10 @@ inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3s* f
 			kernel_gradient_y = y * scalar_value[linear_ind];
 			kernel_gradient_z = z * scalar_value[linear_ind];
 
-			//std::cout << usableDensity << std::endl;
 			res_x += mass[neighbor_index] * (f_p[i].x / dens[i] - f_p[neighbor_index].x / dens[i])*kernel_gradient_x;
 			res_y += mass[neighbor_index] * (f_p[i].y / dens[i] - f_p[neighbor_index].y / dens[i])*kernel_gradient_y;
 			res_z += mass[neighbor_index] * (f_p[i].z / dens[i] - f_p[neighbor_index].z / dens[i])*kernel_gradient_z;
 		}
-
-		//std::cout << res_x << " " << res_y << "  " << res_z << std::endl;
 
 		predicted_pressure[i].x = d_t_2 *res_x;
 		predicted_pressure[i].y = d_t_2 *res_y;
@@ -539,22 +524,12 @@ inline void calculate_kvi(float* alpha, Float3* vel, Float3* pos, float* mass,
 			d_dens_x += particle_mass * (x);
 			d_dens_y += particle_mass * (y);
 			d_dens_z += particle_mass * (z);
-
 		}
 
-		/*
-		std::cout << delta_t << "  : time" << std::endl;
-		std::cout << d_dens_x << "  : d_dens_x" << std::endl;
-		std::cout << d_dens_y << "  : d_dens_y" << std::endl;
-		std::cout << d_dens_z << "  : d_dens_z" << std::endl;
-		std::cout << alpha[i] << "  :  alpha[i]" << std::endl;
-		*/
-		
 		k_v_i[i].x = (1.f / (0.001f + delta_t ))* d_dens_x *  alpha[i];
 		k_v_i[i].y = (1.f / (0.001f + delta_t ))* d_dens_y *  alpha[i];
 		k_v_i[i].z = (1.f / (0.001f + delta_t ))* d_dens_z *  alpha[i];
 		
-
 		d_dens_x = d_dens_y = d_dens_z = 0.f;
 	}
 }
@@ -578,20 +553,14 @@ inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, fl
 			auto q = dist / NEIGHBOR_RADIUS;
 
 			//Compute the derivitive of the kernel function
-
 			if (q >= 0 || q <= 0.5f)
-			{
 				kernel_derive = (-12.f*q + 18.f*q*q);
-			}
 			else if (q > 0.5f || q <= 1.0f)
-			{
 				kernel_derive = -6.0f*(1 - q)*(1 - q);
-			}
 			else
-			{
 				kernel_derive = 0.0f;
-			}
-			g[neighbor + particle*D_NR_OF_PARTICLES] = kernel_derive / (dist * NEIGHBOR_RADIUS);
+			
+			g[particle * D_NR_OF_PARTICLES + neighbor] = kernel_derive / (dist * NEIGHBOR_RADIUS);
 		}
 	}
 }
