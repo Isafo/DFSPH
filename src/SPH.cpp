@@ -45,11 +45,11 @@ SPH::SPH()
 void SPH::update(float dT)
 {
 	static float alpha[D_NR_OF_PARTICLES];
-	static float scalar_values[D_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
-	static float kernel_values[D_NR_OF_PARTICLES*D_NR_OF_PARTICLES];
 	static Float3s k_v_i[D_NR_OF_PARTICLES];
 	static Float3s f_tot[D_NR_OF_PARTICLES];
-	
+	static float scalar_values[D_NR_OF_PARTICLES * D_NR_OF_PARTICLES];
+	static float kernel_values[D_NR_OF_PARTICLES*D_NR_OF_PARTICLES];
+
 	find_neighborhoods();
 
 	update_scalar_function(&m_particles.pos, m_neighbor_data, scalar_values, C_NEIGHBOR_RAD);
@@ -138,8 +138,8 @@ inline void update_density_and_factors(float* mass, Float3* pos, float* dens, fl
 			neighbor_index = neighbor_data[particle].neighbor[neighbor];
 			neighbor_mass = mass[neighbor_index];
 
-			int linear_ind = neighbor_index + D_MAX_NR_OF_NEIGHBORS*particle;
-			//std::cout << linear_ind << std::endl;
+			int linear_ind = neighbor_index + D_NR_OF_PARTICLES*particle;
+
 			//Update density
 			dens[particle] += neighbor_mass*kernel_values[linear_ind];
 
@@ -281,9 +281,9 @@ void SPH::correct_density_error(float* alpha, float dT, float* g_values, Float3s
 
 		}
 
-		//m_particles.vel.x[i] -= m_delta_t * sum_x;
-		//m_particles.vel.y[i] -= m_delta_t * sum_y;
-		//m_particles.vel.z[i] -= m_delta_t * sum_z;
+		m_particles.vel.x[i] -= m_delta_t * sum_x;
+		m_particles.vel.y[i] -= m_delta_t * sum_y;
+		m_particles.vel.z[i] -= m_delta_t * sum_z;
 		sum_x = .0f;
 		sum_y = .0f;
 		sum_z = .0f;
@@ -415,7 +415,7 @@ inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, fl
 			{
 				kernel_derive = 0.0f;
 			}
-			g[neighbor + particle*D_MAX_NR_OF_NEIGHBORS] = kernel_derive / (dist * NEIGHBOR_RADIUS);
+			g[neighbor_ind + particle*D_NR_OF_PARTICLES] = kernel_derive / (dist * NEIGHBOR_RADIUS);
 		}
 	}
 }
