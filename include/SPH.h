@@ -11,6 +11,12 @@ struct Float3
 	float* y;
 	float* z;
 };
+struct Float3s
+{
+	float x;
+	float y;
+	float z;
+};
 
 // Containing information about the index of each neighbor to a particle 
 // and the number of neighbors the particle has
@@ -23,10 +29,7 @@ struct Neighbor_Data
 class SPH
 {
 public:
-	SPH();
-
-	void update_velocities(float dT) const;
-
+	SPH(glm::vec3* start_pos);
 	~SPH();
 	// performs the simulation steps and updates the particles
 	void update(float dT);
@@ -49,17 +52,13 @@ private:
 	// Calculates a stable time-step
 	void calculate_time_step(float dT);
 	// Calculates an unstable predicted velocity
-	void predict_velocities(float dT);
-	// Correct the density error in the predicted velocity
-	void correct_density_error(float* alpha);
-
+	void predict_velocities();
+	void correct_density_error(float* alpha,float dT, float* g_values, Float3s* f_tot, Float3s* k_v_i);
 	void correct_strain_rate_error();
-	// Update the particle positions
 	void update_positions(float dT) const;
-	// correct the divergence error in the predicted velocity
-	void correct_divergence_error(float* alpha);
-	// Update the velocity with the stable corrected predicted velocity
-	void update_velocities(float dT);
+	void correct_divergence_error(Float3s* k_v_i);
+
+	void update_velocities();
 
 	struct Particles
 	{
@@ -78,15 +77,18 @@ private:
 	Neighbor_Data *m_neighbor_data;
 
 	const float C_REST_DENS{ 0.1f };
-	const float C_NEIGHBOR_RAD{ 0.3f };
 };
 
 // calculates the density and the alpha particle factors
-inline void update_density_and_factors(float* mass, Float3* pos, float* dens, float* g_value, float nr_particles, 
+inline void update_density_and_factors(float* mass, Float3* pos, float* dens, float* scalar_values,
 										Neighbor_Data* neighbor_data, float* alpha, float* kernel_values);
 
-inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data, const float NEIGHBOR_RAD);
+inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data);
+
+inline void calculate_pressure_force(Float3s* f_tot, Float3s* k_v_i, Float3* pos, float* mass, float* scalar_values, Neighbor_Data* neighbor_data, float* dens);
+inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3s* f_p, float* mass, float_t*dens, float* scalar_values, float delta_t, Neighbor_Data* n_data, Float3 * pos, const float rest_dens);
+
 // calculates the k^v_i variable for all particles
-inline void calculate_kvi(float* alpha, Float3* vel, float* mass, int nr_particles, float delta_t, float* k_v_i);
+inline void calculate_kv(float* alpha, Float3* vel, Float3* pos, float* mass, float delta_t, Float3s *k_v_i, Neighbor_Data* neighbor_data, float* scalar_values);
 // updates the scalar values g(q) for all particles
-inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* g, const float NEIGHBOR_RADIUS);
+inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values);

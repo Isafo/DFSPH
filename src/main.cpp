@@ -1,12 +1,5 @@
 #include "GL/glew.h"
 
-#include <glm/vec3.hpp> // glm::vec3
-#include <glm/vec4.hpp> // glm::vec4
-#include <glm/mat4x4.hpp> // glm::mat4
-#include <glm/gtc/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
-#include <glm/gtc/type_ptr.hpp> //glm::make:mat4
-#include <glm/gtx/rotate_vector.hpp> // rotate vector
-
 #include "glfwContext.h"
 #include "Shader.h"
 #include "MatrixStack.h"
@@ -53,8 +46,8 @@ int main() {
 	//BoundingBox bbox(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
 
-	SPH s;
-	s.init_positions(bbox.getPosition(), 1, 2);
+	SPH s(bbox.getPosition());
+	//s.init_positions(bbox.getPosition(), 1, 2);
 
 	Sphere sphere(0.0f, 0.0f, 0.0f, s.get_particle_radius());
 
@@ -78,7 +71,8 @@ int main() {
 
 		glUseProgram(sceneLight.programID);
 
-		s.update(dT / 10);
+		 
+		s.update(dT);
 
 		MVstack.push();//Camera transforms --<
 		glUniformMatrix4fv(locationP, 1, GL_FALSE, mCamera.getPerspective());
