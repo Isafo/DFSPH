@@ -47,12 +47,10 @@ int main() {
 	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
 
 	SPH s(bbox.getPosition());
-	//s.init_positions(bbox.getPosition(), 1, 2);
-
+	
 	Sphere sphere(0.0f, 0.0f, 0.0f, s.get_particle_radius());
 
 	Camera mCamera;
-	// mCamera.setPosition(&glm::vec3(0f, 0.f, 0.f));
 	mCamera.setPosition(&glm::vec3(0.f, 0.f, 1.5f));
 	mCamera.update();
 
@@ -71,8 +69,7 @@ int main() {
 
 		glUseProgram(sceneLight.programID);
 
-		 
-		s.update(dT/10.f);
+		s.update(dT);
 
 		MVstack.push();//Camera transforms --<
 		glUniformMatrix4fv(locationP, 1, GL_FALSE, mCamera.getPerspective());
