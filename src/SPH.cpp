@@ -5,7 +5,7 @@
 #define D_GRAVITY -9.82f
 #define D_PI 3.1415926559f;
 #define D_EPSILON 0.000000000000001f;
-#define D_RAD 0.03f;
+#define D_RAD 0.05f;
 
 SPH::SPH(glm::vec3* start_pos)
 {
@@ -26,7 +26,7 @@ SPH::SPH(glm::vec3* start_pos)
 	settings class with static values
 	instead of being defined here. */
 	m_particles.rad = 0.01f;
-	m_particles.mass = 0.02f;
+	m_particles.mass = 0.0033f;
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i) {
 		m_particles.dens[i] = 0.f;
@@ -39,7 +39,7 @@ SPH::SPH(glm::vec3* start_pos)
 		m_particles.vel.z[i] = 0.f;
 	}
 
-	init_positions(start_pos);
+	init_positions(start_pos,10,10);
 }
 
 SPH::~SPH()
@@ -159,9 +159,9 @@ void SPH::non_pressure_forces() const
 {
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		m_particles.F_adv.x[i] = 0.f;
-		m_particles.F_adv.y[i] = D_GRAVITY;
-		m_particles.F_adv.z[i] = 0.f;
+		m_particles.F_adv.x[i] = m_particles.mass * 0.f;
+		m_particles.F_adv.y[i] = m_particles.mass * D_GRAVITY;
+		m_particles.F_adv.z[i] = m_particles.mass * 0.f;
 	}
 }
 
@@ -190,9 +190,9 @@ void SPH::predict_velocities()
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		m_particles.vel.x[i] += m_particles.F_adv.x[i] * mass * m_delta_t;
-		m_particles.vel.y[i] += m_particles.F_adv.y[i] * mass * m_delta_t;
-		m_particles.pos.z[i] += m_particles.F_adv.z[i] * mass * m_delta_t;
+		m_particles.vel.x[i] += m_particles.F_adv.x[i]  * m_delta_t;
+		m_particles.vel.y[i] += m_particles.F_adv.y[i]  * m_delta_t;
+		m_particles.pos.z[i] += m_particles.F_adv.z[i]  * m_delta_t;
 
 		if (abs(m_particles.pos.x[i] + m_particles.vel.x[i] * m_delta_t) >= 0.5)
 		{
@@ -244,7 +244,7 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		dens_i = m_particles.dens[i];
+		dens_i = m_particles.dens[i]; 
 		k_i_x = k[i].x / dens_i;
 		k_i_y = k[i].y / dens_i;
 		k_i_z = k[i].z / dens_i;
@@ -376,22 +376,24 @@ inline void update_density_and_factors(float mass, Float3* pos, float* dens, flo
 			dy = pos->y[neighbor_index] - pos->y[particle];
 			dz = pos->z[neighbor_index] - pos->y[particle];
 		
-			kernel_gradient_x = dx * scalar_values[linear_ind];
-			kernel_gradient_y = dy * scalar_values[linear_ind];
-			kernel_gradient_z = dz * scalar_values[linear_ind];
+			kernel_gradient_x = neighbor_mass * dx * scalar_values[linear_ind];
+			kernel_gradient_y = neighbor_mass * dy * scalar_values[linear_ind];
+			kernel_gradient_z = neighbor_mass * dz * scalar_values[linear_ind];
 
 			sqrt_val = (kernel_gradient_x*kernel_gradient_x + kernel_gradient_y*kernel_gradient_y
 						+ kernel_gradient_z*kernel_gradient_z);
 
-			sum_abs_denom = neighbor_mass*neighbor_mass*sqrt(sqrt_val);
-			abs_sum_denom += sum_abs_denom*sum_abs_denom;
+			float temp = sqrt(sqrt_val);
+			sum_abs_denom += temp*temp;
 		}
+		abs_sum_denom = sum_abs_denom*sum_abs_denom;
+
 		denom = (sum_abs_denom*sum_abs_denom + abs_sum_denom);
 
 		// set alpha to max(denom,min_denom)
 		denom = denom > min_denom ? denom : min_denom;
 		alpha[particle] = dens[particle] / denom;
-		abs_sum_denom = 0.f;
+		sum_abs_denom = 0.f;
 	}
 }
 
