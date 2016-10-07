@@ -355,7 +355,7 @@ inline void update_density_and_factors(float mass, Float3* pos, float* dens, flo
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
 	float sqrt_val;
 	unsigned int neighbor_index;
-
+	float x = 0.f, y = 0.f, z = 0.f;
 	const float min_denom{ 0.000001f };
 
 	neighbor_mass = mass;
@@ -379,21 +379,26 @@ inline void update_density_and_factors(float mass, Float3* pos, float* dens, flo
 			kernel_gradient_x = neighbor_mass * dx * scalar_values[linear_ind];
 			kernel_gradient_y = neighbor_mass * dy * scalar_values[linear_ind];
 			kernel_gradient_z = neighbor_mass * dz * scalar_values[linear_ind];
-
+			x += kernel_gradient_x;
+			y += kernel_gradient_y;
+			z += kernel_gradient_z;
 			sqrt_val = (kernel_gradient_x*kernel_gradient_x + kernel_gradient_y*kernel_gradient_y
 						+ kernel_gradient_z*kernel_gradient_z);
 
 			float temp = sqrt(sqrt_val);
-			sum_abs_denom += temp*temp;
-		}
-		abs_sum_denom = sum_abs_denom*sum_abs_denom;
 
-		denom = (sum_abs_denom*sum_abs_denom + abs_sum_denom);
+			sum_abs_denom += temp*temp;
+
+		}
+		
+		abs_sum_denom = sqrt(x*x + y*y + z*z);
+		denom = (abs_sum_denom*abs_sum_denom + sum_abs_denom);
 
 		// set alpha to max(denom,min_denom)
 		denom = denom > min_denom ? denom : min_denom;
 		alpha[particle] = dens[particle] / denom;
 		sum_abs_denom = 0.f;
+		x = y = z = 0.f;
 	}
 }
 
