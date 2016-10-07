@@ -26,7 +26,7 @@ SPH::SPH(glm::vec3* start_pos)
 	settings class with static values
 	instead of being defined here. */
 	m_particles.rad = 0.01f;
-	m_particles.mass = 0.01f;
+	m_particles.mass = 0.02f;
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i) {
 		m_particles.dens[i] = 0.f;
@@ -272,9 +272,7 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
  		m_particles.vel.x[i] -= m_delta_t * sum_x;
 		m_particles.vel.y[i] -= m_delta_t * sum_y;
 		m_particles.vel.z[i] -= m_delta_t * sum_z;
-		sum_x = .0f;
-		sum_y = .0f;
-		sum_z = .0f;
+		sum_x = sum_z = sum_y =.0f;
 	}
 }
 
@@ -320,9 +318,7 @@ void SPH::correct_divergence_error(Float3s* k_v_i)
 		m_particles.vel.x[i] -= m_delta_t * sum_x;
 		m_particles.vel.y[i] -= m_delta_t * sum_y;
 		m_particles.vel.z[i] -= m_delta_t * sum_z;
-		sum_x = .0f;
-		sum_y = .0f;
-		sum_z = .0f;
+		sum_x = sum_y = sum_z =.0f;
 	}
 	
 }
@@ -395,6 +391,7 @@ inline void update_density_and_factors(float mass, Float3* pos, float* dens, flo
 		// set alpha to max(denom,min_denom)
 		denom = denom > min_denom ? denom : min_denom;
 		alpha[particle] = dens[particle] / denom;
+		abs_sum_denom = 0.f;
 	}
 }
 
@@ -505,6 +502,7 @@ inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3s* f
 		predicted_pressure[i].x = d_t_2 *res_x;
 		predicted_pressure[i].y = d_t_2 *res_y;
 		predicted_pressure[i].z = d_t_2 *res_z;
+		res_x = res_y = res_z = 0.f;
 	}
 }
 
