@@ -1,6 +1,7 @@
 #include "SPH.h"
 
 #include <math.h>
+#include <cmath>
 
 #define D_GRAVITY -9.82f
 #define D_PI 3.1415926559f;
@@ -39,7 +40,7 @@ SPH::SPH(glm::vec3* start_pos)
 		m_particles.vel.z[i] = 0.f;
 	}
 
-	init_positions(start_pos,10,10);
+	init_positions(start_pos);
 }
 
 SPH::~SPH()
@@ -593,6 +594,9 @@ inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, fl
 			auto dz = pos->z[particle] - pos->z[neighbor_ind];
 
 			auto dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+
+			dist = std::fmax(dist, 0.0001f);
+
 			auto q = dist / D_RAD;
 
 			//Compute the derivitive of the kernel function

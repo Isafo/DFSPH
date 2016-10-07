@@ -13,8 +13,6 @@ void inputHandler(GLFWwindow* _window, double _dT);
 void cameraHandler(GLFWwindow* _window, double _dT, Camera* _cam);
 void GLcalls();
 
-
-
 int main() {
 
 	glfwContext glfw;
