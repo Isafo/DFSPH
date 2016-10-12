@@ -44,12 +44,12 @@ int main() {
 	//BoundingBox bbox(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
 
-	SPH s(bbox.getPosition());
+	SPH s(&glm::vec3(-0.15, 0.0, 0.0));
 	
 	Sphere sphere(0.0f, 0.0f, 0.0f, s.get_particle_radius());
 
 	Camera mCamera;
-	mCamera.setPosition(&glm::vec3(0.f, 0.f, 1.5f));
+	mCamera.setPosition(&glm::vec3(0.f, 0.f, 1.0f));
 	mCamera.update();
 
 	double lastTime = glfwGetTime() - 0.001f;

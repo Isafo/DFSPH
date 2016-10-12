@@ -40,7 +40,7 @@ SPH::SPH(glm::vec3* start_pos)
 		m_particles.vel.z[i] = 0.f;
 	}
 
-	init_positions(start_pos);
+	init_positions(start_pos, 4, 4);
 }
 
 SPH::~SPH()
@@ -106,10 +106,10 @@ void SPH::init_positions(glm::vec3* start_pos, int rows, int cols) const
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		z = i / (rows*cols);
-		ind = i - z*rows*cols;
+		x = i / (rows*cols);
+		ind = i - x*rows*cols;
 		y = ind / rows;
-		x = ind % rows;
+		z = ind % rows;
 
 		m_particles.pos.x[i] = start_pos->x + x * dist_between*padding_factor;
 		m_particles.pos.y[i] = start_pos->y + y * dist_between*padding_factor;
@@ -259,7 +259,7 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 
 			assert(m_particles.dens[neighbor_index] != 0.0f, "n dens");
 
-			int linear_ind = j + D_NR_OF_PARTICLES*i;
+			int linear_ind = j + D_MAX_NR_OF_NEIGHBORS*i;
 
 			dx = m_particles.pos.x[neighbor_index] - m_particles.pos.x[i];
 			dy = m_particles.pos.y[neighbor_index] - m_particles.pos.y[i];
@@ -324,7 +324,7 @@ void SPH::correct_divergence_error(Float3s* k_v_i, float* scalar_values)
 
 		for (auto j = 0; j < m_neighbor_data[i].n; ++j)
 		{
-			int linear_ind = j + D_NR_OF_PARTICLES*i;
+			int linear_ind = j + D_MAX_NR_OF_NEIGHBORS*i;
 			neighbor_index = m_neighbor_data[i].neighbor[j];
 
 			assert(m_particles.dens[neighbor_index] != 0.0f, "n dens");
@@ -397,10 +397,11 @@ inline void update_density_and_factors(float mass, Float3* pos, float* dens, flo
 		{
 			neighbor_index = neighbor_data[particle].neighbor[neighbor];
 
-			int linear_ind = neighbor + D_NR_OF_PARTICLES*particle;
+			int linear_ind = neighbor + D_MAX_NR_OF_NEIGHBORS*particle;
 
 			//Update density
 			dens[particle] += neighbor_mass*kernel_values[linear_ind];
+
 
 			dx = pos->x[neighbor_index] - pos->x[particle];
 			dy = pos->y[neighbor_index] - pos->y[particle];
@@ -488,7 +489,7 @@ inline void calculate_pressure_force(Float3s* f_tot, Float3s* k_v_i, Float3* pos
 		for (int j = 0; j < n_neighbors; ++j)
 		{
 			neighbor_index = neighbor_data[i].neighbor[j];
-			int linear_ind = neighbor_index + D_NR_OF_PARTICLES*i;
+			int linear_ind = neighbor_index + D_MAX_NR_OF_NEIGHBORS*i;
 
 			x = pos->x[neighbor_index];
 			y = pos->y[neighbor_index];
@@ -527,7 +528,7 @@ inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3s* f
 		for (int j = 0; j < neighbor_length; ++j)
 		{
 			neighbor_index = neighbor_data[i].neighbor[j];
-			int linear_ind = neighbor_index + D_NR_OF_PARTICLES*i;
+			int linear_ind = neighbor_index + D_MAX_NR_OF_NEIGHBORS*i;
 
 			x = pos->x[neighbor_index];
 			y = pos->y[neighbor_index];
