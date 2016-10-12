@@ -53,10 +53,10 @@ private:
 	void calculate_time_step(float dT);
 	// Calculates an unstable predicted velocity
 	void predict_velocities();
-	void correct_density_error(float* alpha,float dT, float* g_values, Float3s* f_tot, Float3s* k_v_i);
+	void correct_density_error(float* alpha,float dT, float* g_values, Float3s* f_tot, float* k_v_i);
 	void correct_strain_rate_error();
 	void update_positions(float dT) const;
-	void correct_divergence_error(Float3s* k_v_i, float* scalar_values);
+	void correct_divergence_error(float* k_v_i, float* scalar_values, float* alpha);
 
 	void update_velocities();
 
@@ -85,10 +85,10 @@ inline void update_density_and_factors(float mass, Float3* pos, float* dens, flo
 
 inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data);
 
-inline void calculate_pressure_force(Float3s* f_tot, Float3s* k_v_i, Float3* pos, float mass, float* scalar_values, Neighbor_Data* neighbor_data, float* dens);
+inline void calculate_pressure_force(Float3s* f_tot, float* k_v_i, Float3* pos, float mass, float* scalar_values, Neighbor_Data* neighbor_data, float* dens);
 inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3s* f_p, float mass, float_t*dens, float* scalar_values, float delta_t, Neighbor_Data* n_data, Float3 * pos, const float rest_dens);
 
 // calculates the k^v_i variable for all particles
-inline void calculate_kv(float* alpha, Float3* vel, Float3* pos, float mass, float delta_t, Float3s *k_v_i, Neighbor_Data* neighbor_data, float* scalar_values);
+inline float calculate_kv(float* alpha, Float3* vel, Float3* pos, float* dens, float delta_t, float *k_v_i, Neighbor_Data* neighbor_data, float* scalar_values);
 // updates the scalar values g(q) for all particles
 inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values);
