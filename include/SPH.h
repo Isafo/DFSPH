@@ -56,7 +56,7 @@ private:
 	void correct_density_error(float* alpha,float dT, float* g_values, Float3s* f_tot, Float3s* k_v_i);
 	void correct_strain_rate_error();
 	void update_positions(float dT) const;
-	void correct_divergence_error(Float3s* k_v_i);
+	void correct_divergence_error(Float3s* k_v_i, float* scalar_values);
 
 	void update_velocities();
 
