@@ -106,9 +106,9 @@ void SPH::init_positions(glm::vec3* start_pos, int rows, int cols) const
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		z = i / (rows*cols);
-		ind = i - z*rows*cols;
-		y = ind / rows;
+		y = i / (rows*cols);
+		ind = i - y*rows*cols;
+		z = ind / rows;
 		x = ind % rows;
 
 		m_particles.pos.x[i] = start_pos->x + x * dist_between*padding_factor;
