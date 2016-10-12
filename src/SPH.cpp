@@ -132,7 +132,7 @@ void SPH::find_neighborhoods() const
 				vector_i_n[0] = m_particles.pos.x[n] - m_particles.pos.x[i];
 				vector_i_n[1] = m_particles.pos.y[n] - m_particles.pos.y[i];
 				vector_i_n[2] = m_particles.pos.z[n] - m_particles.pos.z[i];
-				dist_i_n_2 = vector_i_n[0] * vector_i_n[0] + vector_i_n[1] * vector_i_n[1] + vector_i_n[0] * vector_i_n[0];
+				dist_i_n_2 = vector_i_n[0] * vector_i_n[0] + vector_i_n[1] * vector_i_n[1] + vector_i_n[2] * vector_i_n[2];
 
 				if (dist_i_n_2 < neigborhod_rad*neigborhod_rad)
 				{
