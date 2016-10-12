@@ -212,7 +212,6 @@ void SPH::predict_velocities()
 	}
 }
 
-//TODO: add kernel function
 void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Float3s* f_tot, Float3s* k_v_i)
 {
 	static Float3s predicted_pressure[D_NR_OF_PARTICLES];
@@ -230,12 +229,10 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 	float dy;
 	float dz;
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
-	//f_tot = nan sometimes
+
 	calculate_pressure_force(f_tot, k_v_i, &m_particles.pos, m_particles.mass, scalar_values, m_neighbor_data, m_particles.dens);
-	//std::cout << f_tot[0].x << " " << f_tot[0].y << " " << f_tot[0].z << std::endl;
 
 	calculate_predicted_pressure(predicted_pressure, f_tot, m_particles.mass, m_particles.dens, scalar_values, m_delta_t, m_neighbor_data, &m_particles.pos, C_REST_DENS);
-	//std::cout << predicted_pressure[0].x << " " << predicted_pressure[0].y << " " << predicted_pressure[0].z << std::endl;
 
 	assert(m_delta_t != 0.0f, "deltaT");
 
@@ -245,7 +242,6 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 		k[i].y = predicted_pressure[i].y * alpha[i] / (m_delta_t*m_delta_t);
 		k[i].z = predicted_pressure[i].z * alpha[i] / (m_delta_t*m_delta_t);
 	}
-	//std::cout << k[0].x << " " << k[0].y << " " << k[0].z << std::endl;
 
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
@@ -283,7 +279,6 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 		m_particles.vel.y[i] -= m_delta_t * sum_y;
 		m_particles.vel.z[i] -= m_delta_t * sum_z;
 		sum_x = sum_z = sum_y = .0f;
-
 	}
 }
 
@@ -309,7 +304,6 @@ void SPH::correct_divergence_error(Float3s* k_v_i, float* scalar_values)
 	float sum_x{ 0.f };
 	float sum_y{ 0.f };
 	float sum_z{ 0.f };
-
 
 	// kernel variables
 	float dx;
@@ -402,7 +396,6 @@ inline void update_density_and_factors(float mass, Float3* pos, float* dens, flo
 		for (auto neighbor = 0; neighbor < nr_neighbors; ++neighbor)
 		{
 			neighbor_index = neighbor_data[particle].neighbor[neighbor];
-
 
 			int linear_ind = neighbor + D_NR_OF_PARTICLES*particle;
 
