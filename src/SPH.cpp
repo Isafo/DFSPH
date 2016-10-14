@@ -507,6 +507,8 @@ inline void calculate_pressure_force(Float3s* f_tot, float* k_v_i, Float3* pos, 
 	{
 		n_neighbors = neighbor_data[i].n;
 
+		float kv_dens = k_v_i[i] / dens[i];
+
 		for (int j = 0; j < n_neighbors; ++j)
 		{
 			neighbor_index = neighbor_data[i].neighbor[j];
@@ -522,10 +524,9 @@ inline void calculate_pressure_force(Float3s* f_tot, float* k_v_i, Float3* pos, 
 			kernel_gradient_z = z * scalar_values[linear_ind];
 
 			assert(dens[i] != 0.0f, "dens");
-			//TODO fix this
-			sum_x += mass * (k_v_i[i] / dens[i] + k_v_i[neighbor_index] / dens[neighbor_index])*kernel_gradient_x;
-			sum_y += mass * (k_v_i[i] / dens[i] + k_v_i[neighbor_index] / dens[neighbor_index])*kernel_gradient_y;
-			sum_z += mass * (k_v_i[i] / dens[i] + k_v_i[neighbor_index] / dens[neighbor_index])*kernel_gradient_z;
+			sum_x += mass * (kv_dens + k_v_i[neighbor_index] / dens[neighbor_index])*kernel_gradient_x;
+			sum_y += mass * (kv_dens + k_v_i[neighbor_index] / dens[neighbor_index])*kernel_gradient_y;
+			sum_z += mass * (kv_dens + k_v_i[neighbor_index] / dens[neighbor_index])*kernel_gradient_z;
 		}
 		f_tot[i].x = -mass * sum_x;
 		f_tot[i].y = -mass * sum_y;
