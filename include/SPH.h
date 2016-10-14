@@ -1,8 +1,8 @@
 #pragma once
 #include "glm/glm.hpp"
 
-#define D_NR_OF_PARTICLES 500
-#define D_MAX_NR_OF_NEIGHBORS 500
+#define D_NR_OF_PARTICLES 4
+#define D_MAX_NR_OF_NEIGHBORS 4
 
 // A struct containing three arrays (SoA)
 struct Float3
@@ -64,6 +64,7 @@ private:
 	{
 		Float3 pos;
 		Float3 vel;
+		Float3 pred_vel;
 		Float3 F_adv;
 
 		float* p;
@@ -89,6 +90,6 @@ inline void calculate_pressure_force(Float3s* f_tot, float* k_v_i, Float3* pos, 
 inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3s* f_p, float mass, float_t*dens, float* scalar_values, float delta_t, Neighbor_Data* n_data, Float3 * pos, const float rest_dens);
 
 // calculates the k^v_i variable for all particles
-inline float calculate_kv(float* alpha, Float3* vel, Float3* pos, float* dens, float delta_t, float *k_v_i, Neighbor_Data* neighbor_data, float* scalar_values);
+inline float calculate_kv(float* alpha, Float3* vel, Float3* pred_vel, Float3* pos, float* dens, float delta_t, float *k_v_i, Neighbor_Data* neighbor_data, float* scalar_values);
 // updates the scalar values g(q) for all particles
 inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values);
