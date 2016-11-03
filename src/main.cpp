@@ -22,6 +22,7 @@ int main() {
 
 	glfw.init(1920, 1080, "Waves4Life");
 	glfw.getCurrentWindow(currentWindow);
+	glfwSetInputMode(currentWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 	glfwSetCursorPos(currentWindow, 960, 540);
 
 	// Setup ImGui binding
@@ -57,11 +58,8 @@ int main() {
 	mCamera.setPosition(&glm::vec3(0.f, 0.f, 1.0f));
 	mCamera.update();
 
-
-	bool show_test_window = true;
-	bool show_another_window = false;
-	ImVec4 clear_color = ImColor(114, 144, 154);
-
+	bool fpsResetBool = false;
+	
 	double lastTime = glfwGetTime() - 0.001f;
 	double dT = 0.0;
 	while (!glfwWindowShouldClose(currentWindow))
@@ -73,8 +71,22 @@ int main() {
 
 		//glfw input handler
 		inputHandler(currentWindow, dT);
-		mCamera.fpsCamera(currentWindow, dT);
 
+		if (glfwGetKey(currentWindow, GLFW_KEY_LEFT_CONTROL)) 
+		{
+			if (!fpsResetBool)
+			{
+				fpsResetBool = true;
+				glfwSetCursorPos(currentWindow, 960, 540);
+			}
+			
+			mCamera.fpsCamera(currentWindow, dT);
+		}
+		else
+		{
+			fpsResetBool = false;
+		}
+		
 		GLcalls();
 
 		glUseProgram(sceneLight.programID);
@@ -113,9 +125,24 @@ int main() {
 
 
 		{
-			static float f = 0.0f;
+			static int dParticle = 0;
 			ImGui::Text("Hello, world!");
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+			ImGui::SliderInt("particle: ", &dParticle, 0, 10);
+
+			Float3s pos = s.get_pos_i(dParticle);
+			Float3s vel = s.get_vel_i(dParticle);
+			Float3s F_adv = s.get_F_adv_i(dParticle);
+			float p = s.get_p_i(dParticle);
+			float dens = s.get_dens_i(dParticle);
+
+			ImGui::Text("pos: %.1f %.1f %.1f", pos.x, pos.y, pos.z);
+			ImGui::Text("vel: %.1f %.1f %.1f", vel.x, vel.y, vel.z);
+			ImGui::Text("F_adv: %.1f %.1f %.1f", F_adv.x, F_adv.y, F_adv.z);
+			ImGui::Text("p: %.1f", p);
+			ImGui::Text("dens: %.1f", dens);
+
 		}
 
 		// Rendering imgui

@@ -41,6 +41,51 @@ public:
 	float get_particle_radius() const { return m_particles.rad; }
 	Float3* get_particle_positions() { return &m_particles.pos; }
 
+	// for debug
+	Float3s get_pos_i(int i) const
+	{
+		Float3s i_pos;
+		i_pos.x = m_particles.pos.x[i];
+		i_pos.y = m_particles.pos.y[i];
+		i_pos.z = m_particles.pos.z[i];
+	
+		return i_pos;
+	}
+
+	Float3s get_vel_i(int i) const
+	{
+		Float3s i_vel;
+		i_vel.x = m_particles.vel.x[i];
+		i_vel.y = m_particles.vel.y[i];
+		i_vel.z = m_particles.vel.z[i];
+
+		return i_vel;
+	}
+
+	Float3s get_predvel_i(int i) const
+	{
+		Float3s i_vel;
+		i_vel.x = m_particles.pred_vel.x[i];
+		i_vel.y = m_particles.pred_vel.y[i];
+		i_vel.z = m_particles.pred_vel.z[i];
+
+		return i_vel;
+	}
+
+
+	Float3s get_F_adv_i(int i) const
+	{
+		Float3s i_f;
+		i_f.x = m_particles.F_adv.x[i];
+		i_f.y = m_particles.F_adv.y[i];
+		i_f.z = m_particles.F_adv.z[i];
+
+		return i_f;
+	}
+
+	float get_p_i(int i) const { return m_particles.p[i]; }
+	float get_dens_i(int i) const { return m_particles.dens[i]; }
+	
 private:
 
 	// Finds the neighbors of a particle within the given radius D_NEIGBBOR_RAD
