@@ -6,7 +6,7 @@
 #define D_GRAVITY -9.82f
 #define D_PI 3.1415926559f;
 #define D_EPSILON 0.000000000000001f;
-#define D_RAD 0.0223f;
+#define D_RAD 0.023f;
 
 SPH::SPH(glm::vec3* start_pos)
 {
@@ -36,7 +36,7 @@ SPH::SPH(glm::vec3* start_pos)
 	m_particles.mass = 0.0033f;
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i) {
-		m_particles.dens[i] = 0.1f;
+		m_particles.dens[i] = 0.01f;
 		m_particles.p[i] = 0.f;
 		m_particles.pos.x[i] = 0.f;
 		m_particles.pos.y[i] = 0.f;
@@ -105,6 +105,7 @@ void SPH::update(float dT)
 
 	update_density_and_factors(m_particles.mass, &m_particles.pos, m_particles.dens, scalar_values, m_neighbor_data, alpha, kernel_values);
 
+
 	// TODO: this function is incorretly, implemented correct
 	correct_divergence_error(k_v_i, scalar_values, alpha);
 
@@ -113,9 +114,8 @@ void SPH::update(float dT)
 	update_positions(dT);
 
 }
-//if (isnan(m_particles.vel.x[i]))std::cout << "m_particles.vel.x[i] is nan" << '\n';
-//if (isnan(m_particles.vel.y[i]))std::cout << "m_particles.vel.y[i] is nan" << '\n';
-//if (isnan(m_particles.vel.z[i]))std::cout << "m_particles.vel.z[i] is nan" << '\n';
+
+
 void SPH::init_positions(glm::vec3* start_pos, int rows, int cols) const
 {
 	float dist_between{ 2.f * m_particles.rad };
@@ -213,20 +213,23 @@ void SPH::predict_velocities()
 		m_particles.pred_vel.x[i] += m_particles.F_adv.x[i] * m_delta_t;
 		m_particles.pred_vel.y[i] += m_particles.F_adv.y[i] * m_delta_t;
 		m_particles.pred_vel.z[i] += m_particles.F_adv.z[i] * m_delta_t;
-
+		
 		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.5)
 		{
 			m_particles.pred_vel.x[i] = 0.0f;
+			m_particles.vel.x[i] = 0.f;
 		}
 
 		if (m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t <= -0.5)
 		{
 			m_particles.pred_vel.y[i] = 0.0f;
+			m_particles.vel.y[i] = 0.f;
 		}
 
 		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.5)
 		{
 			m_particles.pred_vel.z[i] = 0.0f;
+			m_particles.vel.z[i] = 0.f;
 		}
 	}
 }
@@ -312,6 +315,7 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 			m_particles.pred_vel.x[i] -= m_delta_t * sum_x;
 			m_particles.pred_vel.y[i] -= m_delta_t * sum_y;
 			m_particles.pred_vel.z[i] -= m_delta_t * sum_z;
+			
 			if (isnan(sum_x))std::cout << "1 x is nan" << '\n';
 			if (isnan(sum_y))std::cout << "1 y is nan" << '\n';
 			if (isnan(sum_z))std::cout << "1 z is nan" << '\n';
@@ -374,18 +378,10 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 				dx = m_particles.pos.x[neighbor_index] - m_particles.pos.x[i];
 				dy = m_particles.pos.y[neighbor_index] - m_particles.pos.y[i];
 				dz = m_particles.pos.z[neighbor_index] - m_particles.pos.z[i];
-
+				
 				kernel_gradient_x = dx * scalar_values[linear_ind];
 				kernel_gradient_y = dy * scalar_values[linear_ind];
 				kernel_gradient_z = dz * scalar_values[linear_ind];
-
-				if (isnan(kernel_gradient_x))std::cout << "kernel_gradient_x is nan" << '\n';
-				if (isnan(kernel_gradient_y))std::cout << "kernel_gradient_y is nan" << '\n';
-				if (isnan(kernel_gradient_z))std::cout << "kernel_gradient_z is nan" << '\n';
-				
-				if (isnan(k_v_i[neighbor_index]))std::cout << "k_v_i[neighbor_index] is nan" << '\n';
-				if (isnan(div_i))std::cout << "div_i is nan" << '\n';
-				if (isnan(m_particles.dens[neighbor_index]))std::cout << "m_particles.dens[neighbor_index] is nan" << '\n';
 
 				sum_x += m_particles.mass * (div_i + k_v_i[neighbor_index] /
 					m_particles.dens[neighbor_index]) * kernel_gradient_x;
@@ -395,18 +391,27 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 
 				sum_z += m_particles.mass * (div_i + k_v_i[neighbor_index] /
 					m_particles.dens[neighbor_index]) * kernel_gradient_z;
+				if (isnan(sum_x))std::cout << "2 x is nan" << '\n' << "kernalgrad x,y,z is " << kernel_gradient_x << " : " << kernel_gradient_y << " : " << kernel_gradient_z << '\n'
+					<< "div_i is : " << div_i << '\n' << "(m_particles.dens[neighbor_index] is : " << m_particles.dens[neighbor_index] << '\n' <<"k_v_i is :" <<k_v_i[neighbor_index] << '\n' <<
+					"dens_i is : " << dens_i <<'\n';
+				if (isnan(sum_y))std::cout << "2 y is nan" << '\n';
+				if (isnan(sum_z))std::cout << "2 z is nan" << '\n';
 			}
 
 
 			m_particles.pred_vel.x[i] -= m_delta_t * sum_x;
 			m_particles.pred_vel.y[i] -= m_delta_t * sum_y;
 			m_particles.pred_vel.z[i] -= m_delta_t * sum_z;
-			if (isnan(sum_x))std::cout << "2 x is nan" << '\n';
-			if (isnan(sum_y))std::cout << "2 y is nan" << '\n';
-			if (isnan(sum_z))std::cout << "2 z is nan" << '\n';
+			if (m_particles.pred_vel.x[i] > 10000000000.f || m_particles.pred_vel.x[i] < -10000000000.f) {
+				std::cout <<'\n' <<"predict velicities" << '\n' <<
+					"m_particles.pred_vel.x[i] : " << m_particles.pred_vel.x[i] << '\n' <<
+					"m_particles.pred_vel.y[i] : " << m_particles.pred_vel.y[i] << '\n' <<
+					"m_particles.pred_vel.z[i] : " << m_particles.pred_vel.z[i] << '\n';
+			}
+		
 			sum_x = sum_y = sum_z = .0f;
 		}
-	} while ( abs(avrg) > 0.1f );
+	} while ( abs(avrg) > 1.f );
 }
 
 void SPH::update_velocities()
@@ -414,12 +419,9 @@ void SPH::update_velocities()
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 
-
-
 		m_particles.vel.x[i] = m_particles.pred_vel.x[i];
 		m_particles.vel.y[i] = m_particles.pred_vel.y[i];
 		m_particles.vel.z[i] = m_particles.pred_vel.z[i];
-
 
 		m_particles.vel.x[i] += m_particles.F_adv.x[i] * m_particles.mass * m_delta_t;
 		m_particles.vel.y[i] += m_particles.F_adv.y[i] * m_particles.mass * m_delta_t;
@@ -427,14 +429,18 @@ void SPH::update_velocities()
 
 
 
-		if (abs(m_particles.pos.x[i] + m_particles.vel.x[i] * m_delta_t) >= 0.5)
+		if (abs(m_particles.pos.x[i] + m_particles.vel.x[i] * m_delta_t) >= 0.5) {
 			m_particles.vel.x[i] = 0.0f;
-
-		if (m_particles.pos.y[i] + m_particles.vel.y[i] * m_delta_t <= -0.5)
+			m_particles.pred_vel.x[i] = 0.f;
+		}
+		if (m_particles.pos.y[i] + m_particles.vel.y[i] * m_delta_t <= -0.5) {
 			m_particles.vel.y[i] = 0.0f;
-
-		if (abs(m_particles.pos.z[i] + m_particles.vel.z[i] * m_delta_t) >= 0.5)
+			m_particles.pred_vel.y[i] = 0.f;
+		}
+		if (abs(m_particles.pos.z[i] + m_particles.vel.z[i] * m_delta_t) >= 0.5) {
 			m_particles.vel.z[i] = 0.0f;
+			m_particles.pred_vel.z[i] = 0.f;
+		}
 	}
 }
 
@@ -643,6 +649,10 @@ inline float calculate_kv(float* alpha, Float3* vel, Float3* pred_vel, Float3* p
 		d_dens = particle_dens * -(dx + dy + dz);
 		d_dens_avrg += d_dens;
 		k_v_i[i] = (1.f / delta_t)* d_dens * alpha[i];
+		if (isinf(k_v_i[i]))std::cout << "delta_t is : " << delta_t << '\n' << "d_dens is : " << d_dens << '\n' <<
+			"alpha[i] is : " << alpha[i] << '\n' << "dx,dy,dz is : " << dx <<" : " << dy << " : " << dz << '\n' <<
+			"particle density is : "<< particle_dens << '\n' << "pred_vel->x[i] is : " << pred_vel->x[i] << '\n'<<
+			"vel->x[i] is : " << vel->x[i] << '\n' <<'\n';
 
 	}
 
