@@ -258,3 +258,4 @@ paket-files/
 *.sln
 *.vcxproj
 *.vcxproj.filters
+imgui.ini

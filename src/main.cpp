@@ -1,12 +1,15 @@
 #include "GL/glew.h"
-
+#include <imgui.h>
+#include "imgui_impl_glfw.h"
 #include "glfwContext.h"
+
 #include "Shader.h"
 #include "MatrixStack.h"
 #include "Camera.h"
 #include "Sphere.h"
 #include "BoundingBox.h"
 #include "SPH.h"
+
 #include <iostream>
 
 void inputHandler(GLFWwindow* _window, double _dT);
@@ -14,13 +17,15 @@ void cameraHandler(GLFWwindow* _window, double _dT, Camera* _cam);
 void GLcalls();
 
 int main() {
-
 	glfwContext glfw;
 	GLFWwindow* currentWindow = nullptr;
 
 	glfw.init(1920, 1080, "Waves4Life");
 	glfw.getCurrentWindow(currentWindow);
 	glfwSetCursorPos(currentWindow, 960, 540);
+
+	// Setup ImGui binding
+	ImGui_ImplGlfw_Init(currentWindow, true);
 
 	//start GLEW extension handler
 	glewExperimental = GL_TRUE;
@@ -52,10 +57,17 @@ int main() {
 	mCamera.setPosition(&glm::vec3(0.f, 0.f, 1.0f));
 	mCamera.update();
 
+
+	bool show_test_window = true;
+	bool show_another_window = false;
+	ImVec4 clear_color = ImColor(114, 144, 154);
+
 	double lastTime = glfwGetTime() - 0.001f;
 	double dT = 0.0;
 	while (!glfwWindowShouldClose(currentWindow))
 	{
+		glfwPollEvents();
+		
 		dT = glfwGetTime() - lastTime;
 		lastTime = glfwGetTime();
 
@@ -95,9 +107,26 @@ int main() {
 		MVstack.pop();
 		MVstack.pop(); //Camera transforms >--
 
+		glUseProgram(0);
+
+		ImGui_ImplGlfw_NewFrame();
+
+
+		{
+			static float f = 0.0f;
+			ImGui::Text("Hello, world!");
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		}
+
+		// Rendering imgui
+		int display_w, display_h;
+		glfwGetFramebufferSize(currentWindow, &display_w, &display_h);
+		glViewport(0, 0, display_w, display_h);
+		ImGui::Render();
 		glfwSwapBuffers(currentWindow);
-		glfwPollEvents();
 	}
+
+	ImGui_ImplGlfw_Shutdown();
 
 	return 0;
 }
