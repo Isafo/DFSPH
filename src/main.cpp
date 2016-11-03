@@ -42,8 +42,7 @@ int main() {
 
 	GLint locationP = glGetUniformLocation(sceneLight.programID, "P"); //perspective matrix
 	GLint locationMV = glGetUniformLocation(sceneLight.programID, "MV"); //modelview matrix
-	GLint locationLP = glGetUniformLocation(sceneLight.programID, "LP"); // light position
-	GLint locationTex = glGetUniformLocation(sceneLight.programID, "tex"); //texcoords
+	GLint locationColor = glGetUniformLocation(sceneLight.programID, "Color");
 
 	MatrixStack MVstack; MVstack.init();
 
@@ -62,6 +61,9 @@ int main() {
 	
 	double lastTime = glfwGetTime() - 0.001f;
 	double dT = 0.0;
+
+	int dParticle = 0;
+
 	while (!glfwWindowShouldClose(currentWindow))
 	{
 		glfwPollEvents();
@@ -98,13 +100,26 @@ int main() {
 		MVstack.multiply(mCamera.getTransformM());
 
 		glm::vec3 particlePos;
+
+		Float3* particle_pos = s.get_particle_positions();
 		for (int i = 0; i < D_NR_OF_PARTICLES; ++i) {
 			MVstack.push();
 			particlePos = glm::vec3(
-				s.get_particle_positions()->x[i],
-				s.get_particle_positions()->y[i],
-				s.get_particle_positions()->z[i]
+				particle_pos->x[i],
+				particle_pos->y[i],
+				particle_pos->z[i]
 			);
+
+			if (i == dParticle)
+			{
+				float color[] = { 1.0, 0.3, 0.0 };
+				glUniform3fv(locationColor, 1, &color[0]);
+			}
+			else
+			{
+				float color[] = { 0.0, 0.3, 1.0 };
+				glUniform3fv(locationColor, 1, &color[0]);
+			}
 			MVstack.translate(&particlePos);
 			//MVstack.translate(particle.getPosition());
 			glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
@@ -122,27 +137,25 @@ int main() {
 		glUseProgram(0);
 
 		ImGui_ImplGlfw_NewFrame();
-
-
 		{
-			static int dParticle = 0;
 			ImGui::Text("Hello, world!");
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
-			ImGui::SliderInt("particle: ", &dParticle, 0, 10);
+			ImGui::SliderInt("particle: ", &dParticle, 0, D_NR_OF_PARTICLES - 1);
 
 			Float3s pos = s.get_pos_i(dParticle);
 			Float3s vel = s.get_vel_i(dParticle);
+			Float3s pred_vel = s.get_predvel_i(dParticle);
 			Float3s F_adv = s.get_F_adv_i(dParticle);
 			float p = s.get_p_i(dParticle);
 			float dens = s.get_dens_i(dParticle);
 
 			ImGui::Text("pos: %.1f %.1f %.1f", pos.x, pos.y, pos.z);
 			ImGui::Text("vel: %.1f %.1f %.1f", vel.x, vel.y, vel.z);
+			ImGui::Text("pred. vel: %.1f %.1f %.1f", pred_vel.x, pred_vel.y, pred_vel.z);
 			ImGui::Text("F_adv: %.1f %.1f %.1f", F_adv.x, F_adv.y, F_adv.z);
 			ImGui::Text("p: %.1f", p);
 			ImGui::Text("dens: %.1f", dens);
-
 		}
 
 		// Rendering imgui

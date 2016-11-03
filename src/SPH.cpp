@@ -274,7 +274,7 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 			k[i].x = predicted_pressure[i].x * alpha[i] / (m_delta_t*m_delta_t);
 			k[i].y = predicted_pressure[i].y * alpha[i] / (m_delta_t*m_delta_t);
 			k[i].z = predicted_pressure[i].z * alpha[i] / (m_delta_t*m_delta_t);
-			if (isnan(k[i].x))std::cout << "k is nan" << '\n';
+			//if (isnan(k[i].x))std::cout << "k is nan" << '\n';
 		}
 
 		for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
@@ -288,7 +288,7 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 			k_i_x = k[i].x / dens_i;
 			k_i_y = k[i].y / dens_i;
 			k_i_z = k[i].z / dens_i;
-			if (isnan(k_i_x))std::cout << "k is nan" << '\n';
+			//if (isnan(k_i_x))std::cout << "k is nan" << '\n';
 
 			for (int j = 0; j < m_neighbor_data[i].n; ++j)
 			{
@@ -316,9 +316,9 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 			m_particles.pred_vel.y[i] -= m_delta_t * sum_y;
 			m_particles.pred_vel.z[i] -= m_delta_t * sum_z;
 			
-			if (isnan(sum_x))std::cout << "1 x is nan" << '\n';
-			if (isnan(sum_y))std::cout << "1 y is nan" << '\n';
-			if (isnan(sum_z))std::cout << "1 z is nan" << '\n';
+			//if (isnan(sum_x))std::cout << "1 x is nan" << '\n';
+			//if (isnan(sum_y))std::cout << "1 y is nan" << '\n';
+			//if (isnan(sum_z))std::cout << "1 z is nan" << '\n';
 		}
 		//TODO: ADD condition p_avg - p_0 > ny 
 	} while ( iter < 2);
@@ -391,24 +391,24 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 
 				sum_z += m_particles.mass * (div_i + k_v_i[neighbor_index] /
 					m_particles.dens[neighbor_index]) * kernel_gradient_z;
-				if (isnan(sum_x))std::cout << "2 x is nan" << '\n' << "kernalgrad x,y,z is " << kernel_gradient_x << " : " << kernel_gradient_y << " : " << kernel_gradient_z << '\n'
-					<< "div_i is : " << div_i << '\n' << "(m_particles.dens[neighbor_index] is : " << m_particles.dens[neighbor_index] << '\n' <<"k_v_i is :" <<k_v_i[neighbor_index] << '\n' <<
-					"dens_i is : " << dens_i <<'\n';
-				if (isnan(sum_y))std::cout << "2 y is nan" << '\n';
-				if (isnan(sum_z))std::cout << "2 z is nan" << '\n';
+				//if (isnan(sum_x))std::cout << "2 x is nan" << '\n' << "kernalgrad x,y,z is " << kernel_gradient_x << " : " << kernel_gradient_y << " : " << kernel_gradient_z << '\n'
+				//	<< "div_i is : " << div_i << '\n' << "(m_particles.dens[neighbor_index] is : " << m_particles.dens[neighbor_index] << '\n' <<"k_v_i is :" <<k_v_i[neighbor_index] << '\n' <<
+				//	"dens_i is : " << dens_i <<'\n';
+				//if (isnan(sum_y))std::cout << "2 y is nan" << '\n';
+				//if (isnan(sum_z))std::cout << "2 z is nan" << '\n';
 			}
 
 
 			m_particles.pred_vel.x[i] -= m_delta_t * sum_x;
 			m_particles.pred_vel.y[i] -= m_delta_t * sum_y;
 			m_particles.pred_vel.z[i] -= m_delta_t * sum_z;
-			if (m_particles.pred_vel.x[i] > 10000000000.f || m_particles.pred_vel.x[i] < -10000000000.f) {
+		/*	if (m_particles.pred_vel.x[i] > 10000000000.f || m_particles.pred_vel.x[i] < -10000000000.f) {
 				std::cout <<'\n' <<"predict velicities" << '\n' <<
 					"m_particles.pred_vel.x[i] : " << m_particles.pred_vel.x[i] << '\n' <<
 					"m_particles.pred_vel.y[i] : " << m_particles.pred_vel.y[i] << '\n' <<
 					"m_particles.pred_vel.z[i] : " << m_particles.pred_vel.z[i] << '\n';
 			}
-		
+		*/
 			sum_x = sum_y = sum_z = .0f;
 		}
 	} while ( abs(avrg) > 1.f );
@@ -471,7 +471,7 @@ inline void update_density_and_factors(float mass, Float3* pos, float* dens, flo
 
 			//Update density
 			dens[particle] += neighbor_mass*kernel_values[linear_ind];
-			if (isnan(dens[particle]))std::cout << " dens is nan" << std::endl;
+			//if (isnan(dens[particle]))std::cout << " dens is nan" << std::endl;
 			dx = pos->x[neighbor_index] - pos->x[particle];
 			dy = pos->y[neighbor_index] - pos->y[particle];
 			dz = pos->z[neighbor_index] - pos->z[particle];
