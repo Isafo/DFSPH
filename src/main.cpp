@@ -143,6 +143,8 @@ int main() {
 		{
 			ImGui::Text("Hello, world!");
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+			ImGui::Text("Simulation average %.3f ms/frame", dT);
+
 
 			ImGui::SliderInt("particle: ", &dParticle, 0, D_NR_OF_PARTICLES - 1);
 
