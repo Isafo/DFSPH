@@ -99,7 +99,7 @@ void SPH::update(float dT)
 
 	correct_density_error(alpha, dT, scalar_values, f_tot, k_v_i);
 
-	//update_positions(dT);
+	update_positions(dT);
 
 	find_neighborhoods();  // t + dt
 
@@ -111,7 +111,7 @@ void SPH::update(float dT)
 
 	update_velocities();
 
-	update_positions(dT);
+	//update_positions(dT);
 
 }
 
@@ -188,15 +188,15 @@ void SPH::non_pressure_forces() const
 void SPH::calculate_time_step(float dT)
 {
 	float v_max_2 = 0;
-	float x, y, z;
+	float x_2, y_2, z_2;
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		x = m_particles.vel.x[i] * m_particles.vel.x[i];
-		y = m_particles.vel.y[i] * m_particles.vel.y[i];
-		z = m_particles.vel.z[i] * m_particles.vel.z[i];
-		if (v_max_2 < (x + y + z))
-			v_max_2 = (x + y + z);
+		x_2 = m_particles.vel.x[i] * m_particles.vel.x[i];
+		y_2 = m_particles.vel.y[i] * m_particles.vel.y[i];
+		z_2 = m_particles.vel.z[i] * m_particles.vel.z[i];
+		if (v_max_2 < (x_2 + y_2 + z_2))
+			v_max_2 = (x_2 + y_2 + z_2);
 	}
 	m_delta_t = 0.4f*(m_particles.rad * 2) / sqrtf(v_max_2) - D_EPSILON;
 
@@ -210,9 +210,9 @@ void SPH::predict_velocities()
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		m_particles.pred_vel.x[i] += m_particles.F_adv.x[i] * m_delta_t;
-		m_particles.pred_vel.y[i] += m_particles.F_adv.y[i] * m_delta_t;
-		m_particles.pred_vel.z[i] += m_particles.F_adv.z[i] * m_delta_t;
+		m_particles.pred_vel.x[i] = m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t;
+		m_particles.pred_vel.y[i] = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t;
+		m_particles.pred_vel.z[i] = m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t;
 		
 		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.5)
 		{
@@ -331,9 +331,9 @@ void SPH::update_positions(float dT) const
 {
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		m_particles.pos.x[i] += m_particles.vel.x[i] * m_delta_t;
-		m_particles.pos.y[i] += m_particles.vel.y[i] * m_delta_t;
-		m_particles.pos.z[i] += m_particles.vel.z[i] * m_delta_t;
+		m_particles.pos.x[i] += m_particles.pred_vel.x[i] * m_delta_t;
+		m_particles.pos.y[i] += m_particles.pred_vel.y[i] * m_delta_t;
+		m_particles.pos.z[i] += m_particles.pred_vel.z[i] * m_delta_t;
 	}
 }
 
@@ -411,7 +411,7 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 		
 			sum_x = sum_y = sum_z = .0f;
 		}
-	} while ( abs(avrg) > 1.f );
+	} while ( abs(avrg) > 0.1f );
 }
 
 void SPH::update_velocities()
@@ -422,11 +422,6 @@ void SPH::update_velocities()
 		m_particles.vel.x[i] = m_particles.pred_vel.x[i];
 		m_particles.vel.y[i] = m_particles.pred_vel.y[i];
 		m_particles.vel.z[i] = m_particles.pred_vel.z[i];
-
-		m_particles.vel.x[i] += m_particles.F_adv.x[i] * m_particles.mass * m_delta_t;
-		m_particles.vel.y[i] += m_particles.F_adv.y[i] * m_particles.mass * m_delta_t;
-		m_particles.vel.z[i] += m_particles.F_adv.z[i] * m_particles.mass * m_delta_t;
-
 
 
 		if (abs(m_particles.pos.x[i] + m_particles.vel.x[i] * m_delta_t) >= 0.5) {
@@ -637,7 +632,7 @@ inline float calculate_kv(float* alpha, Float3* vel, Float3* pred_vel, Float3* p
 
 	//not suppose to be nessesary bot in first iteratin time = 0
 	//delta_t = delta_t <= 0 ? 0.00001f : delta_t;
-
+	delta_t = delta_t < 0.033f ? 0.033f : delta_t;
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		float particle_dens = dens[i];

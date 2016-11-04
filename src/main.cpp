@@ -65,10 +65,14 @@ int main() {
 	while (!glfwWindowShouldClose(currentWindow))
 	{
 		glfwPollEvents();
-		
-		dT = glfwGetTime() - lastTime;
-		lastTime = glfwGetTime();
-
+		if (dT > 1.f / 30.f) {
+			s.update(dT);
+			lastTime = glfwGetTime();
+		}
+		else {
+			dT = glfwGetTime() - lastTime;
+		}
+	
 		//glfw input handler
 		inputHandler(currentWindow, dT);
 
@@ -90,8 +94,7 @@ int main() {
 		GLcalls();
 
 		glUseProgram(sceneLight.programID);
-
-		s.update(dT);
+		
 
 		MVstack.push();//Camera transforms --<
 		glUniformMatrix4fv(locationP, 1, GL_FALSE, mCamera.getPerspective());
