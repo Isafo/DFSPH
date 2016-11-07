@@ -1,8 +1,8 @@
 #pragma once
 #include "glm/glm.hpp"
 
-#define D_NR_OF_PARTICLES 300
-#define D_MAX_NR_OF_NEIGHBORS 300
+#define D_NR_OF_PARTICLES 400
+#define D_MAX_NR_OF_NEIGHBORS 400
 
 // A struct containing three arrays (SoA)
 struct Float3
@@ -33,7 +33,7 @@ public:
 	~SPH();
 	// performs the simulation steps and updates the particles
 	void update(float dT);
-	
+
 	// initializes the particles in a given grid formation
 	void init_positions(glm::vec3* start_pos, int rows = 3, int cols = 3) const;
 
@@ -48,7 +48,7 @@ public:
 		i_pos.x = m_particles.pos.x[i];
 		i_pos.y = m_particles.pos.y[i];
 		i_pos.z = m_particles.pos.z[i];
-	
+
 		return i_pos;
 	}
 
@@ -85,7 +85,7 @@ public:
 
 	float get_p_i(int i) const { return m_particles.p[i]; }
 	float get_dens_i(int i) const { return m_particles.dens[i]; }
-	
+
 private:
 
 	// Finds the neighbors of a particle within the given radius D_NEIGBBOR_RAD
@@ -98,7 +98,7 @@ private:
 	void calculate_time_step(float dT);
 	// Calculates an unstable predicted velocity
 	void predict_velocities();
-	void correct_density_error(float* alpha,float dT, float* g_values, Float3s* f_tot, float* k_v_i);
+	void correct_density_error(float* alpha, float dT, float* g_values, Float3s* f_tot, float* k_v_i);
 	void correct_strain_rate_error();
 	void update_positions(float dT) const;
 	void correct_divergence_error(float* k_v_i, float* scalar_values, float* alpha);
@@ -122,17 +122,17 @@ private:
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
 
-	const float C_REST_DENS{ 2.861f };
+	const float C_REST_DENS{ 100.f };
 };
 
 // calculates the density and the alpha particle factors
 inline void update_density_and_factors(float mass, Float3* pos, float* dens, float* scalar_values,
-										Neighbor_Data* neighbor_data, float* alpha, float* kernel_values);
+	Neighbor_Data* neighbor_data, float* alpha, float* kernel_values);
 
 inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data);
 
 inline void calculate_pressure_force(Float3s* f_tot, float* k_v_i, Float3* pos, float mass, float* scalar_values, Neighbor_Data* neighbor_data, float* dens);
-inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3s* f_p, float mass, float_t*dens, float* scalar_values, float delta_t, Neighbor_Data* n_data, Float3 * pos, const float rest_dens);
+inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3* pred_vel, float mass, float_t*dens, float* scalar_values, float delta_t, Neighbor_Data* n_data, Float3 * pos, const float rest_dens);
 
 // calculates the k^v_i variable for all particles
 inline float calculate_kv(float* alpha, Float3* vel, Float3* pred_vel, Float3* pos, float* dens, float delta_t, float *k_v_i, Neighbor_Data* neighbor_data, float* scalar_values);
