@@ -155,12 +155,12 @@ int main() {
 			float p = s.get_p_i(dParticle);
 			float dens = s.get_dens_i(dParticle);
 
-			ImGui::Text("pos: %.1f %.1f %.1f", pos.x, pos.y, pos.z);
-			ImGui::Text("vel: %.1f %.1f %.1f", vel.x, vel.y, vel.z);
-			ImGui::Text("pred. vel: %.1f %.1f %.1f", pred_vel.x, pred_vel.y, pred_vel.z);
-			ImGui::Text("F_adv: %.1f %.1f %.1f", F_adv.x, F_adv.y, F_adv.z);
-			ImGui::Text("p: %.1f", p);
-			ImGui::Text("dens: %.1f", dens);
+			ImGui::Text("pos: %.4f %.4f %.4f", pos.x, pos.y, pos.z);
+			ImGui::Text("vel: %.4f %.4f %.4f", vel.x, vel.y, vel.z);
+			ImGui::Text("pred. vel: %.4f %.4f %.4f", pred_vel.x, pred_vel.y, pred_vel.z);
+			ImGui::Text("F_adv: %.4f %.4f %.4f", F_adv.x, F_adv.y, F_adv.z);
+			ImGui::Text("p: %.4f", p);
+			ImGui::Text("dens: %.4f", dens);
 		}
 
 		// Rendering imgui

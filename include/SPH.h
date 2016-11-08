@@ -122,19 +122,19 @@ private:
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
 
-	const float C_REST_DENS{ 100.f };
+	const float C_REST_DENS{ 10.f };
 };
 
 // calculates the density and the alpha particle factors
-inline void update_density_and_factors(float mass, Float3* pos, float* dens, float* scalar_values,
+void update_density_and_factors(float mass, Float3* pos, float* dens, float* scalar_values,
 	Neighbor_Data* neighbor_data, float* alpha, float* kernel_values);
 
-inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data);
+void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data);
 
-inline void calculate_pressure_force(Float3s* f_tot, float* k_v_i, Float3* pos, float mass, float* scalar_values, Neighbor_Data* neighbor_data, float* dens);
-inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3* pred_vel, float mass, float_t*dens, float* scalar_values, float delta_t, Neighbor_Data* n_data, Float3 * pos, const float rest_dens);
+void calculate_pressure_force(Float3s* f_tot, float* k_v_i, Float3* pos, float mass, float* scalar_values, Neighbor_Data* neighbor_data, float* dens);
+void calculate_predicted_pressure(Float3s* predicted_pressure, Float3* pred_vel, float mass, float_t*dens, float* scalar_values, float delta_t, Neighbor_Data* n_data, Float3 * pos);
 
 // calculates the k^v_i variable for all particles
-inline float calculate_kv(float* alpha, Float3* vel, Float3* pred_vel, Float3* pos, float* dens, float delta_t, float *k_v_i, Neighbor_Data* neighbor_data, float* scalar_values);
+float calculate_kv(float* alpha, Float3* vel, Float3* pred_vel, Float3* pos, float* dens, float delta_t, float *k_v_i, Neighbor_Data* neighbor_data, float* scalar_values);
 // updates the scalar values g(q) for all particles
-inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values);
+void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values);
