@@ -400,9 +400,7 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 
 				sum_z += m_particles.mass * (div_i + k_v_i[neighbor_index] /
 					m_particles.dens[neighbor_index]) * kernel_gradient_z;
-
 			}
-
 
 			m_particles.pred_vel.x[i] -= m_delta_t * sum_x;
 			m_particles.pred_vel.y[i] -= m_delta_t * sum_y;
@@ -417,11 +415,9 @@ void SPH::update_velocities()
 {
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-
 		m_particles.vel.x[i] = m_particles.pred_vel.x[i];
 		m_particles.vel.y[i] = m_particles.pred_vel.y[i];
 		m_particles.vel.z[i] = m_particles.pred_vel.z[i];
-
 
 		if (abs(m_particles.pos.x[i] + m_particles.vel.x[i] * m_delta_t) >= 0.15) {
 			m_particles.vel.x[i] = 0.0f;
@@ -438,7 +434,7 @@ void SPH::update_velocities()
 	}
 }
 
-inline void update_density_and_factors(float mass, Float3* pos, float* dens, float* scalar_values,
+void update_density_and_factors(float mass, Float3* pos, float* dens, float* scalar_values,
 	Neighbor_Data* neighbor_data, float* alpha, float* kernel_values)
 {
 	int nr_neighbors;
@@ -499,7 +495,7 @@ inline void update_density_and_factors(float mass, Float3* pos, float* dens, flo
 	}
 }
 
-inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data)
+void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data)
 {
 	unsigned int ind;
 	float x, y, z, q;
@@ -534,7 +530,7 @@ inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Dat
 	}
 }
 
-inline void calculate_pressure_force(Float3s* f_tot, float* k_v_i, Float3* pos, float mass, float* scalar_values, Neighbor_Data* neighbor_data, float* dens)
+void calculate_pressure_force(Float3s* f_tot, float* k_v_i, Float3* pos, float mass, float* scalar_values, Neighbor_Data* neighbor_data, float* dens)
 {
 	unsigned int neighbor_index;
 	unsigned int n_neighbors;
@@ -576,8 +572,8 @@ inline void calculate_pressure_force(Float3s* f_tot, float* k_v_i, Float3* pos, 
 	}
 }
 
-inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3* pred_vel, float mass, float_t*dens, float* scalar_value,
-	float delta_t, Neighbor_Data* neighbor_data, Float3 * pos, const float rest_dens)
+void calculate_predicted_pressure(Float3s* predicted_pressure, Float3* pred_vel, float mass, float_t*dens, float* scalar_value,
+	float delta_t, Neighbor_Data* neighbor_data, Float3 * pos)
 {
 	int neighbor_length;
 	float x, y, z;
@@ -638,7 +634,7 @@ inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3* pr
 	}*/
 }
 
-inline float calculate_kv(float* alpha, Float3* vel, Float3* pred_vel, Float3* pos, float* dens,
+float calculate_kv(float* alpha, Float3* vel, Float3* pred_vel, Float3* pos, float* dens,
 	float delta_t, float* k_v_i, Neighbor_Data* neighbor_data, float* scalar_value)
 {
 	//float x, y, z;
@@ -687,7 +683,7 @@ inline float calculate_kv(float* alpha, Float3* vel, Float3* pred_vel, Float3* p
 	return d_dens_avrg / D_NR_OF_PARTICLES;
 }
 
-inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values)
+void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values)
 {
 	float kernel_derive;
 	//Loop through all particles
