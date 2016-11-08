@@ -271,8 +271,8 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 	float p0{ 0.f };
 	float p_avg{ 0.f };
 
-
-	float avrg = calculate_kv(alpha, &m_particles.vel, &m_particles.pred_vel, &m_particles.pos, m_particles.dens, m_delta_t, k_v_i, m_neighbor_data, scalar_values);
+	//TODO: why is avrg not used is it old code that should be removed or is this function wrong?
+	//float avrg = calculate_kv(alpha, &m_particles.vel, &m_particles.pred_vel, &m_particles.pos, m_particles.dens, m_delta_t, k_v_i, m_neighbor_data, scalar_values);
 
 	calculate_pressure_force(f_tot, k_v_i, &m_particles.pos, m_particles.mass, scalar_values, m_neighbor_data, m_particles.dens);
 
@@ -280,7 +280,7 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 	do
 	{
 		//p_avg = 0.f;
-		calculate_predicted_pressure(predicted_pressure, &m_particles.pred_vel, m_particles.mass, m_particles.dens, scalar_values, m_delta_t, m_neighbor_data, &m_particles.pos, C_REST_DENS);
+		calculate_predicted_pressure(predicted_pressure, &m_particles.pred_vel, m_particles.mass, m_particles.dens, scalar_values, m_delta_t, m_neighbor_data, &m_particles.pos);
 		++iter;
 		assert(m_delta_t != 0.0f, "deltaT");
 
@@ -289,7 +289,6 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 			k[i].x = predicted_pressure[i].x * alpha[i] / (m_delta_t*m_delta_t);
 			k[i].y = predicted_pressure[i].y * alpha[i] / (m_delta_t*m_delta_t);
 			k[i].z = predicted_pressure[i].z * alpha[i] / (m_delta_t*m_delta_t);
-			//if (isnan(k[i].x))std::cout << "k is nan" << '\n';
 		}
 
 		for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
@@ -305,7 +304,6 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 			k_i_x = k[i].x / dens_i;
 			k_i_y = k[i].y / dens_i;
 			k_i_z = k[i].z / dens_i;
-			//if (isnan(k_i_x))std::cout << "k is nan" << '\n';
 
 			for (int j = 0; j < m_neighbor_data[i].n; ++j)
 			{
@@ -371,9 +369,7 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 	do
 	{
 		avrg = calculate_kv(alpha, &m_particles.vel, &m_particles.pred_vel, &m_particles.pos, m_particles.dens, m_delta_t, k_v_i, m_neighbor_data, scalar_values);
-		//assert(avrg == 0.0f, "avrg");
-		//if (isnan(avrg))std::cout << "avrg is nan" << '\n';
-
+		
 		for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 		{
 			dens_i = m_particles.dens[i];
@@ -414,9 +410,6 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 		
 			sum_x = sum_y = sum_z = .0f;
 		}
-		if ((avrg > 0.1f)) std::cout << abs(avrg) << std::endl;
-
-	
 	} while ((avrg) > 0.1f );
 }
 
@@ -459,7 +452,6 @@ inline void update_density_and_factors(float mass, Float3* pos, float* dens, flo
 	unsigned int neighbor_index;
 	float x = 0.f, y = 0.f, z = 0.f;
 	const float min_denom{ 0.000001f };
-	float pi = D_PI;
 	neighbor_mass = mass;
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
 	{
@@ -474,7 +466,7 @@ inline void update_density_and_factors(float mass, Float3* pos, float* dens, flo
 
 			//Update density
 			dens[particle] += scalar_values[linear_ind] * neighbor_mass;// / (4.f / 3.f * pi * pow(0.01, 3));
-			//if (isnan(dens[particle]))std::cout << " dens is nan" << std::endl;
+
 			dx = pos->x[neighbor_index] - pos->x[particle];
 			dy = pos->y[neighbor_index] - pos->y[particle];
 			dz = pos->z[neighbor_index] - pos->z[particle];
@@ -590,7 +582,7 @@ inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3* pr
 	int neighbor_length;
 	float x, y, z;
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
-	float d_t_2 = delta_t*delta_t;
+	//float d_t_2 = delta_t*delta_t;
 	float res_x = 0.f, res_y = 0.f, res_z = 0.0f;
 	unsigned int neighbor_index;
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
@@ -619,8 +611,6 @@ inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3* pr
 		res_x = res_y = res_z = 0.f;
 	}
 
-
-
 	/*for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		neighbor_length = neighbor_data[i].n;
@@ -636,7 +626,6 @@ inline void calculate_predicted_pressure(Float3s* predicted_pressure, Float3* pr
 			kernel_gradient_x = x * scalar_value[linear_ind];
 			kernel_gradient_y = y * scalar_value[linear_ind];
 			kernel_gradient_z = z * scalar_value[linear_ind];
-			if (dens[i] == 0.f)std::cout << "null" << '\n';
 
 			res_x += mass * (f_p[i].x / dens[i] - f_p[neighbor_index].x / dens[i])*kernel_gradient_x;
 			res_y += mass * (f_p[i].y / dens[i] - f_p[neighbor_index].y / dens[i])*kernel_gradient_y;
@@ -656,7 +645,6 @@ inline float calculate_kv(float* alpha, Float3* vel, Float3* pred_vel, Float3* p
 	float dx = 0.f, dy = 0.f, dz= 0.f;
 	float x, y, z;
 	unsigned int neighbor_index;
-	unsigned int n_neighbors;
 	float kernel_gradient_x;
 	float kernel_gradient_y;
 	float kernel_gradient_z;
