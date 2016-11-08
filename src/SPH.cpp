@@ -511,7 +511,7 @@ inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Dat
 {
 	unsigned int ind;
 	float x, y, z, q;
-	float kernel_val;
+	float kernel_val = 0;
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
 	{
 		float particle_pos_x = pos->x[particle];
