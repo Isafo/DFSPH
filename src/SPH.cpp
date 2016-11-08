@@ -124,13 +124,11 @@ void SPH::update(float dT)
 
 	update_velocities();
 
+	// Are we suppose to do this?
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i) {
 		m_particles.dens[i] = m_particles.mass /(4.f / 3.f * pow(m_particles.rad, 3)*pi );
-		
 	}
-
 	update_positions(dT);
-
 }
 
 
@@ -231,6 +229,9 @@ void SPH::predict_velocities()
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)	
 	{
+		// TODO fix this shit somehow
+		// F_adv for x & z is always 0 => pred_vel = vel
+		// F_adv for y is always gravity => the particles will move between the floor and the celling in eternity
 		m_particles.pred_vel.x[i] = m_particles.vel.x[i]  + m_particles.F_adv.x[i] * m_delta_t/mass;
 		m_particles.pred_vel.y[i] = m_particles.vel.y[i]  + m_particles.F_adv.y[i] * m_delta_t/mass;
 		m_particles.pred_vel.z[i] = m_particles.vel.z[i]  + m_particles.F_adv.z[i] * m_delta_t/mass;
@@ -240,7 +241,6 @@ void SPH::predict_velocities()
 			m_particles.pred_vel.x[i] = -0.1f*m_particles.pred_vel.x[i];
 			m_particles.vel.x[i] = -0.1f*m_particles.vel.x[i];
 		}
-
 		if (abs(m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t) >= 0.2)
 		{
 			m_particles.pred_vel.y[i] = -0.0f*m_particles.pred_vel.y[i];
@@ -276,11 +276,9 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 	float p0{ 0.f };
 	float p_avg{ 0.f };
 
-	
 
-	
-		//TODO: why is avrg not used is it old code that should be removed or is this function wrong?
-		float avrg = calculate_kv(alpha, &m_particles.vel, &m_particles.pred_vel, &m_particles.pos, m_particles.dens, m_delta_t, k_v_i, m_neighbor_data, scalar_values, m_particles.mass);
+	//TODO: why is avrg not used is it old code that should be removed or is this function wrong?
+	//float avrg = calculate_kv(alpha, &m_particles.vel, &m_particles.pred_vel, &m_particles.pos, m_particles.dens, m_delta_t, k_v_i, m_neighbor_data, scalar_values, m_particles.mass);
 
 	float dens_min = 11111110.f, dens_max = 0.f;
 	do{
@@ -328,19 +326,18 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 				kernel_gradient_y = dy * scalar_values[linear_ind];
 				kernel_gradient_z = dz * scalar_values[linear_ind];
 
-				sum_x += m_particles.mass * (k_i_x + (k[neighbor_index].x / m_particles.dens[neighbor_index])) * kernel_gradient_x;
-				sum_y += m_particles.mass * (k_i_y + (k[neighbor_index].y / m_particles.dens[neighbor_index])) * kernel_gradient_y;
-				sum_z += m_particles.mass * (k_i_z + (k[neighbor_index].z / m_particles.dens[neighbor_index])) * kernel_gradient_z;
-
+				sum_x += m_particles.mass * (k_i_x + k[neighbor_index].x / m_particles.dens[neighbor_index]) * kernel_gradient_x;
+				sum_y += m_particles.mass * (k_i_y + k[neighbor_index].y / m_particles.dens[neighbor_index]) * kernel_gradient_y;
+				sum_z += m_particles.mass * (k_i_z + k[neighbor_index].z / m_particles.dens[neighbor_index]) * kernel_gradient_z;
 			}
 
 			m_particles.pred_vel.x[i] -= m_delta_t * sum_x;
 			m_particles.pred_vel.y[i] -= m_delta_t * sum_y;
 			m_particles.pred_vel.z[i] -= m_delta_t * sum_z;
 		}
-		if (((p_avg / D_NR_OF_PARTICLES - C_REST_DENS) > (1.01*(dens_max - dens_min))))p_avg = 0.f;
+		if (p_avg / D_NR_OF_PARTICLES - C_REST_DENS > 1.01*(dens_max - dens_min))p_avg = 0.f;
 		// condition p_avg - p_0 > ny  ny = 1.01*(p_max_p_min) p_0 = 1000
-	} while ( ( (p_avg/D_NR_OF_PARTICLES - C_REST_DENS) > (1.01*(dens_max - dens_min) ) )  );
+	} while ( p_avg/D_NR_OF_PARTICLES - C_REST_DENS > (1.01*(dens_max - dens_min) ));
 }
 
 void SPH::correct_strain_rate_error() {}
@@ -415,7 +412,7 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 		
 			sum_x = sum_y = sum_z = .0f;
 		}
-	} while ((avrg) > 0.1f );
+	} while (avrg > 0.1f);
 }
 
 void SPH::update_velocities()
@@ -426,13 +423,14 @@ void SPH::update_velocities()
 		m_particles.vel.y[i] = m_particles.pred_vel.y[i];
 		m_particles.vel.z[i] = m_particles.pred_vel.z[i];
 
+		// Why are we setting it ti the opposit direction?
 		if (abs(m_particles.pos.x[i] + m_particles.vel.x[i] * m_delta_t) >= 0.05) {
 			m_particles.vel.x[i] = -0.1f*m_particles.vel.x[i];
 			m_particles.pred_vel.x[i] = -0.1f*m_particles.pred_vel.x[i];
 		}
-		if (abs(m_particles.pos.y[i] + m_particles.vel.y[i] * m_delta_t) >= 0.20) {
-			m_particles.vel.y[i] = 0.0f;
-			m_particles.pred_vel.y[i] = 0.0f;
+		if (abs(m_particles.pos.y[i] + m_particles.vel.y[i] * m_delta_t) >= 0.2) {
+			m_particles.vel.y[i] = -0.1f*m_particles.vel.y[i];
+			m_particles.pred_vel.y[i] = -0.1f*m_particles.pred_vel.y[i];
 		}
 		if (abs(m_particles.pos.z[i] + m_particles.vel.z[i] * m_delta_t) >= 0.05) {
 			m_particles.vel.z[i] = -0.1f*m_particles.vel.z[i];
@@ -674,17 +672,17 @@ float calculate_kv(float* alpha, Float3* vel, Float3* pred_vel, Float3* pos, flo
 			kernel_gradient_y = y * scalar_value[linear_ind];
 			kernel_gradient_z = z * scalar_value[linear_ind];
 
-			dx += mass*(pred_vel->x[i] - pred_vel->x[neighbor_index]) *kernel_gradient_x;
-			dy += mass*(pred_vel->y[i] - pred_vel->y[neighbor_index]) *kernel_gradient_y;
-			dz += mass*(pred_vel->z[i] - pred_vel->z[neighbor_index]) *kernel_gradient_z;
+			dx += mass*(pred_vel->x[i] - pred_vel->x[neighbor_index])*kernel_gradient_x;
+			dy += mass*(pred_vel->y[i] - pred_vel->y[neighbor_index])*kernel_gradient_y;
+			dz += mass*(pred_vel->z[i] - pred_vel->z[neighbor_index])*kernel_gradient_z;
 
 		}
 		float particle_dens = dens[i];
 
-
 		d_dens = particle_dens * -(dx + dy + dz);
 		d_dens_avrg += d_dens;
-		k_v_i[i] = 1.f*(1.f /(delta_t)	)* d_dens * alpha[i];
+		float kappa = 1.0f;
+		k_v_i[i] = kappa*(1.f /delta_t)*d_dens*alpha[i];
 		dx = dy = dz = 0.f;
 	}
 

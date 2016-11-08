@@ -122,6 +122,7 @@ private:
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
 
+	// TODO dont forfill the condition (p - p0 = 0) right now
 	const float C_REST_DENS{ 1000.f };
 };
 
