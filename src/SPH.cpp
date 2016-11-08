@@ -431,16 +431,16 @@ void SPH::update_velocities()
 
 
 		if (abs(m_particles.pos.x[i] + m_particles.vel.x[i] * m_delta_t) >= 0.15) {
-			m_particles.vel.x[i] = -0.0f*m_particles.vel.x[i];
-			m_particles.pred_vel.x[i] = -0.0f*m_particles.pred_vel.x[i];
+			m_particles.vel.x[i] = 0.0f;
+			m_particles.pred_vel.x[i] = 0.0f;
 		}
 		if ((m_particles.pos.y[i] + m_particles.vel.y[i] * m_delta_t) <= -0.15) {
-			m_particles.vel.y[i] = -0.f*m_particles.vel.y[i];
-			m_particles.pred_vel.y[i] = -0.f*m_particles.pred_vel.y[i];
+			m_particles.vel.y[i] = 0.0f;
+			m_particles.pred_vel.y[i] = 0.0f;
 		}
 		if (abs(m_particles.pos.z[i] + m_particles.vel.z[i] * m_delta_t) >= 0.15) {
-			m_particles.vel.z[i] = -0.0f*m_particles.vel.z[i];
-			m_particles.pred_vel.z[i] = -0.0f*m_particles.pred_vel.z[i];
+			m_particles.vel.z[i] = 0.0f;
+			m_particles.pred_vel.z[i] = 0.0f;
 		}
 	}
 }
