@@ -1,8 +1,8 @@
 #pragma once
 #include "glm/glm.hpp"
 
-#define D_NR_OF_PARTICLES 500
-#define D_MAX_NR_OF_NEIGHBORS 500
+#define D_NR_OF_PARTICLES 400
+#define D_MAX_NR_OF_NEIGHBORS 400
 
 // A struct containing three arrays (SoA)
 struct Float3
@@ -123,7 +123,7 @@ private:
 	Neighbor_Data *m_neighbor_data;
 
 	// TODO dont forfill the condition (p - p0 = 0) right now
-	const float C_REST_DENS{ 1000.f };
+	const float C_REST_DENS{ 95.f };
 };
 
 // calculates the density and the alpha particle factors
