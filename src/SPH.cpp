@@ -12,7 +12,7 @@
 #define D_EPSILON 0.000000000000001f;
 
 //since force is low a higher radius is requiered for small number of particles
-#define D_RAD 0.003f;
+#define D_RAD 0.03f;
 
 SPH::SPH(glm::vec3* start_pos)
 {
@@ -89,8 +89,6 @@ void SPH::update(float dT)
 	static float pi = D_PI;
 	
 	find_neighborhoods();
-
-	//calculate_time_step(dT);
 
 	update_scalar_function(&m_particles.pos, m_neighbor_data, scalar_values);
 
@@ -361,9 +359,9 @@ void SPH::update_positions(float dT) const
 {
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		m_particles.pos.x[i] += m_particles.pred_vel.x[i] * m_delta_t;
-		m_particles.pos.y[i] += m_particles.pred_vel.y[i] * m_delta_t;
-		m_particles.pos.z[i] += m_particles.pred_vel.z[i] * m_delta_t;
+		m_particles.pos.x[i] += m_particles.pred_vel.x[i] * dT;
+		m_particles.pos.y[i] += m_particles.pred_vel.y[i] * dT;
+		m_particles.pos.z[i] += m_particles.pred_vel.z[i] * dT;
 	}
 }
 
@@ -387,10 +385,9 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 
 	while (avrg > 0.1f)
 	{
-		avrg = calculate_stiffness(alpha, &m_particles.vel, &m_particles.pred_vel, &m_particles.pos, m_particles.dens, m_delta_t, k_v_i, m_neighbor_data, scalar_values, m_particles.mass);
-
 		for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 		{
+
 			dens_i = m_particles.dens[i];
 
 			assert(dens_i != 0.0f, "dens");
@@ -425,6 +422,7 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 			m_particles.pred_vel.y[i] = m_particles.pred_vel.y[i] - m_delta_t * sum_y;
 			m_particles.pred_vel.z[i] = m_particles.pred_vel.z[i] - m_delta_t * sum_z;
 		}
+		avrg = calculate_stiffness(alpha, &m_particles.vel, &m_particles.pred_vel, &m_particles.pos, m_particles.dens, m_delta_t, k_v_i, m_neighbor_data, scalar_values, m_particles.mass);
 	}
 }
 
@@ -435,21 +433,21 @@ void SPH::update_velocities()
 		m_particles.vel.x[i] = m_particles.pred_vel.x[i];
 		m_particles.vel.y[i] = m_particles.pred_vel.y[i];
 		m_particles.vel.z[i] = m_particles.pred_vel.z[i];
-		/*
+		
 		// Why are we setting it ti the opposit direction?
 		if (abs(m_particles.pos.x[i] + m_particles.vel.x[i] * m_delta_t) >= 0.05) {
-			m_particles.vel.x[i] = -0.1f*m_particles.vel.x[i];
-			m_particles.pred_vel.x[i] = -0.1f*m_particles.pred_vel.x[i];
+			m_particles.vel.x[i] = -0.f*m_particles.vel.x[i];
+			m_particles.pred_vel.x[i] = -0.f*m_particles.pred_vel.x[i];
 		}
 		if (abs(m_particles.pos.y[i] + m_particles.vel.y[i] * m_delta_t) >= 0.2) {
-			m_particles.vel.y[i] = -0.1f*m_particles.vel.y[i];
+			m_particles.vel.y[i] = -0.f*m_particles.vel.y[i];
 			m_particles.pred_vel.y[i] = -0.1f*m_particles.pred_vel.y[i];
 		}
 		if (abs(m_particles.pos.z[i] + m_particles.vel.z[i] * m_delta_t) >= 0.05) {
-			m_particles.vel.z[i] = -0.1f*m_particles.vel.z[i];
-			m_particles.pred_vel.z[i] = -0.1f*m_particles.pred_vel.z[i];
+			m_particles.vel.z[i] = -0.f*m_particles.vel.z[i];
+			m_particles.pred_vel.z[i] = -0.f*m_particles.pred_vel.z[i];
 		}
-		 */
+		 
 	}
 }
 
@@ -669,7 +667,7 @@ float calculate_stiffness(float* alpha, Float3* vel, Float3* pred_vel, Float3* p
 
 	int neighbor_length;
 	float particle_dens;
-	float kappa = 1.0f;
+	float kappa = 0.8f;
 
 	//not suppose to be nessesary bot in first iteratin time = 0
 	//delta_t = delta_t <= 0 ? 0.00001f : delta_t;
@@ -680,17 +678,23 @@ float calculate_stiffness(float* alpha, Float3* vel, Float3* pred_vel, Float3* p
 		for (int j = 0; j < neighbor_length; ++j)
 		{
 			neighbor_index = neighbor_data[i].neighbor[j];
+			int linear_ind = neighbor_index + D_MAX_NR_OF_NEIGHBORS*i;
 
 			x = pos->x[neighbor_index] - pos->x[i];
 			y = pos->y[neighbor_index] - pos->y[i];
 			z = pos->z[neighbor_index] - pos->z[i];
 
-			dx -= particle_dens*(pred_vel->x[i] - pred_vel->x[neighbor_index]);
-			dy -= particle_dens*(pred_vel->y[i] - pred_vel->y[neighbor_index]);
-			dz -= particle_dens*(pred_vel->z[i] - pred_vel->z[neighbor_index]);
+			kernel_gradient_x = x*scalar_value[linear_ind];
+			kernel_gradient_y = y*scalar_value[linear_ind];
+			kernel_gradient_z = z*scalar_value[linear_ind];
+
+			dx += mass *kernel_gradient_x*(pred_vel->x[i]- pred_vel->x[neighbor_index]) ;
+			dy += mass *kernel_gradient_y*(pred_vel->y[i]- pred_vel->x[neighbor_index]) ;
+			dz += mass *kernel_gradient_z*(pred_vel->z[i]- pred_vel->x[neighbor_index]) ;
 		}
 		
-		d_dens = particle_dens * -(dx + dy + dz);
+		d_dens = particle_dens * (dx + dy + dz);
+
 		d_dens_avrg += d_dens;
 		
 		k_v_i[i] = kappa*(1.f / delta_t)*d_dens*alpha[i];
@@ -729,7 +733,7 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 			else
 				kernel_derive = 0.0f;
 
-			scalar_values[particle * D_MAX_NR_OF_NEIGHBORS + neighbor] = (kernel_derive / (dist / d));
+			scalar_values[particle * D_MAX_NR_OF_NEIGHBORS + neighbor] = (kernel_derive /( dist * d));
 		}
 	}
 

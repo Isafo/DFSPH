@@ -124,7 +124,7 @@ private:
 	Neighbor_Data *m_neighbor_data;
 
 	// TODO dont forfill the condition (p - p0 = 0) right now
-	const float C_REST_DENS{ 95.f };
+	const float C_REST_DENS{ 100.f };
 };
 
 // calculates the density and the alpha particle factors
