@@ -12,7 +12,7 @@
 #define D_EPSILON 0.000000000000001f;
 
 //since force is low a higher radius is requiered for small number of particles
-#define D_RAD 0.017f;
+#define D_RAD 0.003f;
 
 SPH::SPH(glm::vec3* start_pos)
 {
@@ -87,7 +87,7 @@ void SPH::update(float dT)
 	static float scalar_values[D_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
 	static float kernel_values[D_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
 	static float pi = D_PI;
-
+	
 	find_neighborhoods();
 
 	//calculate_time_step(dT);
@@ -106,7 +106,8 @@ void SPH::update(float dT)
 
 	predict_velocities();
 
-	correct_density_error(alpha, dT, scalar_values, f_tot, k_v_i);
+	if(iter >= 2)
+		correct_density_error(alpha, dT, scalar_values, f_tot, k_v_i);
 
 	update_positions(dT);
 
@@ -120,7 +121,8 @@ void SPH::update(float dT)
 
 
 	// TODO: this function is incorretly, implemented correct
-	correct_divergence_error(k_v_i, scalar_values, alpha);
+	if(iter >= 1)
+		correct_divergence_error(k_v_i, scalar_values, alpha);
 
 	update_velocities();
 
@@ -129,6 +131,8 @@ void SPH::update(float dT)
 		m_particles.dens[i] = 100.f;
 	}
 	//update_positions(dT);
+
+	++iter;
 }
 
 
@@ -238,19 +242,22 @@ void SPH::predict_velocities()
 
 		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.05)
 		{
-			m_particles.pred_vel.x[i] = -0.1f*m_particles.pred_vel.x[i];
-			m_particles.vel.x[i] = -0.1f*m_particles.vel.x[i];
+			m_particles.pred_vel.x[i] = 0.f;
+			//m_particles.pred_vel.x[i] = -0.1f*m_particles.pred_vel.x[i];
+			//m_particles.vel.x[i] = -0.1f*m_particles.vel.x[i];
 		}
 		if (abs(m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t) >= 0.2)
 		{
-			m_particles.pred_vel.y[i] = -0.0f*m_particles.pred_vel.y[i];
-			m_particles.vel.y[i] = -0.0f*m_particles.vel.y[i];
+			m_particles.pred_vel.y[i] = 0.f;
+			//m_particles.pred_vel.y[i] = -0.0f*m_particles.pred_vel.y[i];
+			//m_particles.vel.y[i] = -0.0f*m_particles.vel.y[i];
 		}
 
 		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.05)
 		{
-			m_particles.pred_vel.z[i] = -0.1f*m_particles.pred_vel.z[i];
-			m_particles.vel.z[i] = -0.1f*m_particles.vel.z[i];
+			m_particles.pred_vel.z[i] = 0.f;
+			//m_particles.pred_vel.z[i] = -0.1f*m_particles.pred_vel.z[i];
+			//m_particles.vel.z[i] = -0.1f*m_particles.vel.z[i];
 		}
 	}
 }
@@ -376,11 +383,11 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 
 	int neighbor_index;
 
-	float avrg = 0.f;
+	float avrg = calculate_stiffness(alpha, &m_particles.vel, &m_particles.pred_vel, &m_particles.pos, m_particles.dens, m_delta_t, k_v_i, m_neighbor_data, scalar_values, m_particles.mass);
 
-	do
+	while (avrg > 0.1f)
 	{
-		avrg = calculate_kv(alpha, &m_particles.vel, &m_particles.pred_vel, &m_particles.pos, m_particles.dens, m_delta_t, k_v_i, m_neighbor_data, scalar_values, m_particles.mass);
+		avrg = calculate_stiffness(alpha, &m_particles.vel, &m_particles.pred_vel, &m_particles.pos, m_particles.dens, m_delta_t, k_v_i, m_neighbor_data, scalar_values, m_particles.mass);
 
 		for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 		{
@@ -417,10 +424,8 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 			m_particles.pred_vel.x[i] = m_particles.pred_vel.x[i] - m_delta_t * sum_x;
 			m_particles.pred_vel.y[i] = m_particles.pred_vel.y[i] - m_delta_t * sum_y;
 			m_particles.pred_vel.z[i] = m_particles.pred_vel.z[i] - m_delta_t * sum_z;
-
 		}
-		//std::cout << avrg << std::endl;
-	} while (avrg > 0.1f);
+	}
 }
 
 void SPH::update_velocities()
@@ -430,7 +435,7 @@ void SPH::update_velocities()
 		m_particles.vel.x[i] = m_particles.pred_vel.x[i];
 		m_particles.vel.y[i] = m_particles.pred_vel.y[i];
 		m_particles.vel.z[i] = m_particles.pred_vel.z[i];
-
+		/*
 		// Why are we setting it ti the opposit direction?
 		if (abs(m_particles.pos.x[i] + m_particles.vel.x[i] * m_delta_t) >= 0.05) {
 			m_particles.vel.x[i] = -0.1f*m_particles.vel.x[i];
@@ -444,6 +449,7 @@ void SPH::update_velocities()
 			m_particles.vel.z[i] = -0.1f*m_particles.vel.z[i];
 			m_particles.pred_vel.z[i] = -0.1f*m_particles.pred_vel.z[i];
 		}
+		 */
 	}
 }
 
@@ -454,14 +460,14 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 	float abs_sum_denom{ 0 };
 	float sum_abs_denom{ 0 };
 	float denom;
-	float neighbor_mass;
 	float dx, dy, dz;
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
 	float sqrt_val;
 	unsigned int neighbor_index;
 	float x = 0.f, y = 0.f, z = 0.f;
 	const float min_denom{ 0.000001f };
-	neighbor_mass = mass;
+	int ind;
+
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
 	{
 		nr_neighbors = neighbor_data[particle].n;
@@ -471,18 +477,18 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 		{
 			neighbor_index = neighbor_data[particle].neighbor[neighbor];
 
-			int linear_ind = neighbor + D_MAX_NR_OF_NEIGHBORS*particle;
+			ind = neighbor + D_MAX_NR_OF_NEIGHBORS*particle;
 
 			//Update density
-			dens[particle] += scalar_values[linear_ind] * neighbor_mass;// / (4.f / 3.f * pi * pow(0.01, 3));
+			dens[particle] += kernel_values[ind] * mass;// / (4.f / 3.f * pi * pow(0.01, 3));
 
 			dx = pos->x[neighbor_index] - pos->x[particle];
 			dy = pos->y[neighbor_index] - pos->y[particle];
 			dz = pos->z[neighbor_index] - pos->z[particle];
 
-			kernel_gradient_x = neighbor_mass * dx * scalar_values[linear_ind];
-			kernel_gradient_y = neighbor_mass * dy * scalar_values[linear_ind];
-			kernel_gradient_z = neighbor_mass * dz * scalar_values[linear_ind];
+			kernel_gradient_x = dx * scalar_values[ind];
+			kernel_gradient_y = dy * scalar_values[ind];
+			kernel_gradient_z = dz * scalar_values[ind];
 
 			x += kernel_gradient_x;
 			y += kernel_gradient_y;
@@ -497,7 +503,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 		}
 
 		abs_sum_denom = sqrt(( x*x + y*y + z*z ));
-		denom = ( (abs_sum_denom*abs_sum_denom + sum_abs_denom));
+		denom = mass*(abs_sum_denom*abs_sum_denom + sum_abs_denom);
 
 		// set alpha to max(denom,min_denom)
 		denom = denom > min_denom ? denom : min_denom;
@@ -647,7 +653,7 @@ void calculate_predicted_pressure(Float3s* predicted_pressure, Float3s* f_p, flo
 	}
 }
 
-float calculate_kv(float* alpha, Float3* vel, Float3* pred_vel, Float3* pos, float* dens,
+float calculate_stiffness(float* alpha, Float3* vel, Float3* pred_vel, Float3* pos, float* dens,
 	float delta_t, float* k_v_i, Neighbor_Data* neighbor_data, float* scalar_value, float mass)
 {
 	//float x, y, z;
@@ -661,34 +667,32 @@ float calculate_kv(float* alpha, Float3* vel, Float3* pred_vel, Float3* pos, flo
 
 	float d_dens_avrg = 0.0f;
 
+	int neighbor_length;
+	float particle_dens;
+	float kappa = 1.0f;
+
 	//not suppose to be nessesary bot in first iteratin time = 0
 	//delta_t = delta_t <= 0 ? 0.00001f : delta_t;
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		int neighbor_length = neighbor_data[i].n;
+		neighbor_length = neighbor_data[i].n;
+		particle_dens = dens[i];
 		for (int j = 0; j < neighbor_length; ++j)
 		{
 			neighbor_index = neighbor_data[i].neighbor[j];
-			int linear_ind = neighbor_index + D_MAX_NR_OF_NEIGHBORS*i;
 
 			x = pos->x[neighbor_index] - pos->x[i];
 			y = pos->y[neighbor_index] - pos->y[i];
 			z = pos->z[neighbor_index] - pos->z[i];
 
-			kernel_gradient_x = x * scalar_value[linear_ind];
-			kernel_gradient_y = y * scalar_value[linear_ind];
-			kernel_gradient_z = z * scalar_value[linear_ind];
-
-			dx += mass*(pred_vel->x[i] - pred_vel->x[neighbor_index])*kernel_gradient_x;
-			dy += mass*(pred_vel->y[i] - pred_vel->y[neighbor_index])*kernel_gradient_y;
-			dz += mass*(pred_vel->z[i] - pred_vel->z[neighbor_index])*kernel_gradient_z;
-
+			dx -= particle_dens*(pred_vel->x[i] - pred_vel->x[neighbor_index]);
+			dy -= particle_dens*(pred_vel->y[i] - pred_vel->y[neighbor_index]);
+			dz -= particle_dens*(pred_vel->z[i] - pred_vel->z[neighbor_index]);
 		}
-		float particle_dens = dens[i];
-
+		
 		d_dens = particle_dens * -(dx + dy + dz);
 		d_dens_avrg += d_dens;
-		float kappa = 1.0f;
+		
 		k_v_i[i] = kappa*(1.f / delta_t)*d_dens*alpha[i];
 		dx = dy = dz = 0.f;
 	}
