@@ -12,7 +12,7 @@
 #define D_EPSILON 0.000000000000001f;
 
 //since force is low a higher radius is requiered for small number of particles
-#define D_RAD 0.03f;
+#define D_RAD 0.08f;
 
 SPH::SPH(glm::vec3* start_pos)
 {
@@ -105,7 +105,7 @@ void SPH::update(float dT)
 	predict_velocities();
 
 	if(iter >= 2)
-		correct_density_error(alpha, dT, scalar_values, f_tot, k_v_i);
+		correct_density_error(alpha, m_delta_t, scalar_values, f_tot, k_v_i);
 
 	update_positions(dT);
 
@@ -221,7 +221,7 @@ void SPH::calculate_time_step(float dT)
 	if (dT < m_delta_t)
 		m_delta_t = dT;
 
-	//m_delta_t = m_delta_t < 0.033f ? 0.033f : m_delta_t;
+	m_delta_t = m_delta_t < 0.00033f ? 0.00033f : m_delta_t;
 
 }
 
@@ -241,20 +241,20 @@ void SPH::predict_velocities()
 		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.05)
 		{
 			m_particles.pred_vel.x[i] = 0.f;
-			//m_particles.pred_vel.x[i] = -0.1f*m_particles.pred_vel.x[i];
+			m_particles.pred_vel.x[i] = 0.f;
 			//m_particles.vel.x[i] = -0.1f*m_particles.vel.x[i];
 		}
 		if (abs(m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t) >= 0.2)
 		{
 			m_particles.pred_vel.y[i] = 0.f;
-			//m_particles.pred_vel.y[i] = -0.0f*m_particles.pred_vel.y[i];
+			m_particles.pred_vel.y[i] = 0.0;
 			//m_particles.vel.y[i] = -0.0f*m_particles.vel.y[i];
 		}
 
 		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.05)
 		{
 			m_particles.pred_vel.z[i] = 0.f;
-			//m_particles.pred_vel.z[i] = -0.1f*m_particles.pred_vel.z[i];
+			m_particles.pred_vel.z[i] = 0.f;
 			//m_particles.vel.z[i] = -0.1f*m_particles.vel.z[i];
 		}
 	}
@@ -359,9 +359,9 @@ void SPH::update_positions(float dT) const
 {
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		m_particles.pos.x[i] += m_particles.pred_vel.x[i] * dT;
-		m_particles.pos.y[i] += m_particles.pred_vel.y[i] * dT;
-		m_particles.pos.z[i] += m_particles.pred_vel.z[i] * dT;
+		m_particles.pos.x[i] += m_particles.pred_vel.x[i] * m_delta_t;
+		m_particles.pos.y[i] += m_particles.pred_vel.y[i] * m_delta_t;
+		m_particles.pos.z[i] += m_particles.pred_vel.z[i] * m_delta_t;
 	}
 }
 
@@ -484,9 +484,9 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 			dy = pos->y[neighbor_index] - pos->y[particle];
 			dz = pos->z[neighbor_index] - pos->z[particle];
 
-			kernel_gradient_x = dx * scalar_values[ind];
-			kernel_gradient_y = dy * scalar_values[ind];
-			kernel_gradient_z = dz * scalar_values[ind];
+			kernel_gradient_x = dx * mass * scalar_values[ind];
+			kernel_gradient_y = dy * mass * scalar_values[ind];
+			kernel_gradient_z = dz * mass * scalar_values[ind];
 
 			x += kernel_gradient_x;
 			y += kernel_gradient_y;
@@ -501,7 +501,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 		}
 
 		abs_sum_denom = sqrt(( x*x + y*y + z*z ));
-		denom = mass*(abs_sum_denom*abs_sum_denom + sum_abs_denom);
+		denom = (abs_sum_denom*abs_sum_denom + sum_abs_denom);
 
 		// set alpha to max(denom,min_denom)
 		denom = denom > min_denom ? denom : min_denom;
@@ -667,10 +667,8 @@ float calculate_stiffness(float* alpha, Float3* vel, Float3* pred_vel, Float3* p
 
 	int neighbor_length;
 	float particle_dens;
-	float kappa = 0.8f;
 
-	//not suppose to be nessesary bot in first iteratin time = 0
-	//delta_t = delta_t <= 0 ? 0.00001f : delta_t;
+
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		neighbor_length = neighbor_data[i].n;
@@ -688,16 +686,16 @@ float calculate_stiffness(float* alpha, Float3* vel, Float3* pred_vel, Float3* p
 			kernel_gradient_y = y*scalar_value[linear_ind];
 			kernel_gradient_z = z*scalar_value[linear_ind];
 
-			dx += mass *kernel_gradient_x*(pred_vel->x[i]- pred_vel->x[neighbor_index]) ;
-			dy += mass *kernel_gradient_y*(pred_vel->y[i]- pred_vel->x[neighbor_index]) ;
-			dz += mass *kernel_gradient_z*(pred_vel->z[i]- pred_vel->x[neighbor_index]) ;
+			dx += mass*kernel_gradient_x*(pred_vel->x[i] - pred_vel->x[neighbor_index]) ;
+			dy += mass*kernel_gradient_y*(pred_vel->y[i] - pred_vel->y[neighbor_index]) ;
+			dz += mass*kernel_gradient_z*(pred_vel->z[i] - pred_vel->z[neighbor_index]) ;
 		}
 		
-		d_dens = particle_dens * (dx + dy + dz);
+		d_dens = (dx + dy + dz);
 
 		d_dens_avrg += d_dens;
 		
-		k_v_i[i] = kappa*(1.f / delta_t)*d_dens*alpha[i];
+		k_v_i[i] = (1.f / delta_t)*d_dens*alpha[i];
 		dx = dy = dz = 0.f;
 	}
 	//std::cout << d_dens_avrg << std::endl;
