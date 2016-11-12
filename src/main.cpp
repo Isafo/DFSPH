@@ -152,14 +152,12 @@ int main() {
 			Float3s vel = s.get_vel_i(dParticle);
 			Float3s pred_vel = s.get_predvel_i(dParticle);
 			Float3s F_adv = s.get_F_adv_i(dParticle);
-			float p = s.get_p_i(dParticle);
 			float dens = s.get_dens_i(dParticle);
 
 			ImGui::Text("pos: %.4f %.4f %.4f", pos.x, pos.y, pos.z);
 			ImGui::Text("vel: %.4f %.4f %.4f", vel.x, vel.y, vel.z);
 			ImGui::Text("pred. vel: %.4f %.4f %.4f", pred_vel.x, pred_vel.y, pred_vel.z);
 			ImGui::Text("F_adv: %.4f %.4f %.4f", F_adv.x, F_adv.y, F_adv.z);
-			ImGui::Text("p: %.4f", p);
 			ImGui::Text("dens: %.4f", dens);
 		}
 

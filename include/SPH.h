@@ -83,7 +83,6 @@ public:
 		return i_f;
 	}
 
-	float get_p_i(int i) const { return m_particles.p[i]; }
 	float get_dens_i(int i) const { return m_particles.dens[i]; }
 
 private:
@@ -91,7 +90,6 @@ private:
 	// Finds the neighbors of a particle within the given radius D_NEIGBBOR_RAD
 	void find_neighborhoods() const;
 
-	void pressure_forces() const;
 	// Calculates the non-pressure forces: Gravity, surface-tension and vicosity
 	void non_pressure_forces() const;
 	// Calculates a stable time-step

@@ -17,7 +17,6 @@
 SPH::SPH(glm::vec3* start_pos)
 {
 	m_particles.dens = new float[D_NR_OF_PARTICLES];
-	m_particles.p = new float[D_NR_OF_PARTICLES];
 	m_particles.pos.x = new float[D_NR_OF_PARTICLES];
 	m_particles.pos.y = new float[D_NR_OF_PARTICLES];
 	m_particles.pos.z = new float[D_NR_OF_PARTICLES];
@@ -43,7 +42,6 @@ SPH::SPH(glm::vec3* start_pos)
 	float pi = D_PI;
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i) {
 		m_particles.dens[i] = 100.f;
-		m_particles.p[i] = 0.f;
 		m_particles.pos.x[i] = 0.f;
 		m_particles.pos.y[i] = 0.f;
 		m_particles.pos.z[i] = 0.f;
@@ -75,7 +73,6 @@ SPH::~SPH()
 	delete[] m_particles.pos.y;
 	delete[] m_particles.pos.z;
 	delete[] m_particles.dens;
-	delete[] m_particles.p;
 	delete[] m_neighbor_data;
 }
 
@@ -95,8 +92,6 @@ void SPH::update(float dT)
 	update_kernel_values(kernel_values, &m_particles.pos, m_neighbor_data);
 
 	update_density_and_factors(m_particles.mass, &m_particles.pos, m_particles.dens, scalar_values, m_neighbor_data, alpha, kernel_values);
-
-	pressure_forces();
 
 	calculate_time_step(dT);
 
@@ -181,15 +176,6 @@ void SPH::find_neighborhoods() const
 		//save nr of neighbor to first position 
 		m_neighbor_data[i].n = count;
 		count = 0;
-	}
-}
-
-void SPH::pressure_forces() const
-{
-	// calculate the particle pressure
-	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
-	{
-		m_particles.p[i] = m_particles.dens[i] - C_REST_DENS;
 	}
 }
 
