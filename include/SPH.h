@@ -141,7 +141,7 @@ void calculate_pressure_force(Float3s* f_tot, float* k_v_i, Float3* pos, float m
 void calculate_predicted_pressure(Float3s* predicted_pressure, Float3s* pred_vel, float mass, float_t*dens, float* scalar_values, float delta_t, Neighbor_Data* n_data, Float3 * pos);
 
 // calculates the k^v_i variable for all particles
-float calculate_stiffness(float* alpha, Float3* vel, Float3* pred_vel, Float3* pos, float* dens, float delta_t, float *k_v_i, Neighbor_Data* neighbor_data, float* scalar_values,float mass);
+float calculate_stiffness(float* alpha, Float3* pred_vel, Float3* pos, float delta_t, float *k_v_i, Neighbor_Data* neighbor_data, float* scalar_values,float mass);
 
 // updates the scalar values g(q) for all particles
 void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values);

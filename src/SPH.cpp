@@ -331,7 +331,7 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
 	int neighbor_ind;
 
-	float dens_avg = calculate_stiffness(alpha, &m_particles.vel, &m_particles.pred_vel, &m_particles.pos, m_particles.dens, m_delta_t, k_v_i, m_neighbor_data, scalar_values, m_particles.mass);
+	float dens_avg = calculate_stiffness(alpha, &m_particles.pred_vel, &m_particles.pos, m_delta_t, k_v_i, m_neighbor_data, scalar_values, m_particles.mass);
 
 	while (dens_avg > 0.1f)
 	{
@@ -371,7 +371,7 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 			m_particles.pred_vel.y[particle_ind] = m_particles.pred_vel.y[particle_ind] - m_delta_t * sum_y;
 			m_particles.pred_vel.z[particle_ind] = m_particles.pred_vel.z[particle_ind] - m_delta_t * sum_z;
 		}
-		dens_avg = calculate_stiffness(alpha, &m_particles.vel, &m_particles.pred_vel, &m_particles.pos, m_particles.dens, m_delta_t, k_v_i, m_neighbor_data, scalar_values, m_particles.mass);
+		dens_avg = calculate_stiffness(alpha, &m_particles.pred_vel, &m_particles.pos, m_delta_t, k_v_i, m_neighbor_data, scalar_values, m_particles.mass);
 	}
 }
 
@@ -592,8 +592,8 @@ void calculate_predicted_pressure(Float3s* predicted_pressure, Float3s* f_p, flo
 	}
 }
 
-float calculate_stiffness(float* alpha, Float3* vel, Float3* pred_vel, Float3* pos, float* dens,
-	float delta_t, float* k_v_i, Neighbor_Data* neighbor_data, float* scalar_value, float mass)
+float calculate_stiffness(float* alpha, Float3* pred_vel, Float3* pos, float delta_t, 
+	float* k_v_i, Neighbor_Data* neighbor_data, float* scalar_value, float mass)
 {
 	unsigned int neighbor_index;
 	int neighbor_length;
