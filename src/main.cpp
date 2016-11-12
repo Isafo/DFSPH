@@ -48,8 +48,7 @@ int main() {
 
 	//BoundingBox bbox(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
-
-	SPH s(&glm::vec3(-0.15, 0.0, 0.0));
+	SPH s(-0.15, 0.0, 0.0);
 	
 	Sphere sphere(0.0f, 0.0f, 0.0f, s.get_particle_radius());
 

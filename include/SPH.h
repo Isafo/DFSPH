@@ -29,13 +29,13 @@ struct Neighbor_Data
 class SPH
 {
 public:
-	SPH(glm::vec3* start_pos);
+	SPH(int x, int y, int z);
 	~SPH();
 	// performs the simulation steps and updates the particles
 	void update(float dT);
 
 	// initializes the particles in a given grid formation
-	void init_positions(glm::vec3* start_pos, int rows = 3, int cols = 3) const;
+	void init_positions(int x = 0, int y = 0, int z = 0, int rows = 3, int cols = 3) const;
 
 	static unsigned int get_nr_of_particles() { return D_NR_OF_PARTICLES; }
 	float get_particle_radius() const { return m_particles.rad; }

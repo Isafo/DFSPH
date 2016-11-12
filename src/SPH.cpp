@@ -10,7 +10,7 @@
 //since force is low a higher radius is requiered for small number of particles
 #define D_RAD 0.08f;
 
-SPH::SPH(glm::vec3* start_pos)
+SPH::SPH(int x, int y, int z)
 {
 	m_particles.dens = new float[D_NR_OF_PARTICLES];
 	m_particles.pos.x = new float[D_NR_OF_PARTICLES];
@@ -51,7 +51,7 @@ SPH::SPH(glm::vec3* start_pos)
 		m_particles.pred_vel.z[i] = 0.f;
 	}
 
-	init_positions(start_pos, 5, 5);
+	init_positions(x, y, z, 5, 5);
 }
 
 SPH::~SPH()
@@ -123,7 +123,7 @@ void SPH::update(float dT)
 }
 
 
-void SPH::init_positions(glm::vec3* start_pos, int rows, int cols) const
+void SPH::init_positions(int x_start, int y_start, int z_start, int rows, int cols) const
 {
 	float dist_between{ 1.2f * m_particles.rad };
 	float padding_factor{ 1.4f };
@@ -137,9 +137,9 @@ void SPH::init_positions(glm::vec3* start_pos, int rows, int cols) const
 		y = ind / rows;
 		z = ind % rows;
 
-		m_particles.pos.y[i] = start_pos->x + x * dist_between*padding_factor;
-		m_particles.pos.x[i] = start_pos->y + y * dist_between*padding_factor;
-		m_particles.pos.z[i] = start_pos->z + z * dist_between*padding_factor;
+		m_particles.pos.y[i] = x_start + x * dist_between*padding_factor;
+		m_particles.pos.x[i] = y_start + y * dist_between*padding_factor;
+		m_particles.pos.z[i] = z_start + z * dist_between*padding_factor;
 	}
 }
 
@@ -214,15 +214,15 @@ void SPH::predict_velocities()
 		m_particles.pred_vel.y[i] = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_particles.mass;
 		m_particles.pred_vel.z[i] = m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_particles.mass;
 
-		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.05)
+		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.1)
 		{
 			m_particles.pred_vel.x[i] = 0.f;
 		}
-		if (abs(m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t) >= 0.2)
+		if (abs(m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t) >= 0.5)
 		{
 			m_particles.pred_vel.y[i] = 0.f;
 		}
-		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.05)
+		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.1)
 		{
 			m_particles.pred_vel.z[i] = 0.f;
 		}
@@ -382,16 +382,6 @@ void SPH::update_velocities()
 		m_particles.vel.x[i] = m_particles.pred_vel.x[i];
 		m_particles.vel.y[i] = m_particles.pred_vel.y[i];
 		m_particles.vel.z[i] = m_particles.pred_vel.z[i];
-		
-		if (abs(m_particles.pos.x[i] + m_particles.vel.x[i] * m_delta_t) >= 0.05) {
-			m_particles.vel.x[i] = 0.f;
-		}
-		if (abs(m_particles.pos.y[i] + m_particles.vel.y[i] * m_delta_t) >= 0.2) {
-			m_particles.vel.y[i] = 0.f;
-		}
-		if (abs(m_particles.pos.z[i] + m_particles.vel.z[i] * m_delta_t) >= 0.05) {
-			m_particles.vel.z[i] = 0.f;
-		}		 
 	}
 }
 
