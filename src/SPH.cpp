@@ -34,7 +34,7 @@ SPH::SPH(int x, int y, int z)
 	settings class with static values
 	instead of being defined here. */
 	m_particles.rad = 0.01f;
-	m_particles.mass = 0.00042f;
+	m_particles.mass = 0.0042f;
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i) {
 		m_particles.dens[i] = 100.f;

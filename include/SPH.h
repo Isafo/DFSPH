@@ -127,7 +127,7 @@ private:
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
 
-	const float C_REST_DENS{ 100.f };
+	const float C_REST_DENS{ 1000.f };
 };
 
 // calculates the density and the alpha particle factors
