@@ -94,8 +94,7 @@ void SPH::update(float dT)
 
 	predict_velocities();
 
-	if(iter >= 2)
-		correct_density_error(alpha, m_delta_t, scalar_values, f_tot, k_v_i);
+	correct_density_error(alpha, m_delta_t, scalar_values, f_tot, k_v_i);
 
 	update_positions();
 
@@ -107,19 +106,9 @@ void SPH::update(float dT)
 
 	update_density_and_factors(m_particles.mass, &m_particles.pos, m_particles.dens, scalar_values, m_neighbor_data, alpha, kernel_values);
 
-
-	// TODO: this function is incorretly, implemented correct
-	if(iter >= 1)
-		correct_divergence_error(k_v_i, scalar_values, alpha);
+	correct_divergence_error(k_v_i, scalar_values, alpha);
 
 	update_velocities();
-
-	// Are we suppose to do this?
-	for (int i = 0; i < D_NR_OF_PARTICLES; ++i) {
-		m_particles.dens[i] = 100.f;
-	}
-
-	++iter;
 }
 
 
@@ -235,7 +224,7 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 	static Float3s k[D_NR_OF_PARTICLES];
 
 	int neighbor_index;
-	int iter = -1;
+	int iter = 0;
 
 	float dens_i;
 	float dens_avg;
@@ -251,11 +240,10 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 		dens_avg = 0.f;
 		dens_min = INFINITY;
 		dens_max = -1.f;
+
 		calculate_pressure_force(f_tot, k_v_i, &m_particles.pos, m_particles.mass, scalar_values, m_neighbor_data, m_particles.dens);
-
 		calculate_predicted_pressure(predicted_pressure, f_tot, m_particles.mass, m_particles.dens, scalar_values, m_delta_t, m_neighbor_data, &m_particles.pos);
-		++iter;
-
+		
 		assert(m_delta_t != 0.0f, "deltaT");
 
 		for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
@@ -307,7 +295,8 @@ void SPH::correct_density_error(float* alpha, float dT, float* scalar_values, Fl
 		// condition p_avg - p_0 > ny  ny = 1.01*(p_max_p_min) p_0 = 1000
 		pressure_avg = dens_avg / D_NR_OF_PARTICLES - C_REST_DENS;
 		ny = 1.01*(dens_max - dens_min);
-	} while (pressure_avg - C_REST_DENS > ny );
+		++iter;
+	} while (pressure_avg - C_REST_DENS > ny || iter < 2);
 }
 
 void SPH::correct_strain_rate_error() {}
@@ -333,7 +322,7 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 
 	float dens_avg = calculate_stiffness(alpha, &m_particles.pred_vel, &m_particles.pos, m_delta_t, k_v_i, m_neighbor_data, scalar_values, m_particles.mass);
 
-	while (dens_avg > 0.1f)
+	do 
 	{
 		for (auto particle_ind = 0; particle_ind < D_NR_OF_PARTICLES; ++particle_ind)
 		{
@@ -372,7 +361,7 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 			m_particles.pred_vel.z[particle_ind] = m_particles.pred_vel.z[particle_ind] - m_delta_t * sum_z;
 		}
 		dens_avg = calculate_stiffness(alpha, &m_particles.pred_vel, &m_particles.pos, m_delta_t, k_v_i, m_neighbor_data, scalar_values, m_particles.mass);
-	}
+	} while (dens_avg > 0.1f);
 }
 
 void SPH::update_velocities()
