@@ -94,7 +94,7 @@ void SPH::update(float dT)
 
 	predict_velocities();
 
-	correct_density_error(alpha, m_delta_t, scalar_values, f_tot, k_v_i);
+	//correct_density_error(alpha, m_delta_t, scalar_values, f_tot, k_v_i);
 
 	update_positions();
 
@@ -102,7 +102,7 @@ void SPH::update(float dT)
 
 	update_density_and_factors(m_particles.mass, &m_particles.pos, m_particles.dens, scalar_values, m_neighbor_data, alpha, kernel_values);
 
-	correct_divergence_error(k_v_i, scalar_values, alpha);
+	//correct_divergence_error(k_v_i, scalar_values, alpha);
 
 	update_velocities();
 }
