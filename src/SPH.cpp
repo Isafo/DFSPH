@@ -107,7 +107,6 @@ void SPH::update(float dT)
 	update_velocities();
 }
 
-
 void SPH::init_positions(int x_start, int y_start, int z_start, int rows, int cols) const
 {
 	float dist_between{ 1.2f * m_particles.rad };
@@ -388,6 +387,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 	{
 		nr_neighbors = neighbor_data[particle].n;
 		//added 1 * mass as particles own density as kernel is 1 at dist == 0
+		//this should atleast be the case, but needs to be checked
 		dens[particle] = mass;
 		for (auto neighbor = 0; neighbor < nr_neighbors; ++neighbor)
 		{
