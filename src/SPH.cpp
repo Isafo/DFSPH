@@ -101,12 +101,8 @@ void SPH::update(float dT)
 
 	find_neighborhoods();  // t + dt
 
-	for (int i = 0; i < D_NR_OF_PARTICLES; ++i) {
-		m_particles.dens[i] = 100.f;
-	}
 
 	update_density_and_factors(m_particles.mass, &m_particles.pos, m_particles.dens, scalar_values, m_neighbor_data, alpha, kernel_values);
-
 
 	// TODO: this function is incorretly, implemented correct
 	if(iter >= 1)
@@ -114,10 +110,7 @@ void SPH::update(float dT)
 
 	update_velocities();
 
-	// Are we suppose to do this?
-	for (int i = 0; i < D_NR_OF_PARTICLES; ++i) {
-		m_particles.dens[i] = 100.f;
-	}
+
 
 	++iter;
 }
@@ -402,7 +395,8 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
 	{
 		nr_neighbors = neighbor_data[particle].n;
-
+		//added 1 * mass as particles own density as kernel is 1 at dist == 0
+		dens[particle] = mass;
 		for (auto neighbor = 0; neighbor < nr_neighbors; ++neighbor)
 		{
 			neighbor_index = neighbor_data[particle].neighbor[neighbor];
