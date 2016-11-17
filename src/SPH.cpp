@@ -434,11 +434,17 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 	}
 }
 
+/*
+ * Using a Cubic spline kernel
+ * Divergence-Free SPH for Incompressible and Viscous Fluids, ref 6
+ */
 void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data)
 {
 	int ind;
-	float x, y, z, q;
+	float x, y, z, q, q_2, length;
 	float kernel_val = 0.f;
+	float search_area = D_RAD;
+	float pi = D_PI;
 
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
 	{
@@ -454,16 +460,12 @@ void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neig
 			y = pos->y[ind] - particle_pos_y;
 			z = pos->z[ind] - particle_pos_z;
 
-			float len = x*x + y*y + z*z;
-			len = len == 0.f ? 0.0000000000000000001f : len;
-			q = sqrt(len) / D_RAD;
+			length = sqrt(x*x + y*y + z*z);
+			q = length / D_RAD;
+			q_2 = q*q;
 
-			if (q >= 0.f || q <= 0.5f)
-				kernel_val = (1.f - 6.f*q*q + 6.f*q*q*q);
-			else if (q > 0.5f || q < 1.0f)
-				kernel_val = 2.0f * (1.f - q) * (1.f - q) * (1.f - q);
-			else
-				kernel_val = 0.f;
+			// length is always equal or smaller to D_RAD => implicit intervall between [0, 1]
+			kernel_val = (1.0f/(search_area*pi))*(1.0f - 1.5f*q_2 + 0.75f*q_2*q);
 
 			kernel_values[particle*D_NR_OF_PARTICLES + neighbor] = kernel_val;
 		}
