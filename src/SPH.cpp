@@ -438,7 +438,7 @@ void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neig
 {
 	int ind;
 	float x, y, z, q;
-	float kernel_val = 0;
+	float kernel_val = 0.f;
 
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
 	{
@@ -458,12 +458,12 @@ void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neig
 			len = len == 0.f ? 0.0000000000000000001f : len;
 			q = sqrt(len) / D_RAD;
 
-			if (q >= 0 || q <= 0.5f)
-				kernel_val *= (1 - 6.f*q*q + 6.f*q*q*q);
+			if (q >= 0.f || q <= 0.5f)
+				kernel_val = (1.f - 6.f*q*q + 6.f*q*q*q);
 			else if (q > 0.5f || q < 1.0f)
-				kernel_val *= 2.0f * (1 - q) * (1 - q) * (1 - q);
+				kernel_val = 2.0f * (1.f - q) * (1.f - q) * (1.f - q);
 			else
-				kernel_val = 0;
+				kernel_val = 0.f;
 
 			kernel_values[particle*D_NR_OF_PARTICLES + neighbor] = kernel_val;
 		}
