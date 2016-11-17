@@ -639,9 +639,7 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 			dist = std::sqrt(dx*dx + dy*dy + dz*dz);
 			q = dist / D_RAD;
 			
-			//this is an approximation 
-			dist = dist == 0.f ? 0.000000000000000000000000000001f : dist;
-
+		
 			//Compute the derivitive of the kernel function
 			if (q >= 0 || q <= 0.5f)
 				kernel_derive = (-12.f*q + 18.f*q*q);
