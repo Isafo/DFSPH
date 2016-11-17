@@ -102,7 +102,7 @@ void SPH::update(float dT)
 
 	update_density_and_factors(m_particles.mass, &m_particles.pos, m_particles.dens, scalar_values, m_neighbor_data, alpha, kernel_values);
 
-	//correct_divergence_error(k_v_i, scalar_values, alpha);
+	correct_divergence_error(k_v_i, scalar_values, alpha);
 
 	update_velocities();
 }
@@ -202,7 +202,7 @@ void SPH::predict_velocities()
 		{
 			m_particles.pred_vel.x[i] = 0.f;
 		}
-		if (abs(m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t) >= 0.5)
+		if ((m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t) <= -0.5)
 		{
 			m_particles.pred_vel.y[i] = 0.f;
 		}
@@ -306,27 +306,29 @@ void SPH::update_positions() const
 	}
 }
 
-void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* alpha)
+void SPH::correct_divergence_error(float* stiffenss_velocity, float* scalar_values, float* alpha)
 {
 	float dens_i;
 	float div_i;
-	float sum_x, sum_y, sum_z;
+	float pressure_force_x, pressure_force_y, pressure_force_z;
 	float dx, dy, dz;
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
 	int neighbor_ind;
-
-	float dens_avg = calculate_stiffness(alpha, &m_particles.pred_vel, &m_particles.pos, m_delta_t, k_v_i, m_neighbor_data, scalar_values, m_particles.mass);
-
-	do 
+	static int iter = 0;
+	//should not be here, send
+	float mass = 0.00418f;
+	float delta_dens_avg = calculate_stiffness(alpha, &m_particles.pred_vel, &m_particles.pos, m_delta_t, stiffenss_velocity, m_neighbor_data, scalar_values, m_particles.mass);
+	++iter;
+	while ((delta_dens_avg) > 1.0f && iter > 1)
 	{
 		for (auto particle_ind = 0; particle_ind < D_NR_OF_PARTICLES; ++particle_ind)
 		{
 			dens_i = m_particles.dens[particle_ind];
 
 			assert(dens_i != 0.0f, "dens");
-			
-			div_i = k_v_i[particle_ind] / dens_i;
-			sum_x = sum_y = sum_z = 0.0f;
+
+			div_i = stiffenss_velocity[particle_ind] / dens_i;
+			pressure_force_x = pressure_force_y = pressure_force_z = 0.0f;
 			for (auto j = 0; j < m_neighbor_data[particle_ind].n; ++j)
 			{
 				int linear_ind = j + D_MAX_NR_OF_NEIGHBORS*particle_ind;
@@ -342,21 +344,23 @@ void SPH::correct_divergence_error(float* k_v_i, float* scalar_values, float* al
 				kernel_gradient_y = dy*scalar_values[linear_ind];
 				kernel_gradient_z = dz*scalar_values[linear_ind];
 
-				sum_x += m_particles.mass * (div_i + k_v_i[neighbor_ind] /
+				pressure_force_x += m_particles.mass * (div_i + stiffenss_velocity[neighbor_ind] /
 					m_particles.dens[neighbor_ind]) * kernel_gradient_x;
 
-				sum_y += m_particles.mass * (div_i + k_v_i[neighbor_ind] /
+				pressure_force_y += m_particles.mass * (div_i + stiffenss_velocity[neighbor_ind] /
 					m_particles.dens[neighbor_ind]) * kernel_gradient_y;
 
-				sum_z += m_particles.mass * (div_i + k_v_i[neighbor_ind] /
+				pressure_force_z += m_particles.mass * (div_i + stiffenss_velocity[neighbor_ind] /
 					m_particles.dens[neighbor_ind]) * kernel_gradient_z;
 			}
-			m_particles.pred_vel.x[particle_ind] = m_particles.pred_vel.x[particle_ind] - m_delta_t * sum_x;
-			m_particles.pred_vel.y[particle_ind] = m_particles.pred_vel.y[particle_ind] - m_delta_t * sum_y;
-			m_particles.pred_vel.z[particle_ind] = m_particles.pred_vel.z[particle_ind] - m_delta_t * sum_z;
+			//pressure_force_z/mass is not in report bot it is a force so should be a = F/m *delta_t
+			m_particles.pred_vel.x[particle_ind] = m_particles.pred_vel.x[particle_ind] - m_delta_t * pressure_force_x;
+			m_particles.pred_vel.y[particle_ind] = m_particles.pred_vel.y[particle_ind] - m_delta_t * pressure_force_y;
+			m_particles.pred_vel.z[particle_ind] = m_particles.pred_vel.z[particle_ind] - m_delta_t * pressure_force_z;
 		}
-		dens_avg = calculate_stiffness(alpha, &m_particles.pred_vel, &m_particles.pos, m_delta_t, k_v_i, m_neighbor_data, scalar_values, m_particles.mass);
-	} while (dens_avg > 0.1f);
+		delta_dens_avg = calculate_stiffness(alpha, &m_particles.pred_vel, &m_particles.pos, m_delta_t, stiffenss_velocity, m_neighbor_data, scalar_values, m_particles.mass);
+
+	}
 }
 
 void SPH::update_velocities()
@@ -598,11 +602,11 @@ float calculate_stiffness(float* alpha, Float3* pred_vel, Float3* pos, float del
 			kernel_gradient_y = y*scalar_value[linear_ind];
 			kernel_gradient_z = z*scalar_value[linear_ind];
 
-			dx += mass*kernel_gradient_x*(pred_vel->x[i] - pred_vel->x[neighbor_index]) ;
-			dy += mass*kernel_gradient_y*(pred_vel->y[i] - pred_vel->y[neighbor_index]) ;
-			dz += mass*kernel_gradient_z*(pred_vel->z[i] - pred_vel->z[neighbor_index]) ;
+			dx += kernel_gradient_x*(pred_vel->x[i] - pred_vel->x[neighbor_index]) ;
+			dy += kernel_gradient_y*(pred_vel->y[i] - pred_vel->y[neighbor_index]) ;
+			dz += kernel_gradient_z*(pred_vel->z[i] - pred_vel->z[neighbor_index]) ;
 		}
-		d_dens = dx + dy + dz;
+		d_dens = (dx + dy + dz)*delta_t;
 		d_dens_avg += d_dens;
 		
 		k_v_i[i] = (1.f / delta_t)*d_dens*alpha[i];
