@@ -461,7 +461,7 @@ void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neig
 			q_2 = q*q;
 
 			// length is always equal or smaller to D_RAD => implicit intervall between [0, 1]
-			kernel_val = (1.0f/(search_area*pi))*(1.0f - 1.5f*q_2 + 0.75f*q_2*q);
+			kernel_val = (1.0f - 1.5f*q_2 + 0.75f*q_2*q) / (search_area*pi);
 
 			kernel_values[particle*D_NR_OF_PARTICLES + neighbor] = kernel_val;
 		}
@@ -623,7 +623,7 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 	float search_area = D_RAD;
 	float invD_RAD = 1.0f / D_RAD;
 	float pi = D_PI;
-	float q, q_2, dist;
+	float q, dist;
 	float dx, dy, dz;
 
 
@@ -642,6 +642,7 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 			dz = pos->z[particle] - pos->z[neighbor_ind];
 
 			dist = sqrt(dx*dx + dy*dy + dz*dz);
+
 			q = dist * invD_RAD;
 			
 			// length is always equal or smaller to D_RAD => implicit intervall between [0, 1]
