@@ -34,7 +34,7 @@ SPH::SPH(int x, int y, int z)
 	settings class with static values
 	instead of being defined here. */
 	m_particles.rad = 0.01f;
-	m_particles.mass = 0.00042f;
+	m_particles.mass = 0.0042f;
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i) {
 		m_particles.dens[i] = 100.f;
@@ -614,9 +614,10 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 	int neighbor_ind;
 
 	float kernel_derive;
-	float radii = D_RAD;
+	float h = D_RAD;
 	float q, dist;
 	float dx, dy, dz;
+	float pi = D_PI;
 
 	//Loop through all particles
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
@@ -631,20 +632,17 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 			dz = pos->z[particle] - pos->z[neighbor_ind];
 
 			dist = std::sqrt(dx*dx + dy*dy + dz*dz);
-			q = dist / D_RAD;
+
+
+
+			//Compute the derivitive using spiky kernel since this increases closer to 0
+			//note that kernel_derive -> INF if h -> 0
+			//no if or else needed all neighboors are within search radius by default
 			
-			//this is an approximation 
-			dist = dist == 0.f ? 0.000000000000000000000000000001f : dist;
+			kernel_derive = (15.f / (pi*pow(h, 6))) *pow((h - dist), 3);
+			
 
-			//Compute the derivitive of the kernel function
-			if (q >= 0 || q <= 0.5f)
-				kernel_derive = (-12.f*q + 18.f*q*q);
-			else if (q > 0.5f || q <= 1.0f)
-				kernel_derive = -6.0f*(1 - q)*(1 - q);
-			else
-				kernel_derive = 0.0f;
-
-			scalar_values[particle*D_MAX_NR_OF_NEIGHBORS + neighbor] = kernel_derive/(dist*radii);
+			scalar_values[particle*D_MAX_NR_OF_NEIGHBORS + neighbor] = kernel_derive;
 		}
 	}
 
