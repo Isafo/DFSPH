@@ -460,7 +460,7 @@ void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neig
 			q = length / D_RAD;
 			q_2 = q*q;
 
-			// length is always equell or smaller to D_RAD => implicit intervall between [0, 1]
+			// length is always equal or smaller to D_RAD => implicit intervall between [0, 1]
 			kernel_val = (1.0f/(search_area*pi))*(1.0f - 1.5f*q_2 + 0.75f*q_2*q);
 
 			kernel_values[particle*D_NR_OF_PARTICLES + neighbor] = kernel_val;
