@@ -310,7 +310,7 @@ void SPH::correct_divergence_error(float* stiffenss_velocity, float* scalar_valu
 {
 	float dens_i;
 	float div_i;
-	float pressure_force_x, pressure_force_y, pressure_force_z;
+	float pressure_acc_x, pressure_acc_y, pressure_acc_z;
 	float dx, dy, dz;
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
 	int neighbor_ind;
@@ -328,7 +328,7 @@ void SPH::correct_divergence_error(float* stiffenss_velocity, float* scalar_valu
 			assert(dens_i != 0.0f, "dens");
 
 			div_i = stiffenss_velocity[particle_ind] / dens_i;
-			pressure_force_x = pressure_force_y = pressure_force_z = 0.0f;
+			pressure_acc_x = pressure_acc_y = pressure_acc_z = 0.0f;
 			for (auto j = 0; j < m_neighbor_data[particle_ind].n; ++j)
 			{
 				int linear_ind = j + D_MAX_NR_OF_NEIGHBORS*particle_ind;
@@ -344,19 +344,19 @@ void SPH::correct_divergence_error(float* stiffenss_velocity, float* scalar_valu
 				kernel_gradient_y = dy*scalar_values[linear_ind];
 				kernel_gradient_z = dz*scalar_values[linear_ind];
 
-				pressure_force_x += m_particles.mass * (div_i + stiffenss_velocity[neighbor_ind] /
+				pressure_acc_x += m_particles.mass * (div_i + stiffenss_velocity[neighbor_ind] /
 					m_particles.dens[neighbor_ind]) * kernel_gradient_x;
 
-				pressure_force_y += m_particles.mass * (div_i + stiffenss_velocity[neighbor_ind] /
+				pressure_acc_y += m_particles.mass * (div_i + stiffenss_velocity[neighbor_ind] /
 					m_particles.dens[neighbor_ind]) * kernel_gradient_y;
 
-				pressure_force_z += m_particles.mass * (div_i + stiffenss_velocity[neighbor_ind] /
+				pressure_acc_z += m_particles.mass * (div_i + stiffenss_velocity[neighbor_ind] /
 					m_particles.dens[neighbor_ind]) * kernel_gradient_z;
 			}
 			//pressure_force_z/mass is not in report bot it is a force so should be a = F/m *delta_t
-			m_particles.pred_vel.x[particle_ind] = m_particles.pred_vel.x[particle_ind] - m_delta_t * pressure_force_x;
-			m_particles.pred_vel.y[particle_ind] = m_particles.pred_vel.y[particle_ind] - m_delta_t * pressure_force_y;
-			m_particles.pred_vel.z[particle_ind] = m_particles.pred_vel.z[particle_ind] - m_delta_t * pressure_force_z;
+			m_particles.pred_vel.x[particle_ind] = m_particles.pred_vel.x[particle_ind] - m_delta_t * pressure_acc_x;
+			m_particles.pred_vel.y[particle_ind] = m_particles.pred_vel.y[particle_ind] - m_delta_t * pressure_acc_y;
+			m_particles.pred_vel.z[particle_ind] = m_particles.pred_vel.z[particle_ind] - m_delta_t * pressure_acc_z;
 		}
 		delta_dens_avg = calculate_stiffness(alpha, &m_particles.pred_vel, &m_particles.pos, m_delta_t, stiffenss_velocity, m_neighbor_data, scalar_values, m_particles.mass);
 
