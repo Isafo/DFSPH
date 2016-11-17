@@ -611,13 +611,18 @@ float calculate_stiffness(float* alpha, Float3* pred_vel, Float3* pos, float del
 	return d_dens_avg / D_NR_OF_PARTICLES;
 }
 
+/*
+* Derived the Cubic spline kernel by q
+* Divergence-Free SPH for Incompressible and Viscous Fluids, section 4.2
+*/
 void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values)
 {
 	int neighbor_ind;
 
-	float kernel_derive;
-	float radii = D_RAD;
-	float q, dist;
+	float kernel_derive, scalar_value;
+	float search_area = D_RAD;
+	float pi = D_PI;
+	float q, q_2, dist;
 	float dx, dy, dz;
 
 	//Loop through all particles
@@ -632,21 +637,16 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 			dy = pos->y[particle] - pos->y[neighbor_ind];
 			dz = pos->z[particle] - pos->z[neighbor_ind];
 
-			dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+			dist = sqrt(dx*dx + dy*dy + dz*dz);
 			q = dist / D_RAD;
-			
-			//this is an approximation 
-			dist = dist == 0.f ? 0.000000000000000000000000000001f : dist;
+			q_2 = q*q;
 
-			//Compute the derivitive of the kernel function
-			if (q >= 0 || q <= 0.5f)
-				kernel_derive = (-12.f*q + 18.f*q*q);
-			else if (q > 0.5f || q <= 1.0f)
-				kernel_derive = -6.0f*(1 - q)*(1 - q);
-			else
-				kernel_derive = 0.0f;
+			// length is always equal or smaller to D_RAD => implicit intervall between [0, 1]
+			kernel_derive = (1.0f / (search_area*pi))*(-3.0f*q + 2.25f*q_2);
 
-			scalar_values[particle*D_MAX_NR_OF_NEIGHBORS + neighbor] = kernel_derive/(dist*radii);
+			scalar_value = kernel_derive*(1.0f /  (search_area*dist));
+
+			scalar_values[particle*D_MAX_NR_OF_NEIGHBORS + neighbor] = scalar_value;
 		}
 	}
 
