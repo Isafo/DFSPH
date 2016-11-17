@@ -437,7 +437,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data)
 {
 	int ind;
-	float x, y, z, q, length;
+	float x, y, z, q, q_2, length;
 	float kernel_val = 0.f;
 	float search_area = D_RAD;
 	float pi = D_PI;
@@ -458,9 +458,10 @@ void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neig
 
 			length = sqrt(x*x + y*y + z*z);
 			q = length / D_RAD;
+			q_2 = q*q;
 
-			if (q <= 0.0f && q <= 1.0f)
-				kernel_val = (1.0f/search_area*pi)*(1.0f - (3.0f/2.0f)*q*q + (3.0f/4.0f)*q*q*q);
+			// length is always equell or smaller to D_RAD => implicit intervall between [0, 1]
+			kernel_val = (1.0f/(search_area*pi))*(1.0f - 1.5f*q_2 + 0.75f*q_2*q);
 
 			kernel_values[particle*D_NR_OF_PARTICLES + neighbor] = kernel_val;
 		}
