@@ -646,9 +646,9 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 			q = dist * invD_RAD;
 			
 			// length is always equal or smaller to D_RAD => implicit intervall between [0, 1]
-			kernel_derive = (-3.0f*q + 2.25f*q*q) / (search_area * dist);
+			kernel_derive = search_area_m_pi * (-3.0f*q + 2.25f*q*q);
 
-			scalar_value = search_area_m_pi * kernel_derive;
+			scalar_value = kernel_derive / (search_area * dist);
 
 			scalar_values[particle*D_MAX_NR_OF_NEIGHBORS + neighbor] = scalar_value;
 		}
