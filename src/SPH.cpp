@@ -461,7 +461,7 @@ void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neig
 			q_2 = q*q;
 
 			// length is always equal or smaller to D_RAD => implicit intervall between [0, 1]
-			kernel_val = (1.0f/(search_area*pi))*(1.0f - 1.5f*q_2 + 0.75f*q_2*q);
+			kernel_val = (1.0f - 1.5f*q_2 + 0.75f*q_2*q) / (search_area*pi);
 
 			kernel_values[particle*D_NR_OF_PARTICLES + neighbor] = kernel_val;
 		}
@@ -622,7 +622,7 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 	float kernel_derive, scalar_value;
 	float search_area = D_RAD;
 	float pi = D_PI;
-	float q, q_2, dist;
+	float q, dist;
 	float dx, dy, dz;
 
 	//Loop through all particles
@@ -639,12 +639,11 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 
 			dist = sqrt(dx*dx + dy*dy + dz*dz);
 			q = dist / D_RAD;
-			q_2 = q*q;
 
 			// length is always equal or smaller to D_RAD => implicit intervall between [0, 1]
-			kernel_derive = (1.0f / (search_area*pi))*(-3.0f*q + 2.25f*q_2);
+			kernel_derive = (-3.0f*q + 2.25f*q*q) / (search_area*pi);
 
-			scalar_value = kernel_derive*(1.0f /  (search_area*dist));
+			scalar_value = kernel_derive / (search_area*dist);
 
 			scalar_values[particle*D_MAX_NR_OF_NEIGHBORS + neighbor] = scalar_value;
 		}
