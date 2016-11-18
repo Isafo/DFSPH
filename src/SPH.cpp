@@ -8,7 +8,7 @@
 #define D_EPSILON 0.000000000000001f;
 
 //since force is low a higher radius is requiered for small number of particles
-#define D_RAD 0.08f;
+#define D_RAD 0.05f;
 
 SPH::SPH(int x, int y, int z)
 {
@@ -34,7 +34,7 @@ SPH::SPH(int x, int y, int z)
 	settings class with static values
 	instead of being defined here. */
 	m_particles.rad = 0.01f;
-	m_particles.mass = 0.0042f;
+	m_particles.mass = 0.00418f;
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i) {
 		m_particles.dens[i] = 100.f;
@@ -51,7 +51,7 @@ SPH::SPH(int x, int y, int z)
 		m_particles.pred_vel.z[i] = 0.f;
 	}
 
-	init_positions(x, y, z, 5, 5);
+	init_positions(x, y, z, 8, 8);
 }
 
 SPH::~SPH()
@@ -110,7 +110,7 @@ void SPH::update(float dT)
 void SPH::init_positions(int x_start, int y_start, int z_start, int rows, int cols) const
 {
 	float dist_between{ 1.2f * m_particles.rad };
-	float padding_factor{ 1.4f };
+	float padding_factor{ 1.8f };
 	float x, y, z;
 	int ind;
 
@@ -198,7 +198,7 @@ void SPH::predict_velocities()
 		m_particles.pred_vel.y[i] = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_particles.mass;
 		m_particles.pred_vel.z[i] = m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_particles.mass;
 
-		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.1)
+		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.5)
 		{
 			m_particles.pred_vel.x[i] = 0.f;
 		}
@@ -206,7 +206,7 @@ void SPH::predict_velocities()
 		{
 			m_particles.pred_vel.y[i] = 0.f;
 		}
-		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.1)
+		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.5)
 		{
 			m_particles.pred_vel.z[i] = 0.f;
 		}
@@ -317,10 +317,11 @@ void SPH::correct_divergence_error(float* stiffenss_velocity, float* scalar_valu
 	static int iter = 0;
 	//should not be here, send
 	float mass = 0.00418f;
-	float delta_dens_avg = calculate_stiffness(alpha, &m_particles.pred_vel, &m_particles.pos, m_delta_t, stiffenss_velocity, m_neighbor_data, scalar_values, m_particles.mass);
+	float delta_dens_avg = calculate_stiffness(alpha, &m_particles.pred_vel, &m_particles.pos, m_delta_t, stiffenss_velocity, m_neighbor_data, scalar_values, m_particles.mass,m_particles.dens);
 	++iter;
-	while ((delta_dens_avg) > 1.0f && iter > 1)
-	{
+	//changed to 1% max error
+	while (abs(delta_dens_avg) > 1.f && iter > 1)
+	{	
 		for (auto particle_ind = 0; particle_ind < D_NR_OF_PARTICLES; ++particle_ind)
 		{
 			dens_i = m_particles.dens[particle_ind];
@@ -340,9 +341,9 @@ void SPH::correct_divergence_error(float* stiffenss_velocity, float* scalar_valu
 				dy = m_particles.pos.y[neighbor_ind] - m_particles.pos.y[particle_ind];
 				dz = m_particles.pos.z[neighbor_ind] - m_particles.pos.z[particle_ind];
 
-				kernel_gradient_x = dx*scalar_values[linear_ind];
-				kernel_gradient_y = dy*scalar_values[linear_ind];
-				kernel_gradient_z = dz*scalar_values[linear_ind];
+				kernel_gradient_x = -dx*scalar_values[linear_ind];
+				kernel_gradient_y = -dy*scalar_values[linear_ind];
+				kernel_gradient_z = -dz*scalar_values[linear_ind];
 
 				pressure_acc_x += m_particles.mass * (div_i + stiffenss_velocity[neighbor_ind] /
 					m_particles.dens[neighbor_ind]) * kernel_gradient_x;
@@ -353,13 +354,12 @@ void SPH::correct_divergence_error(float* stiffenss_velocity, float* scalar_valu
 				pressure_acc_z += m_particles.mass * (div_i + stiffenss_velocity[neighbor_ind] /
 					m_particles.dens[neighbor_ind]) * kernel_gradient_z;
 			}
-			//pressure_force_z/mass is not in report bot it is a force so should be a = F/m *delta_t
+			//pressure_force_z is not in report but it is a force and it is = F/m *delta_t
 			m_particles.pred_vel.x[particle_ind] = m_particles.pred_vel.x[particle_ind] - m_delta_t * pressure_acc_x;
 			m_particles.pred_vel.y[particle_ind] = m_particles.pred_vel.y[particle_ind] - m_delta_t * pressure_acc_y;
 			m_particles.pred_vel.z[particle_ind] = m_particles.pred_vel.z[particle_ind] - m_delta_t * pressure_acc_z;
 		}
-		delta_dens_avg = calculate_stiffness(alpha, &m_particles.pred_vel, &m_particles.pos, m_delta_t, stiffenss_velocity, m_neighbor_data, scalar_values, m_particles.mass);
-
+		delta_dens_avg = calculate_stiffness(alpha, &m_particles.pred_vel, &m_particles.pos, m_delta_t, stiffenss_velocity, m_neighbor_data, scalar_values, m_particles.mass, m_particles.dens);
 	}
 }
 
@@ -384,7 +384,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 	float sqrt_val;
 	unsigned int neighbor_index;
 	float x = 0.f, y = 0.f, z = 0.f;
-	const float min_denom{ 0.000001f };
+	const float min_denom{ 0.00001f };
 	int ind;
 
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
@@ -437,7 +437,8 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 /*
  * Using a Cubic spline kernel
  * Divergence-Free SPH for Incompressible and Viscous Fluids, ref 6
- */
+*/
+
 void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data)
 {
 	int ind;
@@ -574,8 +575,8 @@ void calculate_predicted_pressure(Float3s* predicted_pressure, Float3s* f_p, flo
 	}
 }
 
-float calculate_stiffness(float* alpha, Float3* pred_vel, Float3* pos, float delta_t, 
-	float* k_v_i, Neighbor_Data* neighbor_data, float* scalar_value, float mass)
+float calculate_stiffness(float* alpha, Float3* pred_vel, Float3* pos, float delta_t,
+	float* k_v_i, Neighbor_Data* neighbor_data, float* scalar_value, float mass,float* dens)
 {
 	unsigned int neighbor_index;
 	int neighbor_length;
@@ -601,27 +602,38 @@ float calculate_stiffness(float* alpha, Float3* pred_vel, Float3* pos, float del
 			kernel_gradient_x = x*scalar_value[linear_ind];
 			kernel_gradient_y = y*scalar_value[linear_ind];
 			kernel_gradient_z = z*scalar_value[linear_ind];
-
-			dx += kernel_gradient_x*(pred_vel->x[i] - pred_vel->x[neighbor_index]) ;
-			dy += kernel_gradient_y*(pred_vel->y[i] - pred_vel->y[neighbor_index]) ;
-			dz += kernel_gradient_z*(pred_vel->z[i] - pred_vel->z[neighbor_index]) ;
+			
+			//equation 9 in DFSPH, chenged 16-11-18
+			dx += mass*kernel_gradient_x*(pred_vel->x[i] - pred_vel->x[neighbor_index]);
+			dy += mass*kernel_gradient_y*(pred_vel->y[i] - pred_vel->y[neighbor_index]);
+			dz += mass*kernel_gradient_z*(pred_vel->z[i] - pred_vel->z[neighbor_index]);
 		}
-		d_dens = (dx + dy + dz)*delta_t;
+		//this minus sign could be either that it is defined as -dens*div(v) = dp/dt 
+		//=> that eq 9 should be negative or that we have defined somthing in the wrong
+		//direktion. It is also possible that I have made a mistake
+		d_dens = -(dx + dy + dz);
+		
 		d_dens_avg += d_dens;
 		
 		k_v_i[i] = (1.f / delta_t)*d_dens*alpha[i];
 		dx = dy = dz = 0.f;
 	}
+
 	return d_dens_avg / D_NR_OF_PARTICLES;
 }
 
+/*
+* Derived the Cubic spline kernel by q
+* Divergence-Free SPH for Incompressible and Viscous Fluids, section 4.2
+*/
 void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values)
 {
 	int neighbor_ind;
 
-	float kernel_derive;
-	float radii = D_RAD;
-	float q, dist;
+	float kernel_derive, scalar_value;
+	float search_area = D_RAD;
+	float pi = D_PI;
+	float q, q_2, dist;
 	float dx, dy, dz;
 
 	//Loop through all particles
@@ -636,19 +648,17 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 			dy = pos->y[particle] - pos->y[neighbor_ind];
 			dz = pos->z[particle] - pos->z[neighbor_ind];
 
-			dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+			dist = sqrt(dx*dx + dy*dy + dz*dz);
 			q = dist / D_RAD;
-			
-		
-			//Compute the derivitive of the kernel function
-			if (q >= 0 || q <= 0.5f)
-				kernel_derive = (-12.f*q + 18.f*q*q);
-			else if (q > 0.5f || q <= 1.0f)
-				kernel_derive = -6.0f*(1 - q)*(1 - q);
-			else
-				kernel_derive = 0.0f;
+			q_2 = q*q;
 
-			scalar_values[particle*D_MAX_NR_OF_NEIGHBORS + neighbor] = kernel_derive/(dist*radii);
+			// length is always equal or smaller to D_RAD => implicit intervall between [0, 1]
+			kernel_derive = (1.0f / (search_area*pi))*(-3.0f*q + 2.25f*q_2);
+
+			scalar_value = kernel_derive*(1.0f /  (search_area*dist));
+
+			scalar_values[particle*D_MAX_NR_OF_NEIGHBORS + neighbor] = scalar_value;
+
 		}
 	}
 
