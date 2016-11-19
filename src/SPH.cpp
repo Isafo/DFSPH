@@ -177,8 +177,8 @@ void SPH::calculate_time_step(float dT)
 		x_2 = m_particles.vel.x[i] * m_particles.vel.x[i];
 		y_2 = m_particles.vel.y[i] * m_particles.vel.y[i];
 		z_2 = m_particles.vel.z[i] * m_particles.vel.z[i];
-		if (v_max_2 < (x_2 + y_2 + z_2))
-			v_max_2 = (x_2 + y_2 + z_2);
+		if (v_max_2 < x_2 + y_2 + z_2)
+			v_max_2 = x_2 + y_2 + z_2;
 	}
 	m_delta_t = 0.4f * (2.f * m_particles.rad)/sqrtf(v_max_2) - D_EPSILON;
 
@@ -212,6 +212,8 @@ void SPH::predict_velocities()
 	}
 }
 
+
+// TODO rewrite 
 /*
 void SPH::correct_density_error(float* alpha, float* scalar_values, Float3s* f_tot, float* k_v_i)
 {
@@ -327,7 +329,7 @@ void SPH::correct_divergence_error(float* dens_derive, float* scalar_values, flo
 		for (auto particle_ind = 0; particle_ind < D_NR_OF_PARTICLES; ++particle_ind)
 		{
 
-			k_v_i = (1.f / m_delta_t)*dens_derive[particle_ind] * alpha[particle_ind];
+			k_v_i = (1.f / m_delta_t)*dens_derive[particle_ind]*alpha[particle_ind];
 
 			pressure_acc_x = pressure_acc_y = pressure_acc_z = 0.0f;
 			
@@ -386,7 +388,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 	float sqrt_val;
 	unsigned int neighbor_index;
 	float x = 0.f, y = 0.f, z = 0.f;
-	const float min_denom{ 0.00001f };
+	const float min_denom{ 0.000001f };
 	int ind;
 
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
@@ -394,7 +396,8 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 		nr_neighbors = neighbor_data[particle].n;
 		//added 1 * mass as particles own density as kernel is 1 at dist == 0
 		//this should atleast be the case, but needs to be checked
-		dens[particle] = mass;
+		// => Does not seem to cause a problem when it is 0. So i followed the report
+		dens[particle] = 0.f;
 		for (auto neighbor = 0; neighbor < nr_neighbors; ++neighbor)
 		{
 			neighbor_index = neighbor_data[particle].neighbor[neighbor];
@@ -402,35 +405,33 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 			ind = neighbor + D_MAX_NR_OF_NEIGHBORS*particle;
 
 			//Update density
-			dens[particle] += kernel_values[ind] * mass;
+			dens[particle] += mass*kernel_values[ind];
 
 			dx = pos->x[particle] - pos->x[neighbor_index];
 			dy = pos->y[particle] - pos->y[neighbor_index];
 			dz = pos->z[particle] - pos->z[neighbor_index];
 
-			kernel_gradient_x = dx * mass * scalar_values[ind];
-			kernel_gradient_y = dy * mass * scalar_values[ind];
-			kernel_gradient_z = dz * mass * scalar_values[ind];
+			kernel_gradient_x = mass*dx*scalar_values[ind];
+			kernel_gradient_y = mass*dy*scalar_values[ind];
+			kernel_gradient_z = mass*dz*scalar_values[ind];
 
 			x += kernel_gradient_x;
 			y += kernel_gradient_y;
 			z += kernel_gradient_z;
 
-			sqrt_val = kernel_gradient_x*kernel_gradient_x + kernel_gradient_y*kernel_gradient_y
-				+ kernel_gradient_z*kernel_gradient_z;
+			sqrt_val = sqrt(kernel_gradient_x*kernel_gradient_x + kernel_gradient_y*kernel_gradient_y
+				+ kernel_gradient_z*kernel_gradient_z);
 
-			float temp = sqrt(sqrt_val);
-
-			sum_abs_denom += temp*temp;;
+			sum_abs_denom += sqrt_val*sqrt_val;;
 		}
 
 		abs_sum_denom = sqrt(x*x + y*y + z*z);
-		denom = (abs_sum_denom*abs_sum_denom + sum_abs_denom);
+		denom = abs_sum_denom*abs_sum_denom + sum_abs_denom;
 
 		// set alpha to max(denom,min_denom)
-		denom = denom > min_denom ? denom : min_denom;
+		denom = denom < min_denom ? min_denom : denom;
 		alpha[particle] = dens[particle] / denom;
-
+		
 		sum_abs_denom = 0.f;
 		x = y = z = 0.f;
 	}
@@ -440,7 +441,6 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
  * Using a Cubic spline kernel
  * Divergence-Free SPH for Incompressible and Viscous Fluids, ref 6
 */
-
 void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data)
 {
 	int ind;
@@ -496,9 +496,9 @@ float calculate_derived_density(float* derived_density, Float3* pred_vel, float 
 			neighbor_index = neighbor_data[i].neighbor[j];
 			linear_ind = neighbor_index + D_MAX_NR_OF_NEIGHBORS*i;
 
-			x = pos->x[neighbor_index] - pos->x[i];
-			y = pos->y[neighbor_index] - pos->y[i];
-			z = pos->z[neighbor_index] - pos->z[i];
+			x = pos->x[i] - pos->x[neighbor_index];
+			y = pos->y[i] - pos->y[neighbor_index];
+			z = pos->z[i] - pos->z[neighbor_index];
 
 			kernel_gradient_x = x*scalar_value[linear_ind];
 			kernel_gradient_y = y*scalar_value[linear_ind];
@@ -514,10 +514,9 @@ float calculate_derived_density(float* derived_density, Float3* pred_vel, float 
 
 		derived_density[i] = pressure_derived;
 
-		dens_derive_sum += pressure_derived;
+		dens_derive_sum += derived_density[i];
 		pressure_derived_x = pressure_derived_y = pressure_derived_z = 0.f;
 	}
-
 	return dens_derive_sum / D_NR_OF_PARTICLES;
 }
 
