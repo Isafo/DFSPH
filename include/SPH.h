@@ -1,5 +1,4 @@
 #pragma once
-#include "glm/glm.hpp"
 
 #define D_NR_OF_PARTICLES 800
 #define D_MAX_NR_OF_NEIGHBORS 800
@@ -99,9 +98,9 @@ private:
 	// Calculates an unstable predicted velocity
 	void predict_velocities();
 	
-	void correct_density_error(float* alpha, float dT, float* g_values, Float3s* f_tot, float* k_v_i);
+	//void correct_density_error(float* alpha, float* g_values, Float3s* f_tot, float* k_v_i);
 	
-	void correct_strain_rate_error();
+	//void correct_strain_rate_error();
 	
 	void update_positions() const;
 	
@@ -122,7 +121,6 @@ private:
 		float rad;
 	};
 
-	int iter{ 0 };
 	float m_delta_t;
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
@@ -136,12 +134,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 
 void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data);
 
-void calculate_pressure_force(Float3s* f_tot, float* k_v_i, Float3* pos, float mass, float* scalar_values, Neighbor_Data* neighbor_data, float* dens);
-
-void calculate_predicted_pressure(Float3s* predicted_pressure, Float3s* pred_vel, float mass, float_t*dens, float* scalar_values, float delta_t, Neighbor_Data* n_data, Float3 * pos);
-
-// calculates the k^v_i variable for all particles
-float calculate_stiffness(float* alpha, Float3* pred_vel, Float3* pos, float delta_t, float *k_v_i, Neighbor_Data* neighbor_data, float* scalar_values,float mass);
+float calculate_derived_density(float* derived_density, Float3* pred_vel, float mass, float* scalar_value, Neighbor_Data* neighbor_data, Float3* pos);
 
 // updates the scalar values g(q) for all particles
 void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values);
