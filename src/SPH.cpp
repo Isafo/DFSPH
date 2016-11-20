@@ -8,7 +8,7 @@
 #define D_EPSILON 0.000000000000001f;
 
 //since force is low a higher radius is requiered for small number of particles
-#define D_RAD 0.05f;
+#define D_SEARCH_RANGE 0.05f;
 
 SPH::SPH(int x, int y, int z)
 {
@@ -108,10 +108,11 @@ void SPH::update(float dT)
 
 void SPH::init_positions(int x_start, int y_start, int z_start, int rows, int cols) const
 {
+	int ind;
+
 	float dist_between{ 1.2f * m_particles.rad };
 	float padding_factor{ 1.8f };
 	float x, y, z;
-	int ind;
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
@@ -130,7 +131,7 @@ void SPH::find_neighborhoods() const
 {
 	float vector_i_n[3];
 	float dist_i_n_2;
-	const float neigborhod_rad = D_RAD;
+	const float neigborhod_rad = D_SEARCH_RANGE;
 	int count{ 0 };
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
@@ -197,15 +198,21 @@ void SPH::predict_velocities()
 		m_particles.pred_vel.y[i] = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_particles.mass;
 		m_particles.pred_vel.z[i] = m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_particles.mass;
 
-		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.5)
+		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.2f)
 		{
 			m_particles.pred_vel.x[i] = 0.f;
 		}
-		if ((m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t) <= -0.5)
+
+		if (m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t <= -0.3f)
 		{
 			m_particles.pred_vel.y[i] = 0.f;
+		} 
+		else if(abs(m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t) >= 0.27f) // Ceil
+		{
+			m_particles.pred_vel.y[i] = m_particles.F_adv.y[i] * m_delta_t / m_particles.mass;
 		}
-		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.5)
+
+		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.2f)
 		{
 			m_particles.pred_vel.z[i] = 0.f;
 		}
@@ -314,13 +321,14 @@ void SPH::update_positions() const
  */
 void SPH::correct_divergence_error(float* dens_derive, float* scalar_values, float* alpha)
 {
+	int neighbor_ind;
+	int iter = 0;
+
 	float dens_derive_avg;
 	float k_v_i, k_v_j, div_i, div_j;
 	float pressure_acc_x, pressure_acc_y, pressure_acc_z;
-	float dx, dy, dz;
+	float x, y, z;
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
-	int neighbor_ind;
-	int iter = 0;
 	
 	do
 	{
@@ -342,13 +350,13 @@ void SPH::correct_divergence_error(float* dens_derive, float* scalar_values, flo
 
 				k_v_j = (1.f / m_delta_t)*dens_derive[neighbor_ind] * alpha[neighbor_ind];
 
-				dx = m_particles.pos.x[particle_ind] - m_particles.pos.x[neighbor_ind];
-				dy = m_particles.pos.y[particle_ind] - m_particles.pos.y[neighbor_ind];
-				dz = m_particles.pos.z[particle_ind] - m_particles.pos.z[neighbor_ind];
+				x = m_particles.pos.x[particle_ind] - m_particles.pos.x[neighbor_ind];
+				y = m_particles.pos.y[particle_ind] - m_particles.pos.y[neighbor_ind];
+				z = m_particles.pos.z[particle_ind] - m_particles.pos.z[neighbor_ind];
 
-				kernel_gradient_x = dx*scalar_values[linear_ind];
-				kernel_gradient_y = dy*scalar_values[linear_ind];
-				kernel_gradient_z = dz*scalar_values[linear_ind];
+				kernel_gradient_x = x*scalar_values[linear_ind];
+				kernel_gradient_y = y*scalar_values[linear_ind];
+				kernel_gradient_z = z*scalar_values[linear_ind];
 
 				div_i = k_v_i / m_particles.dens[particle_ind];
 				div_j = k_v_j / m_particles.dens[neighbor_ind];
@@ -380,16 +388,16 @@ void SPH::update_velocities()
 void update_density_and_factors(float mass, Float3* pos, float* dens, float* scalar_values,
 	Neighbor_Data* neighbor_data, float* alpha, float* kernel_values)
 {
-	int nr_neighbors;
+	int nr_neighbors, neighbor_index, linear_ind;
+
 	float abs_sum_denom, sum_abs_denom = 0;
 	float denom;
 	float dx, dy, dz;
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
 	float sqrt_val;
-	unsigned int neighbor_index;
 	float x = 0.f, y = 0.f, z = 0.f;
+
 	const float min_denom{ 0.000001f };
-	int ind;
 
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
 	{
@@ -402,18 +410,18 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 		{
 			neighbor_index = neighbor_data[particle].neighbor[neighbor];
 
-			ind = neighbor + D_MAX_NR_OF_NEIGHBORS*particle;
+			linear_ind = neighbor + D_MAX_NR_OF_NEIGHBORS*particle;
 
 			//Update density
-			dens[particle] += mass*kernel_values[ind];
+			dens[particle] += mass*kernel_values[linear_ind];
 
 			dx = pos->x[particle] - pos->x[neighbor_index];
 			dy = pos->y[particle] - pos->y[neighbor_index];
 			dz = pos->z[particle] - pos->z[neighbor_index];
 
-			kernel_gradient_x = mass*dx*scalar_values[ind];
-			kernel_gradient_y = mass*dy*scalar_values[ind];
-			kernel_gradient_z = mass*dz*scalar_values[ind];
+			kernel_gradient_x = mass*dx*scalar_values[linear_ind];
+			kernel_gradient_y = mass*dy*scalar_values[linear_ind];
+			kernel_gradient_z = mass*dz*scalar_values[linear_ind];
 
 			x += kernel_gradient_x;
 			y += kernel_gradient_y;
@@ -444,30 +452,34 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data)
 {
 	int ind;
-	float x, y, z, q, q_2, length;
+
+	float x, y, z;
+	float q, q_2; 
+	float length;
 	float kernel_val;
-	float search_area = D_RAD;
+	float search_area = D_SEARCH_RANGE;
 	float pi = D_PI;
+	float particle_pos_x, particle_pos_y, particle_pos_z;
 
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
 	{
-		float particle_pos_x = pos->x[particle];
-		float particle_pos_y = pos->y[particle];
-		float particle_pos_z = pos->z[particle];
+		particle_pos_x = pos->x[particle];
+		particle_pos_y = pos->y[particle];
+		particle_pos_z = pos->z[particle];
 
 		for (auto neighbor = 0; neighbor < neighbor_data[particle].n; ++neighbor)
 		{
-			// compute q
 			ind = neighbor_data[particle].neighbor[neighbor];
+
 			x = pos->x[ind] - particle_pos_x;
 			y = pos->y[ind] - particle_pos_y;
 			z = pos->z[ind] - particle_pos_z;
 
 			length = sqrt(x*x + y*y + z*z);
-			q = length / D_RAD;
+			q = length / D_SEARCH_RANGE;
 			q_2 = q*q;
 
-			// length is always equal or smaller to D_RAD => implicit intervall between [0, 1]
+			// length is always equal or smaller to D_SEARCH_RANGE => implicit intervall between [0, 1]
 			kernel_val = (1.0f/(search_area*pi))*(1.0f - 1.5f*q_2 + 0.75f*q_2*q);
 
 			kernel_values[particle*D_NR_OF_PARTICLES + neighbor] = kernel_val;
@@ -530,7 +542,7 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 	int neighbor_ind;
 
 	float kernel_derive, scalar_value;
-	float search_area = D_RAD;
+	float search_area = D_SEARCH_RANGE;
 	float pi = D_PI;
 	float q, q_2, dist;
 	float dx, dy, dz;
@@ -548,10 +560,10 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 			dz = pos->z[particle] - pos->z[neighbor_ind];
 
 			dist = sqrt(dx*dx + dy*dy + dz*dz);
-			q = dist / D_RAD;
+			q = dist / D_SEARCH_RANGE;
 			q_2 = q*q;
 
-			// length is always equal or smaller to D_RAD => implicit intervall between [0, 1]
+			// length is always equal or smaller to D_SEARCH_RANGE => implicit intervall between [0, 1]
 			kernel_derive = (1.0f / (search_area*pi))*(-3.0f*q + 2.25f*q_2);
 
 			scalar_value = kernel_derive*(1.0f /  (search_area*dist));

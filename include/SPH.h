@@ -122,7 +122,6 @@ private:
 		float rad;
 	};
 
-	int iter{ 0 };
 	float m_delta_t;
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
