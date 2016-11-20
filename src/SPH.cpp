@@ -375,8 +375,8 @@ void SPH::correct_divergence_error(float* dens_derive, float* scalar_values, flo
 			m_particles.pred_vel.y[particle_ind] = m_particles.pred_vel.y[particle_ind] - m_delta_t * pressure_acc_y;
 			m_particles.pred_vel.z[particle_ind] = m_particles.pred_vel.z[particle_ind] - m_delta_t * pressure_acc_z;
 		}
-	// iter could be used to get an avarge of how many times the loops runs. Like they have in the report
-	++iter;
+	// iter could be used to get an avarge of how many times the loops runs, like they have in the report.
+	//++iter; // uncommented for now. read commet above
 	} while (dens_derive_avg > 1.f); // implicit condition: iter < 1 
 
 }
@@ -400,7 +400,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 	float denom;
 	float dx, dy, dz;
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
-	float scalar_value;
+	float scalar_value_mul_mass;
 	float x = 0.f, y = 0.f, z = 0.f;
 
 	const float min_denom{ 0.000001f };
@@ -425,11 +425,11 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 			dy = pos->y[particle] - pos->y[neighbor_index];
 			dz = pos->z[particle] - pos->z[neighbor_index];
 
-			scalar_value = scalar_values[linear_ind];
+			scalar_value_mul_mass = mass*scalar_values[linear_ind];
 
-			kernel_gradient_x = mass*dx*scalar_value;
-			kernel_gradient_y = mass*dy*scalar_value;
-			kernel_gradient_z = mass*dz*scalar_value;
+			kernel_gradient_x = dx*scalar_value_mul_mass;
+			kernel_gradient_y = dy*scalar_value_mul_mass;
+			kernel_gradient_z = dz*scalar_value_mul_mass;
 
 			x += kernel_gradient_x;
 			y += kernel_gradient_y;
