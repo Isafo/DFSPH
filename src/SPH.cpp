@@ -329,6 +329,9 @@ void SPH::correct_divergence_error(float* dens_derive, float* scalar_values, flo
 	float pressure_acc_x, pressure_acc_y, pressure_acc_z;
 	float x, y, z;
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
+	float scalar_value;
+
+	float inv_delta_t = 1.f / m_delta_t;
 	
 	do
 	{
@@ -337,7 +340,8 @@ void SPH::correct_divergence_error(float* dens_derive, float* scalar_values, flo
 		for (auto particle_ind = 0; particle_ind < D_NR_OF_PARTICLES; ++particle_ind)
 		{
 
-			k_v_i = (1.f / m_delta_t)*dens_derive[particle_ind]*alpha[particle_ind];
+			k_v_i = inv_delta_t*dens_derive[particle_ind]*alpha[particle_ind];
+			div_i = k_v_i / m_particles.dens[particle_ind];
 
 			pressure_acc_x = pressure_acc_y = pressure_acc_z = 0.0f;
 			
@@ -348,17 +352,18 @@ void SPH::correct_divergence_error(float* dens_derive, float* scalar_values, flo
 
 				assert(m_particles.dens[neighbor_ind] != 0.0f, "n dens");
 
-				k_v_j = (1.f / m_delta_t)*dens_derive[neighbor_ind] * alpha[neighbor_ind];
+				k_v_j = inv_delta_t*dens_derive[neighbor_ind] * alpha[neighbor_ind];
 
 				x = m_particles.pos.x[particle_ind] - m_particles.pos.x[neighbor_ind];
 				y = m_particles.pos.y[particle_ind] - m_particles.pos.y[neighbor_ind];
 				z = m_particles.pos.z[particle_ind] - m_particles.pos.z[neighbor_ind];
 
-				kernel_gradient_x = x*scalar_values[linear_ind];
-				kernel_gradient_y = y*scalar_values[linear_ind];
-				kernel_gradient_z = z*scalar_values[linear_ind];
+				scalar_value = scalar_values[linear_ind];
 
-				div_i = k_v_i / m_particles.dens[particle_ind];
+				kernel_gradient_x = x*scalar_value;
+				kernel_gradient_y = y*scalar_value;
+				kernel_gradient_z = z*scalar_value;
+				
 				div_j = k_v_j / m_particles.dens[neighbor_ind];
 
 				pressure_acc_x += m_particles.mass * (div_i + div_j) * kernel_gradient_x;
@@ -370,8 +375,9 @@ void SPH::correct_divergence_error(float* dens_derive, float* scalar_values, flo
 			m_particles.pred_vel.y[particle_ind] = m_particles.pred_vel.y[particle_ind] - m_delta_t * pressure_acc_y;
 			m_particles.pred_vel.z[particle_ind] = m_particles.pred_vel.z[particle_ind] - m_delta_t * pressure_acc_z;
 		}
+	// iter could be used to get an avarge of how many times the loops runs. Like they have in the report
 	++iter;
-	} while (dens_derive_avg > 1.f || iter < 1);
+	} while (dens_derive_avg > 1.f); // implicit condition: iter < 1 
 }
 
 void SPH::update_velocities()
@@ -393,7 +399,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 	float denom;
 	float dx, dy, dz;
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
-	float sqrt_val;
+	float scalar_value;
 	float x = 0.f, y = 0.f, z = 0.f;
 
 	const float min_denom{ 0.000001f };
@@ -418,18 +424,18 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 			dy = pos->y[particle] - pos->y[neighbor_index];
 			dz = pos->z[particle] - pos->z[neighbor_index];
 
-			kernel_gradient_x = mass*dx*scalar_values[linear_ind];
-			kernel_gradient_y = mass*dy*scalar_values[linear_ind];
-			kernel_gradient_z = mass*dz*scalar_values[linear_ind];
+			scalar_value = scalar_values[linear_ind];
+
+			kernel_gradient_x = mass*dx*scalar_value;
+			kernel_gradient_y = mass*dy*scalar_value;
+			kernel_gradient_z = mass*dz*scalar_value;
 
 			x += kernel_gradient_x;
 			y += kernel_gradient_y;
 			z += kernel_gradient_z;
 
-			sqrt_val = sqrt(kernel_gradient_x*kernel_gradient_x + kernel_gradient_y*kernel_gradient_y
-				+ kernel_gradient_z*kernel_gradient_z);
-
-			sum_abs_denom += sqrt_val*sqrt_val;;
+			sum_abs_denom += abs(kernel_gradient_x*kernel_gradient_x + kernel_gradient_y*kernel_gradient_y
+				+ kernel_gradient_z*kernel_gradient_z);;
 		}
 
 		abs_sum_denom = sqrt(x*x + y*y + z*z);
@@ -460,6 +466,8 @@ void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neig
 	float pi = D_PI;
 	float particle_pos_x, particle_pos_y, particle_pos_z;
 
+	float div = 1.0f / (search_area*pi);
+
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
 	{
 		particle_pos_x = pos->x[particle];
@@ -479,7 +487,7 @@ void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neig
 			q_2 = q*q;
 
 			// length is always equal or smaller to D_SEARCH_RANGE => implicit intervall between [0, 1]
-			kernel_val = (1.0f/(search_area*pi))*(1.0f - 1.5f*q_2 + 0.75f*q_2*q);
+			kernel_val = div*(1.0f - 1.5f*q_2 + 0.75f*q_2*q);
 
 			kernel_values[particle*D_NR_OF_PARTICLES + neighbor] = kernel_val;
 		}
@@ -547,6 +555,9 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 	float q, q_2, dist;
 	float dx, dy, dz;
 
+	float inv_range = 1.0f / D_SEARCH_RANGE;
+	float div = 1.0f / (search_area*pi);
+
 	//Loop through all particles
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
 	{
@@ -561,11 +572,11 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 
 			dist = sqrt(dx*dx + dy*dy + dz*dz);
 
-			q = dist / D_SEARCH_RANGE;
+			q = dist * inv_range;
 			q_2 = q*q;
 
 			// length is always equal or smaller to D_SEARCH_RANGE => implicit intervall between [0, 1]
-			kernel_derive = (1.0f / (search_area*pi))*(-3.0f*q + 2.25f*q_2);
+			kernel_derive = div*(-3.0f*q + 2.25f*q_2);
 
 			scalar_value = kernel_derive*(1.0f /  (search_area*dist));
 
