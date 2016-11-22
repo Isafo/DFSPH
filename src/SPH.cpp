@@ -552,7 +552,7 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 	float kernel_derive, scalar_value;
 	float search_area = D_SEARCH_RANGE;
 	float pi = D_PI;
-	float q, q_2, dist;
+	float q, dist;
 	float dx, dy, dz;
 
 	float inv_range = 1.0f / D_SEARCH_RANGE;
@@ -573,12 +573,11 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 			dist = sqrt(dx*dx + dy*dy + dz*dz);
 
 			q = dist * inv_range;
-			q_2 = q*q;
 
 			// length is always equal or smaller to D_SEARCH_RANGE => implicit intervall between [0, 1]
-			kernel_derive = div*(-3.0f*q + 2.25f*q_2);
+			kernel_derive = div*(-3.0f*q + 2.25f*q*q);
 
-			scalar_value = kernel_derive*(1.0f /  (search_area*dist));
+			scalar_value = kernel_derive / (search_area * dist);
 
 			scalar_values[particle*D_MAX_NR_OF_NEIGHBORS + neighbor] = scalar_value;
 
