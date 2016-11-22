@@ -8,7 +8,7 @@
 #define D_EPSILON 0.000000000000001f;
 
 //since force is low a higher radius is requiered for small number of particles
-#define D_SEARCH_RANGE 0.05f;
+#define D_SEARCH_RANGE 0.05;
 
 SPH::SPH(int x, int y, int z)
 {
@@ -377,6 +377,8 @@ void SPH::correct_divergence_error(float* dens_derive, float* scalar_values, flo
 		}
 	// iter could be used to get an avarge of how many times the loops runs, like they have in the report.
 	//++iter; // uncommented for now. read commet above
+		//if dens_derive_avg < 0 it describes a negative flow in the particle -> it shold be abs to 
+		//minimise these flows
 	} while (dens_derive_avg > 1.f); // implicit condition: iter < 1 
 }
 
@@ -401,7 +403,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
 	float scalar_value_mul_mass;
 	float x = 0.f, y = 0.f, z = 0.f;
-
+	float temporary_sum_abs;
 	const float min_denom{ 0.000001f };
 
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
@@ -410,7 +412,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 		//added 1 * mass as particles own density as kernel is 1 at dist == 0
 		//this should atleast be the case, but needs to be checked
 		// => Does not seem to cause a problem when it is 0. So i followed the report
-		dens[particle] = 0.f;
+		dens[particle] = 0;
 		for (auto neighbor = 0; neighbor < nr_neighbors; ++neighbor)
 		{
 			neighbor_index = neighbor_data[particle].neighbor[neighbor];
@@ -434,8 +436,9 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 			y += kernel_gradient_y;
 			z += kernel_gradient_z;
 
-			sum_abs_denom += abs(kernel_gradient_x*kernel_gradient_x + kernel_gradient_y*kernel_gradient_y
-				+ kernel_gradient_z*kernel_gradient_z);;
+			temporary_sum_abs = sqrt(kernel_gradient_x*kernel_gradient_x + kernel_gradient_y*kernel_gradient_y + kernel_gradient_z*kernel_gradient_z);
+
+			sum_abs_denom += temporary_sum_abs*temporary_sum_abs;
 		}
 
 		abs_sum_denom = sqrt(x*x + y*y + z*z);
