@@ -98,13 +98,13 @@ private:
 	// Calculates an unstable predicted velocity
 	void predict_velocities();
 	
-	//void correct_density_error(float* alpha, float* g_values, Float3s* f_tot, float* k_v_i);
+	void correct_density_error(float* dens_derive, float* scalar_values, float* alpha);
 	
 	//void correct_strain_rate_error();
 	
 	void update_positions() const;
 	
-	void correct_divergence_error(float* k_v_i, float* scalar_values, float* alpha);
+	void correct_divergence_error(float* dens_derive, float* scalar_values, float* alpha);
 
 	void update_velocities();
 
@@ -124,6 +124,8 @@ private:
 	float m_delta_t;
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
+
+	int iter{ 1 };
 
 	const float C_REST_DENS{ 1000.f };
 };
