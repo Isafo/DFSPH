@@ -378,8 +378,8 @@ void SPH::correct_divergence_error(float* dens_derive, float* scalar_values, flo
 	// iter could be used to get an avarge of how many times the loops runs, like they have in the report.
 	//++iter; // uncommented for now. read commet above
 		//if dens_derive_avg < 0 it describes a negative flow in the particle -> it shold be abs to 
-		//minimise these flows
-	} while (dens_derive_avg > 1.f); // implicit condition: iter < 1 
+		//minimise these flows that go in the negative direction
+	} while (dens_derive_avg > 1.0f); // implicit condition: iter < 1 
 }
 
 void SPH::update_velocities()
@@ -404,7 +404,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 	float scalar_value_mul_mass;
 	float x = 0.f, y = 0.f, z = 0.f;
 	float temporary_sum_abs;
-	const float min_denom{ 0.000001f };
+	const float min_denom{ 0.00001f };
 
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
 	{
