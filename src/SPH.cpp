@@ -643,6 +643,7 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 
 			dist = sqrt(dx*dx + dy*dy + dz*dz);
 			q = dist / D_RAD;
+
 			q_2 = q*q;
 
 			// length is always equal or smaller to D_RAD => implicit intervall between [0, 1]
