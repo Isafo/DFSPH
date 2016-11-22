@@ -34,7 +34,7 @@ SPH::SPH(int x, int y, int z)
 	settings class with static values
 	instead of being defined here. */
 	m_particles.rad = 0.01f;
-	m_particles.mass = 0.0042f;
+	m_particles.mass = 0.00418f;
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i) {
 		m_particles.dens[i] = 100.f;
@@ -51,7 +51,7 @@ SPH::SPH(int x, int y, int z)
 		m_particles.pred_vel.z[i] = 0.f;
 	}
 
-	init_positions(x, y, z, 5, 5);
+	init_positions(x, y, z, 8, 8);
 }
 
 SPH::~SPH()
@@ -111,7 +111,7 @@ void SPH::init_positions(int x_start, int y_start, int z_start, int rows, int co
 	int ind;
 
 	float dist_between{ 1.2f * m_particles.rad };
-	float padding_factor{ 1.4f };
+	float padding_factor{ 1.8f };
 	float x, y, z;
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
@@ -370,7 +370,7 @@ void SPH::correct_divergence_error(float* dens_derive, float* scalar_values, flo
 				pressure_acc_y += m_particles.mass * (div_i + div_j) * kernel_gradient_y;
 				pressure_acc_z += m_particles.mass * (div_i + div_j) * kernel_gradient_z;
 			}
-			//pressure_force_z/mass is not in report bot it is a force so should be a = F/m *delta_t
+			//pressure_force_z is not in report but it is a force and it is = F/m *delta_t
 			m_particles.pred_vel.x[particle_ind] = m_particles.pred_vel.x[particle_ind] - m_delta_t * pressure_acc_x;
 			m_particles.pred_vel.y[particle_ind] = m_particles.pred_vel.y[particle_ind] - m_delta_t * pressure_acc_y;
 			m_particles.pred_vel.z[particle_ind] = m_particles.pred_vel.z[particle_ind] - m_delta_t * pressure_acc_z;
@@ -581,6 +581,7 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 			scalar_value = kernel_derive*(1.0f /  (search_area*dist));
 
 			scalar_values[particle*D_MAX_NR_OF_NEIGHBORS + neighbor] = scalar_value;
+
 		}
 	}
 
