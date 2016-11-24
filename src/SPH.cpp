@@ -8,7 +8,7 @@
 #define D_EPSILON 0.000000000000001f;
 
 //since force is low a higher radius is requiered for small number of particles
-#define D_SEARCH_RANGE 0.05;
+#define D_SEARCH_RANGE 0.05f;
 
 SPH::SPH(int x, int y, int z)
 {
