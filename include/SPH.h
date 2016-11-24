@@ -98,13 +98,13 @@ private:
 	// Calculates an unstable predicted velocity
 	void predict_velocities();
 	
-	void correct_density_error(float* dens_derive, float* scalar_values, float* alpha);
+	void SPH::correct_density_error(float* pred_dens, float* dens_derive, float* scalar_values, float* alpha);
 	
 	//void correct_strain_rate_error();
 	
 	void update_positions() const;
 	
-	void correct_divergence_error(float* dens_derive, float* scalar_values, float* alpha);
+	void SPH::correct_divergence_error(float* dens_derive, float* pred_dens, float* scalar_values, float* alpha);
 
 	void update_velocities();
 
@@ -125,9 +125,7 @@ private:
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
 
-	int iter{ 1 };
-
-	const float C_REST_DENS{ 1000.f };
+	const float C_REST_DENS{ 1.f };
 };
 
 // calculates the density and the alpha particle factors
@@ -136,7 +134,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 
 void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data);
 
-float calculate_derived_density(float* derived_density, Float3* pred_vel, float mass, float* scalar_value, Neighbor_Data* neighbor_data, Float3* pos);
+void calculate_derived_density_pred_dens(float* dens_derive_avg, float* pred_dens_avg, float* derived_density, float* pred_dens, Float3* pred_vel, float mass, float* scalar_value, float* dens, Neighbor_Data* neighbor_data, Float3* pos, float delta_t);
 
 // updates the scalar values g(q) for all particles
 void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values);
