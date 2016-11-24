@@ -125,7 +125,7 @@ private:
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
 
-	const float C_REST_DENS{ 1.f };
+	const float C_REST_DENS{ 30.f };
 };
 
 // calculates the density and the alpha particle factors
@@ -134,7 +134,8 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 
 void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data);
 
-void calculate_derived_density_pred_dens(float* dens_derive_avg, float* pred_dens_avg, float* derived_density, float* pred_dens, Float3* pred_vel, float mass, float* scalar_value, float* dens, Neighbor_Data* neighbor_data, Float3* pos, float delta_t);
+void calculate_derived_density_pred_dens(float* dens_derive_avg, float* pred_dens_avg, float* derived_density, float* pred_dens, 
+	Float3* pred_vel, float mass, float* scalar_value, float* dens, Neighbor_Data* neighbor_data, Float3* pos, float delta_t);
 
 // updates the scalar values g(q) for all particles
 void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values);
