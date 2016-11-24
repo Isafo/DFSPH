@@ -37,7 +37,7 @@ SPH::SPH(int x, int y, int z)
 	m_particles.mass = 0.00418f;
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i) {
-		m_particles.dens[i] = 100.f;
+		m_particles.dens[i] = 0.f;
 		m_particles.pos.x[i] = 0.f;
 		m_particles.pos.y[i] = 0.f;
 		m_particles.pos.z[i] = 0.f;
@@ -412,7 +412,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 		//added 1 * mass as particles own density as kernel is 1 at dist == 0
 		//this should atleast be the case, but needs to be checked
 		// => Does not seem to cause a problem when it is 0. So i followed the report
-		dens[particle] = 0;
+		dens[particle] = 0.f;
 		for (auto neighbor = 0; neighbor < nr_neighbors; ++neighbor)
 		{
 			neighbor_index = neighbor_data[particle].neighbor[neighbor];
