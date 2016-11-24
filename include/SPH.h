@@ -1,7 +1,7 @@
 #pragma once
 
-#define D_NR_OF_PARTICLES 1000
-#define D_MAX_NR_OF_NEIGHBORS 1000
+#define D_NR_OF_PARTICLES 10000
+#define D_MAX_NR_OF_NEIGHBORS 10000
 
 // A struct containing three arrays (SoA)
 struct Float3
@@ -24,6 +24,7 @@ struct Neighbor_Data
 	int neighbor[D_MAX_NR_OF_NEIGHBORS];
 	unsigned int n;
 };
+
 
 class SPH
 {

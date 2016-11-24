@@ -34,7 +34,7 @@ SPH::SPH(int x, int y, int z)
 	settings class with static values
 	instead of being defined here. */
 	m_particles.rad = 0.01f;
-	m_particles.mass = 0.00418f;
+	m_particles.mass = 0.00818f;
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i) {
 		m_particles.dens[i] = 0.f;
@@ -51,7 +51,7 @@ SPH::SPH(int x, int y, int z)
 		m_particles.pred_vel.z[i] = 0.f;
 	}
 
-	init_positions(x, y, z, 8, 8);
+	init_positions(x, y, z, 20, 20);
 }
 
 SPH::~SPH()
@@ -186,10 +186,11 @@ void SPH::calculate_time_step(float dT)
 		m_delta_t = 0.5f * (2.f * m_particles.rad) / sqrtf(v_max_2) - D_EPSILON;
 	}
 	else {
+		m_delta_t = 0.001f;
 	}
 	if (m_delta_t > 0.005) { m_delta_t = 0.005f; }
-	m_delta_t = 0.001f;
 
+	m_delta_t = 0.004f;
 
 }
 
@@ -201,21 +202,21 @@ void SPH::predict_velocities()
 		m_particles.pred_vel.y[i] = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_particles.mass;
 		m_particles.pred_vel.z[i] = m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_particles.mass;
 
-		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.2f)
+		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.5f)
 		{
 			m_particles.pred_vel.x[i] *= -0.0f;
 		}
 
-		if (m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t <= -0.3f)
+		if (m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t <= -0.5f)
 		{
 			m_particles.pred_vel.y[i] *= 00.0f;
 		} 
-		else if(m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t >= 0.3f) // Ceil
+		else if(m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t >= 0.5f) // Ceil
 		{
 			m_particles.pred_vel.y[i] = m_particles.F_adv.y[i] * m_delta_t / m_particles.mass;
 		}
 
-		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.2f)
+		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.5f)
 		{
 			m_particles.pred_vel.z[i] *= -0.0f;
 		}
@@ -287,7 +288,7 @@ void SPH::correct_density_error(float* pred_dens, float* dens_derive, float* sca
 			if (max_error < dens_derive[i])max_error = dens_derive[i];
 		}
 		eta = 0.01f * 0.01 * C_REST_DENS;
-	} while (pred_dens_avg - C_REST_DENS > eta || iter < 2);
+	} while ((pred_dens_avg - C_REST_DENS > eta || iter < 2) && iter < 100);
 }
 
 //void SPH::correct_strain_rate_error() {}
@@ -319,7 +320,6 @@ void SPH::correct_divergence_error(float* dens_derive, float* pred_dens, float* 
 	float max = 0.f; 
 	float eta = 0.f;
 	float inv_delta_t = 1.f / m_delta_t;
-
 	calculate_derived_density_pred_dens(&dens_derive_avg, &pred_dens_avg, dens_derive, pred_dens, &m_particles.pred_vel, m_particles.mass, scalar_values, m_particles.dens, m_neighbor_data, &m_particles.pos, m_delta_t);
 	do
 	{
@@ -328,7 +328,7 @@ void SPH::correct_divergence_error(float* dens_derive, float* pred_dens, float* 
 		for (auto particle_ind = 0; particle_ind < D_NR_OF_PARTICLES; ++particle_ind)
 		{
 
-			k_v_i = 0.5f*fmax(inv_delta_t*dens_derive[particle_ind]*alpha[particle_ind],-0.5f);
+			k_v_i = 0.5f*fmax(inv_delta_t*dens_derive[particle_ind]*alpha[particle_ind], 0.5f);
 			div_i = k_v_i / m_particles.dens[particle_ind];
 
 			pressure_acc_x = pressure_acc_y = pressure_acc_z = 0.0f;
@@ -340,7 +340,7 @@ void SPH::correct_divergence_error(float* dens_derive, float* pred_dens, float* 
 
 				assert(m_particles.dens[neighbor_ind] != 0.0f, "n dens");
 
-				k_v_j = 0.5f*fmax(inv_delta_t*dens_derive[neighbor_ind] * alpha[neighbor_ind], -0.5f);
+				k_v_j = 0.5f*fmax(inv_delta_t*dens_derive[neighbor_ind] * alpha[neighbor_ind], 0.5f);
 
 				x = m_particles.pos.x[particle_ind] - m_particles.pos.x[neighbor_ind];
 				y = m_particles.pos.y[particle_ind] - m_particles.pos.y[neighbor_ind];
@@ -372,8 +372,10 @@ void SPH::correct_divergence_error(float* dens_derive, float* pred_dens, float* 
 	// iter could be used to get an avarge of how many times the loops runs, like they have in the report.
 	//++iter; // uncommented for now. read commet above
 		//if dens_derive_avg < 0 it describes a negative flow in the particle -> it shold be abs to 
-		//minimise these flows that go in the negative direction
-	} while ((dens_derive_avg) > eta); // implicit condition: iter < 1 
+		//minimise these flows that go in the negative direction+
+	++iter;
+
+	} while ((dens_derive_avg) > eta && iter < 100); // implicit condition: iter < 1 
 }
 
 void SPH::update_velocities()
