@@ -98,13 +98,13 @@ private:
 	// Calculates an unstable predicted velocity
 	void predict_velocities();
 	
-	void SPH::correct_density_error(float* pred_dens, float* dens_derive, float* scalar_values, float* alpha);
+	void correct_density_error(float* pred_dens, float* dens_derive, float* scalar_values, float* alpha);
 	
 	//void correct_strain_rate_error();
 	
 	void update_positions() const;
 	
-	void SPH::correct_divergence_error(float* dens_derive, float* pred_dens, float* scalar_values, float* alpha);
+	void correct_divergence_error(float* dens_derive, float* pred_dens, float* scalar_values, float* alpha);
 
 	void update_velocities();
 
