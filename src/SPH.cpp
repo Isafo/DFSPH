@@ -76,6 +76,7 @@ void SPH::update(float dT)
 {
 	static float alpha[D_NR_OF_PARTICLES];
 	static float dens_derive[D_NR_OF_PARTICLES];
+	static float pred_dens[D_NR_OF_PARTICLES];
 	static float scalar_values[D_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
 	static float kernel_values[D_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
 	
@@ -93,7 +94,7 @@ void SPH::update(float dT)
 
 	predict_velocities();
 
-	//correct_density_error(alpha, scalar_values, f_tot, k_v_i);
+	correct_density_error(dens_derive, pred_dens, scalar_values, alpha);
 
 	update_positions();
 
@@ -101,7 +102,7 @@ void SPH::update(float dT)
 
 	update_density_and_factors(m_particles.mass, &m_particles.pos, m_particles.dens, scalar_values, m_neighbor_data, alpha, kernel_values);
 
-	correct_divergence_error(dens_derive, scalar_values, alpha);
+	correct_divergence_error(dens_derive, pred_dens, scalar_values, alpha);
 
 	update_velocities();
 }
@@ -207,7 +208,7 @@ void SPH::predict_velocities()
 		{
 			m_particles.pred_vel.y[i] = 0.f;
 		} 
-		else if(abs(m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t) >= 0.27f) // Ceil
+		else if(m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t >= 0.3f) // Ceil
 		{
 			m_particles.pred_vel.y[i] = m_particles.F_adv.y[i] * m_delta_t / m_particles.mass;
 		}
@@ -219,90 +220,66 @@ void SPH::predict_velocities()
 	}
 }
 
-
-// TODO rewrite 
-/*
-void SPH::correct_density_error(float* alpha, float* scalar_values, Float3s* f_tot, float* k_v_i)
+void SPH::correct_density_error(float* pred_dens, float* dens_derive, float* scalar_values, float* alpha)
 {
-	static Float3s predicted_pressure[D_NR_OF_PARTICLES];
-	static Float3s k[D_NR_OF_PARTICLES];
-
-	int neighbor_index;
+	int neighbor_ind;
 	int iter = 0;
 
-	float dens_i;
-	float dens_avg;
-	float pressure_avg;
-	float k_i_x, k_i_y, k_i_z;
-	float sum_x = 0, sum_y = 0, sum_z = 0;
-	float dx, dy, dz;
+	float dens_derive_avg, pred_dens_avg;
+	float k_i, k_j, div_i, div_j, div_sum;
+	float pressure_acc_x, pressure_acc_y, pressure_acc_z;
+	float x, y, z;
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
-	float ny;
-	float dens_min, dens_max;
+	float scalar_value;
 
-	do {
-		dens_avg = 0.f;
-		dens_min = INFINITY;
-		dens_max = -1.f;
+	float inv_delta_t_2 = 1.f / (m_delta_t*m_delta_t);
 
-		calculate_pressure_force(f_tot, k_v_i, &m_particles.pos, m_particles.mass, scalar_values, m_neighbor_data, m_particles.dens);
-		//calculate_predicted_pressure(predicted_pressure, f_tot, m_particles.mass, m_particles.dens, scalar_values, m_delta_t, m_neighbor_data, &m_particles.pos);
-		
-		assert(m_delta_t != 0.0f, "deltaT");
-
-		for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
+	calculate_derived_density_pred_dens(&dens_derive_avg, &pred_dens_avg, dens_derive, pred_dens, &m_particles.pred_vel, m_particles.mass, scalar_values, m_particles.dens, m_neighbor_data, &m_particles.pos, m_delta_t);
+	do
+	{
+		for (auto particle_ind = 0; particle_ind < D_NR_OF_PARTICLES; ++particle_ind)
 		{
-			k[i].x = predicted_pressure[i].x * alpha[i] / (m_delta_t*m_delta_t);
-			k[i].y = predicted_pressure[i].y * alpha[i] / (m_delta_t*m_delta_t);
-			k[i].z = predicted_pressure[i].z * alpha[i] / (m_delta_t*m_delta_t);
-		}
+			k_i = inv_delta_t_2*(pred_dens[particle_ind] - C_REST_DENS)*alpha[particle_ind];
+			div_i = k_i / m_particles.dens[particle_ind];
 
-		for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
-		{
-			dens_i = m_particles.dens[i];
-		
-			assert(dens_i != 0, "dens");
-			
-			dens_avg += dens_i;
-			if (dens_min > dens_i) dens_min = dens_i;
-			if (dens_max < dens_i) dens_max = dens_i;
+			pressure_acc_x = pressure_acc_y = pressure_acc_z = 0.0f;
 
-			k_i_x = k[i].x / dens_i;
-			k_i_y = k[i].y / dens_i;
-			k_i_z = k[i].z / dens_i;
-			for (int j = 0; j < m_neighbor_data[i].n; ++j)
+			for (auto j = 0; j < m_neighbor_data[particle_ind].n; ++j)
 			{
-				neighbor_index = m_neighbor_data[i].neighbor[j];
+				int linear_ind = j + D_MAX_NR_OF_NEIGHBORS*particle_ind;
+				neighbor_ind = m_neighbor_data[particle_ind].neighbor[j];
 
-				assert(m_particles.dens[neighbor_index] != 0.0f, "n dens");
+				assert(m_particles.dens[neighbor_ind] != 0.0f, "n dens");
 
-				int linear_ind = j + D_MAX_NR_OF_NEIGHBORS*i;
+				k_j = inv_delta_t_2*(pred_dens[neighbor_ind] - C_REST_DENS)*alpha[neighbor_ind];
+		
+				x = m_particles.pos.x[particle_ind] - m_particles.pos.x[neighbor_ind];
+				y = m_particles.pos.y[particle_ind] - m_particles.pos.y[neighbor_ind];
+				z = m_particles.pos.z[particle_ind] - m_particles.pos.z[neighbor_ind];
 
-				dx = m_particles.pos.x[neighbor_index] - m_particles.pos.x[i];
-				dy = m_particles.pos.y[neighbor_index] - m_particles.pos.y[i];
-				dz = m_particles.pos.z[neighbor_index] - m_particles.pos.z[i];
+				scalar_value = scalar_values[linear_ind];
 
-				kernel_gradient_x = dx * scalar_values[linear_ind];
-				kernel_gradient_y = dy * scalar_values[linear_ind];
-				kernel_gradient_z = dz * scalar_values[linear_ind];
+				kernel_gradient_x = x*scalar_value;
+				kernel_gradient_y = y*scalar_value;
+				kernel_gradient_z = z*scalar_value;
 
-				sum_x += m_particles.mass * (k_i_x + k[neighbor_index].x / m_particles.dens[neighbor_index]) * kernel_gradient_x;
-				sum_y += m_particles.mass * (k_i_y + k[neighbor_index].y / m_particles.dens[neighbor_index]) * kernel_gradient_y;
-				sum_z += m_particles.mass * (k_i_z + k[neighbor_index].z / m_particles.dens[neighbor_index]) * kernel_gradient_z;
+				div_j = k_j / m_particles.dens[neighbor_ind];
+
+				div_sum = div_i + div_j;
+
+				pressure_acc_x += m_particles.mass * div_sum * kernel_gradient_x;
+				pressure_acc_y += m_particles.mass * div_sum * kernel_gradient_y;
+				pressure_acc_z += m_particles.mass * div_sum * kernel_gradient_z;
 			}
-			m_particles.pred_vel.x[i] = m_particles.pred_vel.x[i] - m_delta_t*sum_x;
-			m_particles.pred_vel.y[i] = m_particles.pred_vel.y[i] - m_delta_t*sum_y;
-			m_particles.pred_vel.z[i] = m_particles.pred_vel.z[i] - m_delta_t*sum_z;
-			sum_x = sum_z = sum_y = .0f;
+			//pressure_force_z is not in report but it is a force and it is = F/m *delta_t
+			m_particles.pred_vel.x[particle_ind] = m_particles.pred_vel.x[particle_ind] - m_delta_t * pressure_acc_x;
+			m_particles.pred_vel.y[particle_ind] = m_particles.pred_vel.y[particle_ind] - m_delta_t * pressure_acc_y;
+			m_particles.pred_vel.z[particle_ind] = m_particles.pred_vel.z[particle_ind] - m_delta_t * pressure_acc_z;
 		}
-
-		// condition p_avg - p_0 > ny  ny = 1.01*(p_max_p_min) p_0 = 1000
-		pressure_avg = dens_avg / D_NR_OF_PARTICLES - C_REST_DENS;
-		ny = 1.01*(dens_max - dens_min);
+		calculate_derived_density_pred_dens(&dens_derive_avg, &pred_dens_avg, dens_derive, pred_dens, &m_particles.pred_vel, m_particles.mass, scalar_values, m_particles.dens, m_neighbor_data, &m_particles.pos, m_delta_t);
 		++iter;
-	} while (pressure_avg - C_REST_DENS > ny || iter < 2);
+	} while (pred_dens_avg - C_REST_DENS < 1.f || iter < 2);
 }
-*/
 
 //void SPH::correct_strain_rate_error() {}
 
@@ -319,23 +296,24 @@ void SPH::update_positions() const
 /*
  * ViscousDFSPH, Algorithm 2
  */
-void SPH::correct_divergence_error(float* dens_derive, float* scalar_values, float* alpha)
+void SPH::correct_divergence_error(float* dens_derive, float* pred_dens, float* scalar_values, float* alpha)
 {
 	int neighbor_ind;
 	int iter = 0;
 
-	float dens_derive_avg;
-	float k_v_i, k_v_j, div_i, div_j;
+	float dens_derive_avg, pred_dens_avg;
+	float k_v_i, k_v_j, div_i, div_j, div_sum;
 	float pressure_acc_x, pressure_acc_y, pressure_acc_z;
 	float x, y, z;
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
 	float scalar_value;
 
 	float inv_delta_t = 1.f / m_delta_t;
-	
+
+	calculate_derived_density_pred_dens(&dens_derive_avg, &pred_dens_avg, dens_derive, pred_dens, &m_particles.pred_vel, m_particles.mass, scalar_values, m_particles.dens, m_neighbor_data, &m_particles.pos, m_delta_t);
 	do
 	{
-		dens_derive_avg = calculate_derived_density(dens_derive, &m_particles.pred_vel, m_particles.mass, scalar_values, m_neighbor_data, &m_particles.pos);
+		//calculate_derived_density_pred_dens(&dens_derive_avg, &pred_dens_avg, dens_derive, pred_dens, &m_particles.pred_vel, m_particles.mass, scalar_values, m_particles.dens, m_neighbor_data, &m_particles.pos, m_delta_t);
 		
 		for (auto particle_ind = 0; particle_ind < D_NR_OF_PARTICLES; ++particle_ind)
 		{
@@ -366,15 +344,20 @@ void SPH::correct_divergence_error(float* dens_derive, float* scalar_values, flo
 				
 				div_j = k_v_j / m_particles.dens[neighbor_ind];
 
-				pressure_acc_x += m_particles.mass * (div_i + div_j) * kernel_gradient_x;
-				pressure_acc_y += m_particles.mass * (div_i + div_j) * kernel_gradient_y;
-				pressure_acc_z += m_particles.mass * (div_i + div_j) * kernel_gradient_z;
+				div_sum = div_i + div_j;
+
+				pressure_acc_x += m_particles.mass * div_sum * kernel_gradient_x;
+				pressure_acc_y += m_particles.mass * div_sum * kernel_gradient_y;
+				pressure_acc_z += m_particles.mass * div_sum * kernel_gradient_z;
 			}
 			//pressure_force_z is not in report but it is a force and it is = F/m *delta_t
 			m_particles.pred_vel.x[particle_ind] = m_particles.pred_vel.x[particle_ind] - m_delta_t * pressure_acc_x;
 			m_particles.pred_vel.y[particle_ind] = m_particles.pred_vel.y[particle_ind] - m_delta_t * pressure_acc_y;
 			m_particles.pred_vel.z[particle_ind] = m_particles.pred_vel.z[particle_ind] - m_delta_t * pressure_acc_z;
 		}
+
+	calculate_derived_density_pred_dens(&dens_derive_avg, &pred_dens_avg, dens_derive, pred_dens, &m_particles.pred_vel, m_particles.mass, scalar_values, m_particles.dens, m_neighbor_data, &m_particles.pos, m_delta_t);
+
 	// iter could be used to get an avarge of how many times the loops runs, like they have in the report.
 	//++iter; // uncommented for now. read commet above
 		//if dens_derive_avg < 0 it describes a negative flow in the particle -> it shold be abs to 
@@ -469,7 +452,7 @@ void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neig
 	float pi = D_PI;
 	float particle_pos_x, particle_pos_y, particle_pos_z;
 
-	float div = 1.0f / (search_area*pi);
+	float div = 1.0f / (search_area*search_area*search_area*pi);
 
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
 	{
@@ -501,12 +484,13 @@ void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neig
 /*
  * ViscousDFSPH, eq 9
  */
-float calculate_derived_density(float* derived_density, Float3* pred_vel, float mass, float* scalar_value, Neighbor_Data* neighbor_data, Float3* pos)
+void calculate_derived_density_pred_dens(float* dens_derive_avg, float* pred_dens_avg, float* pred_dens, float* derived_density, Float3* pred_vel, float mass, float* scalar_value, float* dens, Neighbor_Data* neighbor_data, Float3* pos, float delta_t)
 {
 	int neighbor_index, linear_ind;
 	int neighbor_length;
 
-	float pressure_derived, dens_derive_sum = 0.f;
+	float pressure_derived;
+	float dens_derive_sum = 0.f, pred_dens_sum = 0.f;
 	float pressure_derived_x = 0.f, pressure_derived_y = 0.f, pressure_derived_z = 0.f;
 	float x, y, z;
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
@@ -536,11 +520,14 @@ float calculate_derived_density(float* derived_density, Float3* pred_vel, float 
 		pressure_derived = pressure_derived_x + pressure_derived_y + pressure_derived_z;
 
 		derived_density[i] = pressure_derived;
+		pred_dens[i] = dens[i] + delta_t*derived_density[i];
 
 		dens_derive_sum += derived_density[i];
+		pred_dens_sum += pred_dens[i];
 		pressure_derived_x = pressure_derived_y = pressure_derived_z = 0.f;
 	}
-	return dens_derive_sum / D_NR_OF_PARTICLES;
+	*dens_derive_avg = dens_derive_sum / D_NR_OF_PARTICLES;
+	*pred_dens_avg = pred_dens_sum / D_NR_OF_PARTICLES;
 }
 
 
@@ -559,7 +546,7 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 	float dx, dy, dz;
 
 	float inv_range = 1.0f / D_SEARCH_RANGE;
-	float div = 1.0f / (search_area*pi);
+	float div = 1.0f / (search_area*search_area*search_area*pi);
 
 	//Loop through all particles
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
