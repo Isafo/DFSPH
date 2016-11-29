@@ -2,13 +2,23 @@
 #include <iostream>
 #include <math.h>
 #include <assert.h>
+#include <vector>
+#include <array>
+#include <complex>      // std::complex, std::real
 
+//Written by Dan Koschier, https://github.com/InteractiveComputerGraphics/CompactNSearch
+#include "include\CompactNSearch.h"
+#include "include\PointSet.h"
+#include "include\DataStructures.h"
+#include "imconfig.h"
 #define D_GRAVITY -9.82f
 #define D_PI 3.1415926559f;
 #define D_EPSILON 0.000000000000001f;
-
 //since force is low a higher radius is requiered for small number of particles
 #define D_SEARCH_RANGE 0.025f;
+
+using namespace CompactNSearch;
+
 
 SPH::SPH(int x, int y, int z)
 {
@@ -34,7 +44,7 @@ SPH::SPH(int x, int y, int z)
 	settings class with static values
 	instead of being defined here. */
 	m_particles.rad = 0.01f;
-	m_particles.mass = 0.00818f;
+	m_particles.mass = 0.01018f;
 
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i) {
 		m_particles.dens[i] = 0.f;
@@ -135,23 +145,32 @@ void SPH::find_neighborhoods() const
 	const float neigborhod_rad = D_SEARCH_RANGE;
 	int count{ 0 };
 
+	CompactNSearch::NeighborhoodSearch nsearch(neigborhod_rad);
+	static std::array<double, 3> temp;
+	std::vector<std::array<double,3>> positions;
+	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
+	{
+		temp[0] = m_particles.pos.x[i];
+		temp[1] = m_particles.pos.y[i];
+		temp[2] = m_particles.pos.z[i];
+		positions.push_back(temp);
+
+	}
+
+	unsigned int point_set_id = nsearch.add_point_set(positions.front().data(), positions.size());
+	nsearch.find_neighbors();
+	PointSet const& ps = nsearch.point_set(point_set_id);
+	
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		for (auto n = 0; n < D_NR_OF_PARTICLES; ++n)
+		for (auto n = 0; n < ps.n_neighbors(i); ++n)
 		{
-			if (i != n)
-			{
-				vector_i_n[0] = m_particles.pos.x[n] - m_particles.pos.x[i];
-				vector_i_n[1] = m_particles.pos.y[n] - m_particles.pos.y[i];
-				vector_i_n[2] = m_particles.pos.z[n] - m_particles.pos.z[i];
-				dist_i_n_2 = vector_i_n[0]*vector_i_n[0] + vector_i_n[1]*vector_i_n[1] + vector_i_n[2]*vector_i_n[2];
+			PointID const& pid = ps.neighbor(i, n);
 
-				if (sqrt(dist_i_n_2) < neigborhod_rad)
-				{
-					m_neighbor_data[i].neighbor[count] = n;
-					++count;
-				}
-			}
+			m_neighbor_data[i].neighbor[count] = pid.point_id;
+			++count;
+			
+			
 		}
 		//save nr of neighbor to first position 
 		m_neighbor_data[i].n = count;
@@ -186,11 +205,11 @@ void SPH::calculate_time_step(float dT)
 		m_delta_t = 0.5f * (2.f * m_particles.rad) / sqrtf(v_max_2) - D_EPSILON;
 	}
 	else {
-		m_delta_t = 0.001f;
+		m_delta_t = 0.002f;
 	}
 	if (m_delta_t > 0.005) { m_delta_t = 0.005f; }
 
-	m_delta_t = 0.004f;
+	m_delta_t = 0.001f;
 
 }
 
@@ -202,24 +221,7 @@ void SPH::predict_velocities()
 		m_particles.pred_vel.y[i] = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_particles.mass;
 		m_particles.pred_vel.z[i] = m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_particles.mass;
 
-		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.5f)
-		{
-			m_particles.pred_vel.x[i] *= -0.0f;
-		}
-
-		if (m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t <= -0.5f)
-		{
-			m_particles.pred_vel.y[i] *= 00.0f;
-		} 
-		else if(m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t >= 0.5f) // Ceil
-		{
-			m_particles.pred_vel.y[i] = m_particles.F_adv.y[i] * m_delta_t / m_particles.mass;
-		}
-
-		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.5f)
-		{
-			m_particles.pred_vel.z[i] *= -0.0f;
-		}
+		
 	}
 }
 
@@ -255,7 +257,7 @@ void SPH::correct_density_error(float* pred_dens, float* dens_derive, float* sca
 
 				assert(m_particles.dens[neighbor_ind] != 0.0f, "n dens");
 
-				k_j = 0.5f*fmax(inv_delta_t_2*(pred_dens[neighbor_ind] - C_REST_DENS)*alpha[neighbor_ind], 0.5);
+				k_j = fmax(inv_delta_t_2*(pred_dens[neighbor_ind] - C_REST_DENS)*alpha[neighbor_ind], 0.5);
 		
 				x = m_particles.pos.x[particle_ind] - m_particles.pos.x[neighbor_ind];
 				y = m_particles.pos.y[particle_ind] - m_particles.pos.y[neighbor_ind];
@@ -297,6 +299,24 @@ void SPH::update_positions() const
 {
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
+		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.5f)
+		{
+			m_particles.pred_vel.x[i] *= -0.0f;
+		}
+
+		if (m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t <= -0.5f)
+		{
+			m_particles.pred_vel.y[i] *= 00.0f;
+		}
+		else if (m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t >= 0.5f) // Ceil
+		{
+			m_particles.pred_vel.y[i] = m_particles.F_adv.y[i] * m_delta_t / m_particles.mass;
+		}
+
+		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.5f)
+		{
+			m_particles.pred_vel.z[i] *= -0.0f;
+		}
 		m_particles.pos.x[i] += m_particles.pred_vel.x[i] * m_delta_t;
 		m_particles.pos.y[i] += m_particles.pred_vel.y[i] * m_delta_t;
 		m_particles.pos.z[i] += m_particles.pred_vel.z[i] * m_delta_t;
@@ -368,14 +388,14 @@ void SPH::correct_divergence_error(float* dens_derive, float* pred_dens, float* 
 
 	calculate_derived_density_pred_dens(&dens_derive_avg, &pred_dens_avg, dens_derive, pred_dens, &m_particles.pred_vel, m_particles.mass, scalar_values, m_particles.dens, m_neighbor_data, &m_particles.pos, m_delta_t);
 	
-	eta =0.1f*0.01*C_REST_DENS* 1 / m_delta_t;
+	eta =0.01f*0.01*C_REST_DENS* 1 / m_delta_t;
 	// iter could be used to get an avarge of how many times the loops runs, like they have in the report.
 	//++iter; // uncommented for now. read commet above
 		//if dens_derive_avg < 0 it describes a negative flow in the particle -> it shold be abs to 
 		//minimise these flows that go in the negative direction+
 	++iter;
 
-	} while ((dens_derive_avg) > eta && iter < 100); // implicit condition: iter < 1 
+	} while (abs(dens_derive_avg) > eta && iter < 100); // implicit condition: iter < 1 
 }
 
 void SPH::update_velocities()
@@ -408,7 +428,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 		//added 1 * mass as particles own density as kernel is 1 at dist == 0
 		//this should atleast be the case, but needs to be checked
 		// => Does not seem to cause a problem when it is 0. So i followed the report
-		dens[particle] = 0.000656593;
+		dens[particle] = 120.000656593;
 		for (auto neighbor = 0; neighbor < nr_neighbors; ++neighbor)
 		{
 			neighbor_index = neighbor_data[particle].neighbor[neighbor];
@@ -442,7 +462,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 
 		// set alpha to max(denom,min_denom)
 		denom = denom < min_denom ? min_denom : denom;
-		alpha[particle] = dens[particle] / denom;
+		alpha[particle] = 1 / denom;
 		
 		sum_abs_denom = 0.f;
 		x = y = z = 0.f;
