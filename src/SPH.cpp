@@ -6,11 +6,14 @@
 #include <array>
 #include <complex>      // std::complex, std::real
 
-//Written by Dan Koschier, https://github.com/InteractiveComputerGraphics/CompactNSearch
+//Compact Search was written by
+//Dan Koschier, https://github.com/InteractiveComputerGraphics/CompactNSearch
 #include "include\CompactNSearch.h"
 #include "include\PointSet.h"
 #include "include\DataStructures.h"
 #include "imconfig.h"
+
+
 #define D_GRAVITY -9.82f
 #define D_PI 3.1415926559f;
 #define D_EPSILON 0.000000000000001f;
@@ -44,9 +47,10 @@ SPH::SPH(int x, int y, int z)
 	settings class with static values
 	instead of being defined here. */
 	m_particles.rad = 0.01f;
-	m_particles.mass = 0.01018f;
+	m_particles.mass = 0.004218f;
 
-	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i) {
+	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i) 
+	{
 		m_particles.dens[i] = 0.f;
 		m_particles.pos.x[i] = 0.f;
 		m_particles.pos.y[i] = 0.f;
@@ -169,8 +173,6 @@ void SPH::find_neighborhoods() const
 
 			m_neighbor_data[i].neighbor[count] = pid.point_id;
 			++count;
-			
-			
 		}
 		//save nr of neighbor to first position 
 		m_neighbor_data[i].n = count;
@@ -205,11 +207,11 @@ void SPH::calculate_time_step(float dT)
 		m_delta_t = 0.5f * (2.f * m_particles.rad) / sqrtf(v_max_2) - D_EPSILON;
 	}
 	else {
-		m_delta_t = 0.002f;
+		m_delta_t = 0.001f;
 	}
 	if (m_delta_t > 0.005) { m_delta_t = 0.005f; }
 
-	m_delta_t = 0.001f;
+	//m_delta_t = 0.001f;
 
 }
 

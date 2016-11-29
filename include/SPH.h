@@ -1,7 +1,7 @@
 #pragma once
 
-#define D_NR_OF_PARTICLES 1000
-#define D_MAX_NR_OF_NEIGHBORS 1000
+#define D_NR_OF_PARTICLES 2000
+#define D_MAX_NR_OF_NEIGHBORS 2000
 
 // A struct containing three arrays (SoA)
 struct Float3
