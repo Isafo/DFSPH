@@ -9,18 +9,14 @@
 //Compact Search was written by
 //Dan Koschier, https://github.com/InteractiveComputerGraphics/CompactNSearch
 #include "include\CompactNSearch.h"
-#include "include\PointSet.h"
 #include "include\DataStructures.h"
 #include "imconfig.h"
-
 
 #define D_GRAVITY -9.82f
 #define D_PI 3.1415926559f;
 #define D_EPSILON 0.000000000000001f;
 //since force is low a higher radius is requiered for small number of particles
 #define D_SEARCH_RANGE 0.025f;
-
-using namespace CompactNSearch;
 
 
 SPH::SPH(int x, int y, int z)
@@ -129,6 +125,8 @@ void SPH::init_positions(int x_start, int y_start, int z_start, int rows, int co
 	float padding_factor{ 1.8f };
 	float x, y, z;
 
+	#pragma omp parallel
+	#pragma omp for
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		x = i / (rows*cols);
@@ -144,32 +142,30 @@ void SPH::init_positions(int x_start, int y_start, int z_start, int rows, int co
 
 void SPH::find_neighborhoods() const
 {
-	float vector_i_n[3];
-	float dist_i_n_2;
-	int size = D_NR_OF_PARTICLES;
 	const float neigborhod_rad = D_SEARCH_RANGE;
 	int count{ 0 };
 
 	CompactNSearch::NeighborhoodSearch nsearch(neigborhod_rad);
-	static std::array<double, 3> temp;
-	std::vector<std::array<double,3>> positions(size);
+	std::vector<std::array<double,3>> positions(D_NR_OF_PARTICLES);
+
+	#pragma omp parallel
+	#pragma omp for
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		temp[0] = m_particles.pos.x[i];
-		temp[1] = m_particles.pos.y[i];
-		temp[2] = m_particles.pos.z[i];
-		positions.at(i) = temp;
+		positions.at(i) = { m_particles.pos.x[i], m_particles.pos.y[i], m_particles.pos.z[i] };
 	}
 
 	unsigned int point_set_id = nsearch.add_point_set(positions.front().data(), positions.size());
 	nsearch.find_neighbors();
-	PointSet const& ps = nsearch.point_set(point_set_id);
+	CompactNSearch::PointSet const& ps = nsearch.point_set(point_set_id);
 	
+	#pragma omp parallel
+	#pragma omp for
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		for (auto n = 0; n < ps.n_neighbors(i); ++n)
 		{
-			PointID const& pid = ps.neighbor(i, n);
+			CompactNSearch::PointID const& pid = ps.neighbor(i, n);
 
 			m_neighbor_data[i].neighbor[count] = pid.point_id;
 			++count;
@@ -182,6 +178,8 @@ void SPH::find_neighborhoods() const
 
 void SPH::non_pressure_forces() const
 {
+	#pragma omp parallel
+	#pragma omp for
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		m_particles.F_adv.x[i] = 0.f;
@@ -203,12 +201,12 @@ void SPH::calculate_time_step(float dT)
 		if (v_max_2 < x_2 + y_2 + z_2)
 			v_max_2 = x_2 + y_2 + z_2;
 	}
-	if (v_max_2 != 0) {
+	//if (v_max_2 != 0) {
 		m_delta_t = 0.5f * (2.f * m_particles.rad) / sqrtf(v_max_2) - D_EPSILON;
-	}
-	else {
-		m_delta_t = 0.001f;
-	}
+	//}
+	//else {
+	//	m_delta_t = 0.003f;
+	//}
 	if (m_delta_t > 0.005) { m_delta_t = 0.005f; }
 
 	//m_delta_t = 0.001f;
@@ -217,6 +215,9 @@ void SPH::calculate_time_step(float dT)
 
 void SPH::predict_velocities()
 {
+
+	#pragma omp parallel
+	#pragma omp for
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		m_particles.pred_vel.x[i] = m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_particles.mass;
@@ -295,10 +296,10 @@ void SPH::correct_density_error(float* pred_dens, float* dens_derive, float* sca
 	} while ((pred_dens_avg - C_REST_DENS > eta || iter < 2) && iter < 100);
 }
 
-//void SPH::correct_strain_rate_error() {}
-
 void SPH::update_positions() const
 {
+	#pragma omp parallel
+	#pragma omp for
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.5f)
@@ -345,8 +346,7 @@ void SPH::correct_divergence_error(float* dens_derive, float* pred_dens, float* 
 	calculate_derived_density_pred_dens(&dens_derive_avg, &pred_dens_avg, dens_derive, pred_dens, &m_particles.pred_vel, m_particles.mass, scalar_values, m_particles.dens, m_neighbor_data, &m_particles.pos, m_delta_t);
 	do
 	{
-		//calculate_derived_density_pred_dens(&dens_derive_avg, &pred_dens_avg, dens_derive, pred_dens, &m_particles.pred_vel, m_particles.mass, scalar_values, m_particles.dens, m_neighbor_data, &m_particles.pos, m_delta_t);
-		
+
 		for (auto particle_ind = 0; particle_ind < D_NR_OF_PARTICLES; ++particle_ind)
 		{
 
@@ -390,7 +390,7 @@ void SPH::correct_divergence_error(float* dens_derive, float* pred_dens, float* 
 
 	calculate_derived_density_pred_dens(&dens_derive_avg, &pred_dens_avg, dens_derive, pred_dens, &m_particles.pred_vel, m_particles.mass, scalar_values, m_particles.dens, m_neighbor_data, &m_particles.pos, m_delta_t);
 	
-	eta =0.01f*0.01*C_REST_DENS* 1 / m_delta_t;
+	eta = 0.01f*0.01*C_REST_DENS* 1 / m_delta_t;
 	// iter could be used to get an avarge of how many times the loops runs, like they have in the report.
 	//++iter; // uncommented for now. read commet above
 		//if dens_derive_avg < 0 it describes a negative flow in the particle -> it shold be abs to 
@@ -402,6 +402,9 @@ void SPH::correct_divergence_error(float* dens_derive, float* pred_dens, float* 
 
 void SPH::update_velocities()
 {
+
+	#pragma omp parallel
+	#pragma omp for
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		m_particles.vel.x[i] = m_particles.pred_vel.x[i];
@@ -424,6 +427,8 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 	float temporary_sum_abs;
 	const float min_denom{ 0.000001f };
 
+	#pragma omp parallel default(shared)
+	#pragma omp for schedule(static)  
 	for (auto particle = 0; particle < D_NR_OF_PARTICLES; ++particle)
 	{
 		nr_neighbors = neighbor_data[particle].n;
@@ -465,7 +470,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 		// set alpha to max(denom,min_denom)
 		denom = denom < min_denom ? min_denom : denom;
 		alpha[particle] = 1 / denom;
-		
+
 		sum_abs_denom = 0.f;
 		x = y = z = 0.f;
 	}
@@ -605,7 +610,6 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 			scalar_value = kernel_derive / (search_area * dist);
 
 			scalar_values[particle*D_MAX_NR_OF_NEIGHBORS + neighbor] = scalar_value;
-
 		}
 	}
 
