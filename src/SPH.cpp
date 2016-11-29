@@ -202,11 +202,13 @@ void SPH::calculate_time_step(float dT)
 			v_max_2 = x_2 + y_2 + z_2;
 	}
 	//if (v_max_2 != 0) {
-		m_delta_t = 0.5f * (2.f * m_particles.rad) / sqrtf(v_max_2) - D_EPSILON;
+		m_delta_t = 0.5f * (2.f * m_particles.rad) / sqrtf(v_max_2) + D_EPSILON;
 	//}
 	//else {
 	//	m_delta_t = 0.003f;
 	//}
+	if (m_delta_t < 0.0005) { m_delta_t = 0.0005f; }
+
 	if (m_delta_t > 0.005) { m_delta_t = 0.005f; }
 
 	//m_delta_t = 0.001f;
@@ -293,7 +295,7 @@ void SPH::correct_density_error(float* pred_dens, float* dens_derive, float* sca
 			if (max_error < dens_derive[i])max_error = dens_derive[i];
 		}
 		eta = 0.01f * 0.01 * C_REST_DENS;
-	} while ((pred_dens_avg - C_REST_DENS > eta || iter < 2) && iter < 100);
+	} while ((abs(pred_dens_avg - C_REST_DENS) > eta || iter < 2) && iter < 100);
 }
 
 void SPH::update_positions() const
@@ -435,7 +437,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 		//added 1 * mass as particles own density as kernel is 1 at dist == 0
 		//this should atleast be the case, but needs to be checked
 		// => Does not seem to cause a problem when it is 0. So i followed the report
-		dens[particle] = 120.000656593;
+		dens[particle] = 12.000656593;
 		for (auto neighbor = 0; neighbor < nr_neighbors; ++neighbor)
 		{
 			neighbor_index = neighbor_data[particle].neighbor[neighbor];
@@ -469,7 +471,7 @@ void update_density_and_factors(float mass, Float3* pos, float* dens, float* sca
 
 		// set alpha to max(denom,min_denom)
 		denom = denom < min_denom ? min_denom : denom;
-		alpha[particle] = 1 / denom;
+		alpha[particle] = dens[particle] / denom;
 
 		sum_abs_denom = 0.f;
 		x = y = z = 0.f;
