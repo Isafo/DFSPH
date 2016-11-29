@@ -146,19 +146,19 @@ void SPH::find_neighborhoods() const
 {
 	float vector_i_n[3];
 	float dist_i_n_2;
+	int size = D_NR_OF_PARTICLES;
 	const float neigborhod_rad = D_SEARCH_RANGE;
 	int count{ 0 };
 
 	CompactNSearch::NeighborhoodSearch nsearch(neigborhod_rad);
 	static std::array<double, 3> temp;
-	std::vector<std::array<double,3>> positions;
+	std::vector<std::array<double,3>> positions(size);
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
 		temp[0] = m_particles.pos.x[i];
 		temp[1] = m_particles.pos.y[i];
 		temp[2] = m_particles.pos.z[i];
-		positions.push_back(temp);
-
+		positions.at(i) = temp;
 	}
 
 	unsigned int point_set_id = nsearch.add_point_set(positions.front().data(), positions.size());
