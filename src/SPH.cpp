@@ -200,13 +200,14 @@ void SPH::calculate_time_step(float dT)
 			v_max_2 = x_2 + y_2 + z_2;
 	}
 
-	if (v_max_2 != 0) {
-		//m_delta_t = 0.5f * (2.f * m_rad) / sqrtf(v_max_2) + D_EPSILON;
-		m_delta_t = 0.003f;
-	}
-	else {
-		m_delta_t = 0.003f;
-	}
+	m_delta_t = 0.5f * (2.f * m_rad) / (sqrtf(v_max_2) + 0.000001);
+	//m_delta_t = 0.003f;
+
+	if (m_delta_t > 0.005)
+		m_delta_t = 0.005;
+	else if (m_delta_t < 0.0005)
+		m_delta_t = 0.0005;
+
 }
 
 void SPH::predict_velocities()
@@ -309,22 +310,6 @@ void SPH::update_positions() const
 	#pragma omp for
 	for (int i = 0; i < D_NR_OF_PARTICLES; ++i)
 	{
-		/*
-		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.5f)
-		{
-			m_particles.pred_vel.x[i] = 0.0f;
-		}
-
-		if (abs(m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t) >= 0.5f)
-		{
-			m_particles.pred_vel.y[i] = 0.0f;
-		}
-
-		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.5f)
-		{
-			m_particles.pred_vel.z[i] = 0.0f;
-		}
-		*/
 		m_particles.pos.x[i] += m_particles.pred_vel.x[i] * m_delta_t;
 		m_particles.pos.y[i] += m_particles.pred_vel.y[i] * m_delta_t;
 		m_particles.pos.z[i] += m_particles.pred_vel.z[i] * m_delta_t;
@@ -395,10 +380,6 @@ void SPH::correct_divergence_error(float* dens_derive, float* pred_dens, float* 
 	calculate_derived_density_pred_dens(&dens_derive_avg, &pred_dens_avg, dens_derive, pred_dens, &m_particles.pred_vel, m_mass, scalar_values, m_particles.dens, m_neighbor_data, &m_particles.pos, m_delta_t);
 	
 	eta = 0.01f*0.01*C_REST_DENS* 1 / m_delta_t;
-	// iter could be used to get an avarge of how many times the loops runs, like they have in the report.
-	//++iter; // uncommented for now. read commet above
-		//if dens_derive_avg < 0 it describes a negative flow in the particle -> it shold be abs to 
-		//minimise these flows that go in the negative direction+
 	++max_iter;
 
 	} while (dens_derive_avg > eta && max_iter < 100); // implicit condition: iter < 1 
@@ -406,7 +387,6 @@ void SPH::correct_divergence_error(float* dens_derive, float* pred_dens, float* 
 
 void SPH::update_velocities()
 {
-
 	#pragma omp parallel
 	#pragma omp for
 	for (auto i = 0; i < D_NR_OF_PARTICLES; ++i)
@@ -616,5 +596,4 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 			scalar_values[particle*D_MAX_NR_OF_NEIGHBORS + neighbor] = scalar_value;
 		}
 	}
-
 }
