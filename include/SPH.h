@@ -1,7 +1,7 @@
 #pragma once
 
-#define D_NR_OF_PARTICLES 800
-#define D_MAX_NR_OF_NEIGHBORS 800
+#define D_NR_OF_PARTICLES 4000
+#define D_MAX_NR_OF_NEIGHBORS 4000
 
 // A struct containing three arrays (SoA)
 struct Float3
@@ -25,11 +25,16 @@ struct Neighbor_Data
 	unsigned int n;
 };
 
+
 class SPH
 {
 public:
+
 	SPH(int x, int y, int z);
+	
+	// Free the memory
 	~SPH();
+
 	// performs the simulation steps and updates the particles
 	void update(float dT);
 
@@ -37,7 +42,9 @@ public:
 	void init_positions(int x = 0, int y = 0, int z = 0, int rows = 3, int cols = 3) const;
 
 	static unsigned int get_nr_of_particles() { return D_NR_OF_PARTICLES; }
-	float get_particle_radius() const { return m_particles.rad; }
+
+	float get_particle_radius() const { return m_rad; }
+	
 	Float3* get_particle_positions() { return &m_particles.pos; }
 
 	// for debug
@@ -100,8 +107,6 @@ private:
 	
 	void correct_density_error(float* pred_dens, float* dens_derive, float* scalar_values, float* alpha);
 	
-	//void correct_strain_rate_error();
-	
 	void update_positions() const;
 	
 	void correct_divergence_error(float* dens_derive, float* pred_dens, float* scalar_values, float* alpha);
@@ -117,15 +122,16 @@ private:
 
 		float* p;
 		float* dens;
-		float mass;
-		float rad;
 	};
 
 	float m_delta_t;
+	float m_mass;
+	float m_rad;
+
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
 
-	const float C_REST_DENS{ 30.f };
+	const float C_REST_DENS{ 10000.f };
 };
 
 // calculates the density and the alpha particle factors
