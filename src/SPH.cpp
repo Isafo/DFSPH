@@ -144,7 +144,7 @@ void SPH::find_neighborhoods() const
 	int count{ 0 };
 
 	CompactNSearch::NeighborhoodSearch nsearch(neigborhod_rad);
-	std::vector<std::array<double,3>> positions(D_NR_OF_PARTICLES);
+	static std::vector<std::array<double,3>> positions(D_NR_OF_PARTICLES);
 
 	#pragma omp parallel
 	#pragma omp for
