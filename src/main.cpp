@@ -51,7 +51,8 @@ int main() {
 	//BoundingBox bbox(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
 
-	SPH* current_simulation = start_new_simulation(nullptr, -0.15f, 0.0f, 0.0f);
+	// ugly hax with sending in null
+	SPH* current_simulation = new SPH(-0.15f, 0.f, 0.f);
 	Sphere sphere(0.0f, 0.0f, 0.0f, current_simulation->get_particle_radius());
 
 	// for testing.
@@ -64,7 +65,7 @@ int main() {
 
 	bool fpsResetBool = false;
 
-	double lastTime = glfwGetTime() - 0.001f;
+	double lastTime = glfwGetTime() - 0.001;
 	double dT = 0.0;
 
 	int dParticle = 0;
@@ -74,7 +75,7 @@ int main() {
 		// Loop for each frame...
 
 		glfwPollEvents();
-		if (dT > 1.f / 30.f) {
+		if (dT > 1.0 / 30.0) {
 			if (current_simulation) {
 				current_simulation->update(dT);
 			}
@@ -181,8 +182,6 @@ int main() {
 		ImGui::Render();
 		glfwSwapBuffers(currentWindow);
 
-
-
 		// check if user respawns particle system
 		if (glfwGetKey(currentWindow, GLFW_KEY_R)) {
 			current_simulation = start_new_simulation(current_simulation, -0.15f, 0.0f, 0.0f);
@@ -198,6 +197,7 @@ int main() {
 	return 0;
 }
 
+
 void inputHandler(GLFWwindow* _window, double _dT)
 {
 	if (glfwGetKey(_window, GLFW_KEY_ESCAPE)) {
@@ -205,12 +205,12 @@ void inputHandler(GLFWwindow* _window, double _dT)
 	}
 }
 
+
 SPH* start_new_simulation(SPH* sph, int x = 0, int y = 0, int z = 0)
 {
 	delete sph;
 	return new SPH(x, y, z);
 }
-
 
 
 void GLcalls()
