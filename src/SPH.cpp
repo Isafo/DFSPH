@@ -8,7 +8,7 @@
 //Dan Koschier, https://github.com/InteractiveComputerGraphics/CompactNSearch
 #include "CompactNSearch/include/CompactNSearch.h"
 #include "CompactNSearch/include/DataStructures.h"
-#include "imconfig.h"
+#include "imgui\imconfig.h"
 
 #define D_GRAVITY -9.82f
 #define D_PI 3.1415926559f;

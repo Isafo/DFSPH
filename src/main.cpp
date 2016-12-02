@@ -1,6 +1,6 @@
 #include "GL/glew.h"
-#include <imgui.h>
-#include "imgui_impl_glfw.h"
+#include <imgui\imgui.h>
+#include "imgui\imgui_impl_glfw.h"
 #include "glfwContext.h"
 
 #include "Shader.h"
@@ -15,6 +15,8 @@
 void inputHandler(GLFWwindow* _window, double _dT);
 void cameraHandler(GLFWwindow* _window, double _dT, Camera* _cam);
 void GLcalls();
+
+SPH* start_new_simulation(SPH* sph, int x, int y, int z);
 
 int main() {
 	glfwContext glfw;
@@ -48,16 +50,20 @@ int main() {
 
 	//BoundingBox bbox(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
-	SPH s(-0.15, 0.0, 0.0);
-	
-	Sphere sphere(0.0f, 0.0f, 0.0f, s.get_particle_radius());
+
+	SPH* current_simulation = start_new_simulation(nullptr, -0.15f, 0.0f, 0.0f);
+	Sphere sphere(0.0f, 0.0f, 0.0f, current_simulation->get_particle_radius());
+
+	// for testing.
+	//delete current_simulation;
+	//current_simulation = nullptr;
 
 	Camera mCamera;
 	mCamera.setPosition(&glm::vec3(0.f, 0.f, 1.0f));
 	mCamera.update();
 
 	bool fpsResetBool = false;
-	
+
 	double lastTime = glfwGetTime() - 0.001f;
 	double dT = 0.0;
 
@@ -65,68 +71,76 @@ int main() {
 
 	while (!glfwWindowShouldClose(currentWindow))
 	{
+		// Loop for each frame...
+
 		glfwPollEvents();
 		if (dT > 1.f / 30.f) {
-			s.update(dT);
+			if (current_simulation) {
+				current_simulation->update(dT);
+			}
+
 			lastTime = glfwGetTime();
 		}
 		else {
 			dT = glfwGetTime() - lastTime;
 		}
-	
+
 		//glfw input handler
 		inputHandler(currentWindow, dT);
 
-		if (glfwGetKey(currentWindow, GLFW_KEY_LEFT_CONTROL)) 
+		if (glfwGetKey(currentWindow, GLFW_KEY_LEFT_CONTROL))
 		{
 			if (!fpsResetBool)
 			{
 				fpsResetBool = true;
 				glfwSetCursorPos(currentWindow, 960, 540);
 			}
-			
+
 			mCamera.fpsCamera(currentWindow, dT);
 		}
 		else
 		{
 			fpsResetBool = false;
 		}
-		
+
 		GLcalls();
 
 		glUseProgram(sceneLight.programID);
-		
 
 		MVstack.push();//Camera transforms --<
 		glUniformMatrix4fv(locationP, 1, GL_FALSE, mCamera.getPerspective());
 		MVstack.multiply(mCamera.getTransformM());
 
+		// if there is a simulation running
 		glm::vec3 particlePos;
+		Float3* particle_pos;
+		if (current_simulation != nullptr) {
 
-		Float3* particle_pos = s.get_particle_positions();
-		for (int i = 0; i < D_NR_OF_PARTICLES; ++i) {
-			MVstack.push();
-			particlePos = glm::vec3(
-				particle_pos->x[i],
-				particle_pos->y[i],
-				particle_pos->z[i]
-			);
+			particle_pos = current_simulation->get_particle_positions();
+			for (int i = 0; i < D_NR_OF_PARTICLES; ++i) {
+				MVstack.push();
+				particlePos = glm::vec3(
+					particle_pos->x[i],
+					particle_pos->y[i],
+					particle_pos->z[i]
+					);
 
-			if (i == dParticle)
-			{
-				float color[] = { 1.0, 0.3, 0.0 };
-				glUniform3fv(locationColor, 1, &color[0]);
+				if (i == dParticle)
+				{
+					float color[] = { 1.0f, 0.3f, 0.0f };
+					glUniform3fv(locationColor, 1, &color[0]);
+				}
+				else
+				{
+					float color[] = { 0.0f, 0.3f, 1.0f };
+					glUniform3fv(locationColor, 1, &color[0]);
+				}
+				MVstack.translate(&particlePos);
+				//MVstack.translate(particle.getPosition());
+				glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
+				sphere.render();
+				MVstack.pop();
 			}
-			else
-			{
-				float color[] = { 0.0, 0.3, 1.0 };
-				glUniform3fv(locationColor, 1, &color[0]);
-			}
-			MVstack.translate(&particlePos);
-			//MVstack.translate(particle.getPosition());
-			glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
-			sphere.render();
-			MVstack.pop();
 		}
 
 		MVstack.push();
@@ -140,24 +154,24 @@ int main() {
 
 		ImGui_ImplGlfw_NewFrame();
 		{
-			ImGui::Text("Hello, world!");
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 			ImGui::Text("Simulation average %.3f ms/frame", dT);
 
-
 			ImGui::SliderInt("particle: ", &dParticle, 0, D_NR_OF_PARTICLES - 1);
 
-			Float3s pos = s.get_pos_i(dParticle);
-			Float3s vel = s.get_vel_i(dParticle);
-			Float3s pred_vel = s.get_predvel_i(dParticle);
-			Float3s F_adv = s.get_F_adv_i(dParticle);
-			float dens = s.get_dens_i(dParticle);
+			if (current_simulation) {
+				Float3s pos = current_simulation->get_pos_i(dParticle);
+				Float3s vel = current_simulation->get_vel_i(dParticle);
+				Float3s pred_vel = current_simulation->get_predvel_i(dParticle);
+				Float3s F_adv = current_simulation->get_F_adv_i(dParticle);
+				float dens = current_simulation->get_dens_i(dParticle);
 
-			ImGui::Text("pos: %.4f %.4f %.4f", pos.x, pos.y, pos.z);
-			ImGui::Text("vel: %.4f %.4f %.4f", vel.x, vel.y, vel.z);
-			ImGui::Text("pred. vel: %.4f %.4f %.4f", pred_vel.x, pred_vel.y, pred_vel.z);
-			ImGui::Text("F_adv: %.4f %.4f %.4f", F_adv.x, F_adv.y, F_adv.z);
-			ImGui::Text("dens: %.4f", dens);
+				ImGui::Text("pos: %.4f %.4f %.4f", pos.x, pos.y, pos.z);
+				ImGui::Text("vel: %.4f %.4f %.4f", vel.x, vel.y, vel.z);
+				ImGui::Text("pred. vel: %.4f %.4f %.4f", pred_vel.x, pred_vel.y, pred_vel.z);
+				ImGui::Text("F_adv: %.4f %.4f %.4f", F_adv.x, F_adv.y, F_adv.z);
+				ImGui::Text("dens: %.4f", dens);
+			}
 		}
 
 		// Rendering imgui
@@ -166,9 +180,20 @@ int main() {
 		glViewport(0, 0, display_w, display_h);
 		ImGui::Render();
 		glfwSwapBuffers(currentWindow);
+
+
+
+		// check if user respawns particle system
+		if (glfwGetKey(currentWindow, GLFW_KEY_R)) {
+			current_simulation = start_new_simulation(current_simulation, -0.15f, 0.0f, 0.0f);
+		}
+
 	}
 
 	ImGui_ImplGlfw_Shutdown();
+
+	if (current_simulation)
+		delete current_simulation;
 
 	return 0;
 }
@@ -178,8 +203,15 @@ void inputHandler(GLFWwindow* _window, double _dT)
 	if (glfwGetKey(_window, GLFW_KEY_ESCAPE)) {
 		glfwSetWindowShouldClose(_window, GL_TRUE);
 	}
-
 }
+
+SPH* start_new_simulation(SPH* sph, int x = 0, int y = 0, int z = 0)
+{
+	delete sph;
+	return new SPH(x, y, z);
+}
+
+
 
 void GLcalls()
 {
