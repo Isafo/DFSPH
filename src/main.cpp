@@ -16,7 +16,7 @@ void inputHandler(GLFWwindow* _window, double _dT);
 void cameraHandler(GLFWwindow* _window, double _dT, Camera* _cam);
 void GLcalls();
 
-SPH* start_new_simulation(SPH* sph, int x, int y, int z);
+void start_new_simulation(SPH* sph, int n_particles, int x, int y, int z);
 
 int main() {
 	glfwContext glfw;
@@ -52,7 +52,7 @@ int main() {
 	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
 
 	// ugly hax with sending in null
-	SPH* current_simulation = new SPH(-0.15f, 0.f, 0.f);
+	SPH* current_simulation = new SPH(4000, -0.15f, 0.f, 0.f);
 	Sphere sphere(0.0f, 0.0f, 0.0f, current_simulation->get_particle_radius());
 
 	// for testing.
@@ -68,7 +68,9 @@ int main() {
 	double lastTime = glfwGetTime() - 0.001;
 	double dT = 0.0;
 
+	// GUI variables
 	int dParticle = 0;
+	int n_particles = current_simulation->get_nr_of_particles();
 
 	while (!glfwWindowShouldClose(currentWindow))
 	{
@@ -118,7 +120,7 @@ int main() {
 		if (current_simulation != nullptr) {
 
 			particle_pos = current_simulation->get_particle_positions();
-			for (int i = 0; i < D_NR_OF_PARTICLES; ++i) {
+			for (int i = 0; i < current_simulation->get_nr_of_particles(); ++i) {
 				MVstack.push();
 				particlePos = glm::vec3(
 					particle_pos->x[i],
@@ -155,10 +157,18 @@ int main() {
 
 		ImGui_ImplGlfw_NewFrame();
 		{
+			ImGui::Text("Simulation properties:");
+			ImGui::SliderInt("Number of particles: ", &n_particles, 0, 10000);
+
+			if (ImGui::Button("Start")) {
+				start_new_simulation(current_simulation, n_particles, 0, 0, 0);
+			}
+
+			ImGui::Separator();
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 			ImGui::Text("Simulation average %.3f ms/frame", dT);
 
-			ImGui::SliderInt("particle: ", &dParticle, 0, D_NR_OF_PARTICLES - 1);
+			ImGui::SliderInt("particle: ", &dParticle, 0, current_simulation->get_nr_of_particles() - 1);
 
 			if (current_simulation) {
 				Float3s pos = current_simulation->get_pos_i(dParticle);
@@ -184,7 +194,7 @@ int main() {
 
 		// check if user respawns particle system
 		if (glfwGetKey(currentWindow, GLFW_KEY_R)) {
-			current_simulation = start_new_simulation(current_simulation, -0.15f, 0.0f, 0.0f);
+			start_new_simulation(current_simulation, n_particles, -0.15f, 0.0f, 0.0f);
 		}
 
 	}
@@ -206,10 +216,11 @@ void inputHandler(GLFWwindow* _window, double _dT)
 }
 
 
-SPH* start_new_simulation(SPH* sph, int x = 0, int y = 0, int z = 0)
+void start_new_simulation(SPH* sph, int n_particles, int x = 0, int y = 0, int z = 0)
 {
 	delete sph;
-	return new SPH(x, y, z);
+
+	sph = new SPH(n_particles, x, y, z);
 }
 
 

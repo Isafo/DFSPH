@@ -1,7 +1,6 @@
 #pragma once
 
-#define D_NR_OF_PARTICLES 4000
-#define D_MAX_NR_OF_NEIGHBORS 4000
+#define D_MAX_NR_OF_NEIGHBORS 50
 
 // A struct containing three arrays (SoA)
 struct Float3
@@ -30,8 +29,8 @@ class SPH
 {
 public:
 
-	SPH(int x, int y, int z);
-	
+	SPH(int n_particles, int x, int y, int z);
+
 	// Free the memory
 	~SPH();
 
@@ -41,10 +40,10 @@ public:
 	// initializes the particles in a given grid formation
 	void init_positions(int x = 0, int y = 0, int z = 0, int rows = 3, int cols = 3) const;
 
-	static unsigned int get_nr_of_particles() { return D_NR_OF_PARTICLES; }
+	int get_nr_of_particles() { return C_N_PARTICLES; }
 
 	float get_particle_radius() const { return m_rad; }
-	
+
 	Float3* get_particle_positions() { return &m_particles.pos; }
 
 	// for debug
@@ -100,18 +99,24 @@ private:
 	void non_pressure_forces() const;
 
 	// Calculates a stable time-step
-	void calculate_time_step(float dT);
-	
+	void calculate_time_step();
+
 	// Calculates an unstable predicted velocity
 	void predict_velocities();
-	
-	void correct_density_error(float* pred_dens, float* dens_derive, float* scalar_values, float* alpha);
-	
+
+	void correct_density_error();
+
 	void update_positions() const;
-	
-	void correct_divergence_error(float* dens_derive, float* pred_dens, float* scalar_values, float* alpha);
+
+	void correct_divergence_error();
 
 	void update_velocities();
+
+	// former inline functions
+	void calculate_derived_density_pred_dens(Neighbor_Data* neighbor_data);
+
+	// calculates the density and the alpha particle factors
+	void update_density_and_factors(Neighbor_Data* neighbor_data);
 
 	struct Particles
 	{
@@ -132,16 +137,19 @@ private:
 	Neighbor_Data *m_neighbor_data;
 
 	const float C_REST_DENS{ 10000.f };
+	const int C_N_PARTICLES;
+
+	float* m_alpha = new float[C_N_PARTICLES];
+	float* m_dens_derive = new float[C_N_PARTICLES];
+	float* m_pred_dens = new float[C_N_PARTICLES];
+	float* m_scalar_values = new float[C_N_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
+	float* m_kernel_values = new float[C_N_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
+
+	float m_dens_derive_avg;
+	float m_pred_dens_avg;
 };
 
-// calculates the density and the alpha particle factors
-void update_density_and_factors(float mass, Float3* pos, float* dens, float* scalar_values,
-	Neighbor_Data* neighbor_data, float* alpha, float* kernel_values);
-
-void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data);
-
-void calculate_derived_density_pred_dens(float* dens_derive_avg, float* pred_dens_avg, float* derived_density, float* pred_dens, 
-	Float3* pred_vel, float mass, float* scalar_value, float* dens, Neighbor_Data* neighbor_data, Float3* pos, float delta_t);
+inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data, const int N_PARTICLES);
 
 // updates the scalar values g(q) for all particles
-void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values);
+inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values, const int N_PARTICLES);
