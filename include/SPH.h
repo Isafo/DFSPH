@@ -1,6 +1,6 @@
 #pragma once
 
-#define D_MAX_NR_OF_NEIGHBORS 50
+#define D_MAX_NR_OF_NEIGHBORS 4000
 
 // A struct containing three arrays (SoA)
 struct Float3
@@ -29,8 +29,10 @@ class SPH
 {
 public:
 
-	SPH(int n_particles, int x, int y, int z);
+	SPH(int n_particles);
 
+	void init();
+	void reset();
 	// Free the memory
 	~SPH();
 
@@ -90,6 +92,8 @@ public:
 
 	float get_dens_i(int i) const { return m_particles.dens[i]; }
 
+	int current_n_particles;
+
 private:
 
 	// Finds the neighbors of a particle within the given radius D_NEIGBBOR_RAD
@@ -138,13 +142,12 @@ private:
 
 	const float C_REST_DENS{ 10000.f };
 	const int C_N_PARTICLES;
-	
-	float* m_alpha = new float[C_N_PARTICLES];
-	float* m_dens_derive = new float[C_N_PARTICLES];
-	float* m_pred_dens = new float[C_N_PARTICLES];
-	float* m_scalar_values = new float[C_N_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
-	float* m_kernel_values = new float[C_N_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
-	
+
+	float* m_alpha;
+	float* m_dens_derive;
+	float* m_pred_dens;
+	float* m_scalar_values;
+	float* m_kernel_values;
 
 	float m_dens_derive_avg;
 	float m_pred_dens_avg;

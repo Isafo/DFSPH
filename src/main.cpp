@@ -51,18 +51,18 @@ int main() {
 	//BoundingBox bbox(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
 
-	// ugly hax with sending in null
-	SPH* current_simulation = new SPH(4000, -0.15f, 0.f, 0.f);
-	Sphere sphere(0.0f, 0.0f, 0.0f, current_simulation->get_particle_radius());
+	SPH sph(4000);
+	sph.init();
 
-	// for testing.
-	//delete current_simulation;
-	//current_simulation = nullptr;
+	//Sphere* sphere;
+	Sphere sphere(0.0f, 0.0f, 0.0f, sph.get_particle_radius());
 
 	Camera mCamera;
 	mCamera.setPosition(&glm::vec3(0.f, 0.f, 1.0f));
 	mCamera.update();
 
+	// Time related variables
+	bool is_running = false;
 	bool fpsResetBool = false;
 
 	double lastTime = glfwGetTime() - 0.001;
@@ -70,16 +70,51 @@ int main() {
 
 	// GUI variables
 	int dParticle = 0;
-	int n_particles = current_simulation->get_nr_of_particles();
+	int n_particles = 0;
+
 
 	while (!glfwWindowShouldClose(currentWindow))
 	{
 		// Loop for each frame...
 
+		ImGui_ImplGlfw_NewFrame();
+		{
+			ImGui::Text("Simulation properties:");
+			ImGui::SliderInt("Number of particles: ", &n_particles, 0, 4000);
+
+			if (ImGui::Button("Start")) {
+				sph.current_n_particles = n_particles;
+				sph.reset();
+				sph.init_positions(0, 0, 0, 20, 20);
+
+				is_running = true;
+			}
+
+			if (is_running) {
+				ImGui::Separator();
+				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+				ImGui::Text("Simulation average %.3f ms/frame", dT);
+
+				ImGui::SliderInt("particle: ", &dParticle, 0, n_particles - 1);
+
+				Float3s pos = sph.get_pos_i(dParticle - 1);
+				Float3s vel = sph.get_vel_i(dParticle - 1);
+				Float3s pred_vel = sph.get_predvel_i(dParticle - 1);
+				Float3s F_adv = sph.get_F_adv_i(dParticle - 1);
+				float dens = sph.get_dens_i(dParticle - 1);
+
+				ImGui::Text("pos: %.4f %.4f %.4f", pos.x, pos.y, pos.z);
+				ImGui::Text("vel: %.4f %.4f %.4f", vel.x, vel.y, vel.z);
+				ImGui::Text("pred. vel: %.4f %.4f %.4f", pred_vel.x, pred_vel.y, pred_vel.z);
+				ImGui::Text("F_adv: %.4f %.4f %.4f", F_adv.x, F_adv.y, F_adv.z);
+				ImGui::Text("dens: %.4f", dens);
+			}
+		}
+
 		glfwPollEvents();
 		if (dT > 1.0 / 30.0) {
-			if (current_simulation) {
-				current_simulation->update(dT);
+			if (is_running) {
+				sph.update(dT);
 			}
 
 			lastTime = glfwGetTime();
@@ -117,10 +152,10 @@ int main() {
 		// if there is a simulation running
 		glm::vec3 particlePos;
 		Float3* particle_pos;
-		if (current_simulation != nullptr) {
+		if (is_running) {
 
-			particle_pos = current_simulation->get_particle_positions();
-			for (int i = 0; i < current_simulation->get_nr_of_particles(); ++i) {
+			particle_pos = sph.get_particle_positions();
+			for (int i = 0; i < sph.get_nr_of_particles(); ++i) {
 				MVstack.push();
 				particlePos = glm::vec3(
 					particle_pos->x[i],
@@ -155,36 +190,6 @@ int main() {
 
 		glUseProgram(0);
 
-		ImGui_ImplGlfw_NewFrame();
-		{
-			ImGui::Text("Simulation properties:");
-			ImGui::SliderInt("Number of particles: ", &n_particles, 0, 10000);
-
-			if (ImGui::Button("Start")) {
-				start_new_simulation(current_simulation, n_particles, 0, 0, 0);
-			}
-
-			ImGui::Separator();
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-			ImGui::Text("Simulation average %.3f ms/frame", dT);
-
-			ImGui::SliderInt("particle: ", &dParticle, 0, current_simulation->get_nr_of_particles() - 1);
-
-			if (current_simulation) {
-				Float3s pos = current_simulation->get_pos_i(dParticle);
-				Float3s vel = current_simulation->get_vel_i(dParticle);
-				Float3s pred_vel = current_simulation->get_predvel_i(dParticle);
-				Float3s F_adv = current_simulation->get_F_adv_i(dParticle);
-				float dens = current_simulation->get_dens_i(dParticle);
-
-				ImGui::Text("pos: %.4f %.4f %.4f", pos.x, pos.y, pos.z);
-				ImGui::Text("vel: %.4f %.4f %.4f", vel.x, vel.y, vel.z);
-				ImGui::Text("pred. vel: %.4f %.4f %.4f", pred_vel.x, pred_vel.y, pred_vel.z);
-				ImGui::Text("F_adv: %.4f %.4f %.4f", F_adv.x, F_adv.y, F_adv.z);
-				ImGui::Text("dens: %.4f", dens);
-			}
-		}
-
 		// Rendering imgui
 		int display_w, display_h;
 		glfwGetFramebufferSize(currentWindow, &display_w, &display_h);
@@ -193,16 +198,13 @@ int main() {
 		glfwSwapBuffers(currentWindow);
 
 		// check if user respawns particle system
-		if (glfwGetKey(currentWindow, GLFW_KEY_R)) {
-			start_new_simulation(current_simulation, n_particles, -0.15f, 0.0f, 0.0f);
-		}
-
+/*		if (glfwGetKey(currentWindow, GLFW_KEY_R)) {
+			start_new_simulation(current_simulation, n_particles, sphere, -0.15f, 0.0f, 0.0f);
+			is_running = true;
+		} */
 	}
 
 	ImGui_ImplGlfw_Shutdown();
-
-	if (current_simulation)
-		delete current_simulation;
 
 	return 0;
 }
@@ -213,14 +215,6 @@ void inputHandler(GLFWwindow* _window, double _dT)
 	if (glfwGetKey(_window, GLFW_KEY_ESCAPE)) {
 		glfwSetWindowShouldClose(_window, GL_TRUE);
 	}
-}
-
-
-void start_new_simulation(SPH* sph, int n_particles, int x = 0, int y = 0, int z = 0)
-{
-	delete sph;
-
-	sph = new SPH(n_particles, x, y, z);
 }
 
 
