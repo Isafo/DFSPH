@@ -138,12 +138,13 @@ private:
 
 	const float C_REST_DENS{ 10000.f };
 	const int C_N_PARTICLES;
-
+	
 	float* m_alpha = new float[C_N_PARTICLES];
 	float* m_dens_derive = new float[C_N_PARTICLES];
 	float* m_pred_dens = new float[C_N_PARTICLES];
 	float* m_scalar_values = new float[C_N_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
 	float* m_kernel_values = new float[C_N_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
+	
 
 	float m_dens_derive_avg;
 	float m_pred_dens_avg;

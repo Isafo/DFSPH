@@ -493,7 +493,7 @@ void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neig
 			// length is always equal or smaller to D_SEARCH_RANGE => implicit intervall between [0, 1]
 			kernel_val = div*(1.0f - 1.5f*q_2 + 0.75f*q_2*q);
 
-			kernel_values[particle*N_PARTICLES + neighbor] = kernel_val;
+			kernel_values[particle*D_MAX_NR_OF_NEIGHBORS + neighbor] = kernel_val;
 		}
 	}
 }
@@ -587,7 +587,7 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 			kernel_derive = div*(-3.0f*q + 2.25f*q*q);
 
 			scalar_value = kernel_derive / (search_area * dist);
-
+			
 			scalar_values[particle*D_MAX_NR_OF_NEIGHBORS + neighbor] = scalar_value;
 		}
 	}
