@@ -110,6 +110,11 @@ SPH::~SPH()
 	delete[] m_particles.pos.z;
 	delete[] m_particles.dens;
 	delete[] m_neighbor_data;
+	delete[] m_alpha;
+	delete[] m_dens_derive;
+	delete[] m_pred_dens;
+	delete[] m_scalar_values;
+	delete[] m_kernel_values;
 }
 
 void SPH::update(float dT)
@@ -170,10 +175,10 @@ void SPH::find_neighborhoods() const
 	int count{ 0 };
 
 	CompactNSearch::NeighborhoodSearch nsearch(neigborhod_rad);
-	static std::vector<std::array<double, 3>> positions(C_N_PARTICLES);
+	std::vector<std::array<double, 3>> positions(current_n_particles);
 
-	/*#pragma omp parallel
-	#pragma omp for */
+	#pragma omp parallel
+	#pragma omp for
 	for (int i = 0; i < current_n_particles; ++i)
 	{
 		positions.at(i) = { m_particles.pos.x[i], m_particles.pos.y[i], m_particles.pos.z[i] };
@@ -282,7 +287,7 @@ void SPH::correct_density_error()
 		for (auto particle_ind = 0; particle_ind < current_n_particles; ++particle_ind)
 		{
 
-			k_i = fmax(inv_delta_t_2*(m_pred_dens[particle_ind] - C_REST_DENS) * m_alpha[particle_ind], 0.5f);
+			k_i = fmax(inv_delta_t_2*(m_pred_dens[particle_ind] - C_REST_DENS) * m_alpha[particle_ind], 0.1f);
 			div_i = k_i / m_particles.dens[particle_ind];
 
 			pressure_acc_x = pressure_acc_y = pressure_acc_z = 0.0f;
@@ -294,7 +299,7 @@ void SPH::correct_density_error()
 
 				//assert(m_particles.dens[neighbor_ind] != 0.0f, "n dens");
 
-				k_j = fmax(inv_delta_t_2*(m_pred_dens[neighbor_ind] - C_REST_DENS) * m_alpha[neighbor_ind], 0.5f);
+				k_j = fmax(inv_delta_t_2*(m_pred_dens[neighbor_ind] - C_REST_DENS) * m_alpha[neighbor_ind], 0.1f);
 
 				x = m_particles.pos.x[particle_ind] - m_particles.pos.x[neighbor_ind];
 				y = m_particles.pos.y[particle_ind] - m_particles.pos.y[neighbor_ind];

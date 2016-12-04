@@ -140,7 +140,7 @@ private:
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
 
-	const float C_REST_DENS{ 10000.f };
+	const float C_REST_DENS{ 1000.f };
 	const int C_N_PARTICLES;
 
 	float* m_alpha;

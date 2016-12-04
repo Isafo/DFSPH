@@ -97,11 +97,11 @@ int main() {
 
 				ImGui::SliderInt("particle: ", &dParticle, 0, n_particles - 1);
 
-				Float3s pos = sph.get_pos_i(dParticle - 1);
-				Float3s vel = sph.get_vel_i(dParticle - 1);
-				Float3s pred_vel = sph.get_predvel_i(dParticle - 1);
-				Float3s F_adv = sph.get_F_adv_i(dParticle - 1);
-				float dens = sph.get_dens_i(dParticle - 1);
+				Float3s pos = sph.get_pos_i(dParticle);
+				Float3s vel = sph.get_vel_i(dParticle);
+				Float3s pred_vel = sph.get_predvel_i(dParticle);
+				Float3s F_adv = sph.get_F_adv_i(dParticle);
+				float dens = sph.get_dens_i(dParticle);
 
 				ImGui::Text("pos: %.4f %.4f %.4f", pos.x, pos.y, pos.z);
 				ImGui::Text("vel: %.4f %.4f %.4f", vel.x, vel.y, vel.z);
@@ -155,7 +155,7 @@ int main() {
 		if (is_running) {
 
 			particle_pos = sph.get_particle_positions();
-			for (int i = 0; i < sph.get_nr_of_particles(); ++i) {
+			for (int i = 0; i < sph.current_n_particles; ++i) {
 				MVstack.push();
 				particlePos = glm::vec3(
 					particle_pos->x[i],
