@@ -1,6 +1,6 @@
 #pragma once
 
-#define D_MAX_NR_OF_NEIGHBORS 4000
+#define D_MAX_NR_OF_NEIGHBORS 50
 
 // A struct containing three arrays (SoA)
 struct Float3

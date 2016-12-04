@@ -16,8 +16,6 @@ void inputHandler(GLFWwindow* _window, double _dT);
 void cameraHandler(GLFWwindow* _window, double _dT, Camera* _cam);
 void GLcalls();
 
-void start_new_simulation(SPH* sph, int n_particles, int x, int y, int z);
-
 int main() {
 	glfwContext glfw;
 	GLFWwindow* currentWindow = nullptr;
@@ -63,6 +61,8 @@ int main() {
 
 	// Time related variables
 	bool is_running = false;
+	bool is_paused = false;
+
 	bool fpsResetBool = false;
 
 	double lastTime = glfwGetTime() - 0.001;
@@ -90,6 +90,10 @@ int main() {
 				is_running = true;
 			}
 
+			if (ImGui::Button("Pause")) {
+				is_paused = !is_paused;
+			}
+
 			if (is_running) {
 				ImGui::Separator();
 				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -113,7 +117,7 @@ int main() {
 
 		glfwPollEvents();
 		if (dT > 1.0 / 30.0) {
-			if (is_running) {
+			if (is_running && !is_paused) {
 				sph.update(dT);
 			}
 
@@ -196,12 +200,6 @@ int main() {
 		glViewport(0, 0, display_w, display_h);
 		ImGui::Render();
 		glfwSwapBuffers(currentWindow);
-
-		// check if user respawns particle system
-/*		if (glfwGetKey(currentWindow, GLFW_KEY_R)) {
-			start_new_simulation(current_simulation, n_particles, sphere, -0.15f, 0.0f, 0.0f);
-			is_running = true;
-		} */
 	}
 
 	ImGui_ImplGlfw_Shutdown();
