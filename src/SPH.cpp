@@ -260,11 +260,11 @@ void SPH::predict_velocities()
 			(m_particles.pos.y[i] - sc.center.y) * (m_particles.pos.y[i] - sc.center.y) +
 			(m_particles.pos.z[i] - sc.center.z) * (m_particles.pos.z[i] - sc.center.z));
 
-		if (dist == sc.radius_2)
+		if (dist >= sc.radius_2 && dist <= (sc.radius_2+ 0.01f ))
 		{
-			m_particles.pred_vel.x[i] = 2.f*(m_particles.pos.x[i]);// +m_particles.F_adv.x[i] * m_delta_t / m_mass;
-			m_particles.pred_vel.y[i] = 2.f*(m_particles.pos.y[i]) + m_particles.F_adv.y[i] * m_delta_t / m_mass;
-			m_particles.pred_vel.z[i] = 2.f*(m_particles.pos.z[i]);// + m_particles.F_adv.z[i] * m_delta_t / m_mass;
+			m_particles.pred_vel.x[i] = 4.f*(m_particles.pos.x[i]);// +m_particles.F_adv.x[i] * m_delta_t / m_mass;
+			m_particles.pred_vel.y[i] = 2.f*(m_particles.pos.y[i]);// +m_particles.F_adv.y[i] * m_delta_t / m_mass;
+			m_particles.pred_vel.z[i] = 4.f*(m_particles.pos.z[i]);// + m_particles.F_adv.z[i] * m_delta_t / m_mass;
 		}
 		else if(dist < sc.radius_2)
 		{
@@ -272,7 +272,8 @@ void SPH::predict_velocities()
 			m_particles.pred_vel.y[i] = 0.f*(m_particles.pos.y[i]);// + m_particles.F_adv.y[i] * m_delta_t / m_mass;
 			m_particles.pred_vel.z[i] = 4.f*(m_particles.pos.z[i]);// + m_particles.F_adv.z[i] * m_delta_t / m_mass;
 		}
-		else {
+		else 
+		{
 			m_particles.pred_vel.x[i] = m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass;
 			m_particles.pred_vel.y[i] = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_mass;
 			m_particles.pred_vel.z[i] = m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_mass;
