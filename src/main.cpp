@@ -34,6 +34,7 @@ int main() {
 	if (l_GlewResult != GLEW_OK)
 		std::cout << "glewInit() error." << std::endl;
 
+
 	// Print some info about the OpenGL context...
 	glfw.printGLInfo();
 
@@ -80,29 +81,38 @@ int main() {
 	float max_error = 0.2f , min_error = 0.01f;
 	float time_factor = 0.4f;
 
+	float start_pos[3] = { 0 };
+	float rows_cells[2] = { 0 };
+	float start_vel[3] = { 0 };
+
 	while (!glfwWindowShouldClose(currentWindow))
 	{
 		// Loop for each frame...
 		glfwPollEvents();
 
+		glfwPollEvents();
+
 		ImGui_ImplGlfw_NewFrame();
 		{
-			ImGui::Text("Simulation properties");
-			ImGui::InputInt("Number of particles", &n_particles, 100, 1);
-			n_particles = glm::clamp(n_particles, 100, 4000);
+			ImGui::InputInt("Number of particles: ", &n_particles, 1, 100);
+			n_particles = glm::clamp(n_particles, 0, 4000);
 
-			ImGui::InputInt("Max iter. (Divergence solv.)", &Miter_v, 10, 1);
-			ImGui::InputInt("Max iter. (Density solv.)", &Miter, 10, 1);
-			Miter_v = glm::clamp(Miter_v, 10, 200);
-			Miter = glm::clamp(Miter, 10, 200);
-			
-			ImGui::InputFloat("Error % (Divergence)", &div_error, 0.01f, 1);
-			ImGui::InputFloat("Error % (Density)", &dens_error, 0.01f, 1);
-			div_error = glm::clamp(div_error, min_error, max_error);
-			dens_error = glm::clamp(dens_error, min_error, max_error);
+			if (ImGui::BeginMenu("Start Conditions")) {
+				ImGui::InputFloat3("Start position", start_pos, 2);
+				ImGui::InputFloat2("Rows and cells", rows_cells, 2);
+				ImGui::InputFloat3("Start velocity", start_vel, 3);
+				ImGui::EndMenu();
+			}
+			ImGui::SliderInt("Max iter. (Divergence solv.): ", &Miter_v, 10, 200);
+			ImGui::SliderInt("Max iter. (Density solv.):  ", &Miter, 10, 200);
 
-			ImGui::InputFloat("CFL - Factor", &time_factor, 0.01f, 1);
-			time_factor = glm::clamp(time_factor, 0.4f, 0.6f);
+			ImGui::SliderFloat("Error (Divergence): ", &div_error, 0.01f, 0.2f);
+			ImGui::SliderFloat("Error (Density):  ", &dens_error, 0.01f, 0.2f);
+
+			ImGui::SliderFloat("CFL - Factor", &time_factor, 0.4f, 0.6f);
+
+			ImGui::Text("Simulation properties:");
+
 
 			if (ImGui::Button("Start")) {
 				sph.set_n_particles(n_particles);
@@ -213,7 +223,7 @@ int main() {
 		}
 
 		MVstack.push();
-		float color[] = { 0.0f, 1.0f, 0.5f};
+		float color[] = { 0.0f, 1.0f, 0.5f };
 		glUniform3fv(locationColor, 1, &color[0]);
 		MVstack.translate(static_sphere.getPosition());
 		glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());

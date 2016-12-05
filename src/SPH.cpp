@@ -6,8 +6,8 @@
 
 //Compact Search was written by
 //Dan Koschier, https://github.com/InteractiveComputerGraphics/CompactNSearch
-#include "include/CompactNSearch.h"
-#include "include/DataStructures.h"
+#include "CompactNSearch/include/CompactNSearch.h"
+#include "CompactNSearch/include/DataStructures.h"
 #include "imconfig.h"
 
 #define D_GRAVITY -9.82f
