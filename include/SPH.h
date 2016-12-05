@@ -42,7 +42,7 @@ public:
 	~SPH();
 
 	// performs the simulation steps and updates the particles
-	void update(float dT);
+	void update();
 
 	// initializes the particles in a given grid formation
 	void init_positions(int x = 0, int y = 0, int z = 0, int rows = 3, int cols = 3) const;

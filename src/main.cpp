@@ -47,13 +47,10 @@ int main() {
 
 	MatrixStack MVstack; MVstack.init();
 
-	//BoundingBox bbox(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
 
-	SPH sph(4000);
+	SPH sph(5000);
 	sph.init();
-
-	//Sphere* sphere;
 
 	Sphere sphere(0.0f, 0.0f, 0.0f, sph.get_particle_radius());
 	Sphere static_sphere(0.0f, -0.5f, 0.0f, 0.25f);
@@ -81,8 +78,10 @@ int main() {
 	float max_error = 0.2f , min_error = 0.01f;
 	float time_factor = 0.4f;
 	static bool addImplicitSphere = false;
-	float original_sphereRad = 0.25f;
-	float sphereX = 0.f, sphereY = -0.5f, sphereZ = 0.f,sphereRad = original_sphereRad;
+
+	float original_sphereRad = 1.0f;
+	float sphereX = 0.f, sphereY = -0.25f, sphereZ = 0.0f, sphereRad = 0.16f;
+
 
 	while (!glfwWindowShouldClose(currentWindow))
 	{
@@ -94,7 +93,7 @@ int main() {
 		
 			ImGui::Text("Simulation properties");
 			ImGui::InputInt("Number of particles", &n_particles, 100, 1);
-			n_particles = glm::clamp(n_particles, 100, 4000);
+			n_particles = glm::clamp(n_particles, 100, 8000);
 
 			ImGui::InputInt("Max iter. (Divergence solv.)", &Miter_v, 10, 1);
 			ImGui::InputInt("Max iter. (Density solv.)", &Miter, 10, 1);
@@ -133,7 +132,7 @@ int main() {
 				sph.reset();
 				sph.init_positions(0, 0, 0, 20, 20);
 				is_running = true;
-			}
+			}ImGui::SameLine();
 
 			if (ImGui::Button("Pause")) {
 				is_paused = !is_paused;
@@ -164,7 +163,7 @@ int main() {
 
 		if (dT > 1.0 / 30.0) {
 			if (is_running && !is_paused) {
-				sph.update(dT);
+				sph.update();
 			}
 
 			lastTime = glfwGetTime();
