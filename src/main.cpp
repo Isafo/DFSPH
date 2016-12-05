@@ -77,11 +77,17 @@ int main() {
 	float dens_error = 0.1f, div_error = 0.01f;
 	float max_error = 0.2f , min_error = 0.01f;
 	float time_factor = 0.4f;
+
+	float start_pos[3] = { 0.f };
+	int rows_cols[2] = { 0 };
+	float start_vel[3] = { 0.f };
+
+	float gravity = 9.82f;
+	float wind[3] = { 0.f };
+
 	static bool addImplicitSphere = false;
-
-	float original_sphereRad = 1.0f;
-	float sphereX = 0.f, sphereY = -0.25f, sphereZ = 0.0f, sphereRad = 0.16f;
-
+	float original_sphere_rad = 0.25f;
+	float sphereX = 0.f, sphereY = -0.5f, sphereZ = 0.f, sphere_rad = original_sphere_rad;
 
 	while (!glfwWindowShouldClose(currentWindow))
 	{
@@ -89,36 +95,97 @@ int main() {
 
 		ImGui_ImplGlfw_NewFrame();
 		{
+			ImGui::Text("Number of Particles");
+			ImGui::InputInt("", &n_particles, 1, 100);
+			n_particles = glm::clamp(n_particles, 0, 4000);
 
-		
-			ImGui::Text("Simulation properties");
-			ImGui::InputInt("Number of particles", &n_particles, 100, 1);
-			n_particles = glm::clamp(n_particles, 100, 8000);
+			if (ImGui::BeginMenu("Start Conditions")) {
+				//ImGui::InputFloat3("Start position", start_pos, 2);
 
-			ImGui::InputInt("Max iter. (Divergence solv.)", &Miter_v, 10, 1);
-			ImGui::InputInt("Max iter. (Density solv.)", &Miter, 10, 1);
-			Miter_v = glm::clamp(Miter_v, 10, 200);
-			Miter = glm::clamp(Miter, 10, 200);
-			
-			ImGui::InputFloat("Error % (Divergence)", &div_error, 0.01f, 1, 2);
-			ImGui::InputFloat("Error % (Density)", &dens_error, 0.01f, 1, 2);
-			div_error = glm::clamp(div_error, min_error, max_error);
-			dens_error = glm::clamp(dens_error, min_error, max_error);
+				ImGui::Text("Start Velocity");
 
-			ImGui::InputFloat("CFL - Factor", &time_factor, 0.01f, 1, 2);
-			time_factor = glm::clamp(time_factor, 0.4f, 0.6f);
-			//ImGui::Spacing();
+				ImGui::InputFloat("X Position", &start_pos[0], 0.01f, 0.1f, 2);
+				start_pos[0] = glm::clamp(start_pos[0], -10.f, 10.f);
+
+				ImGui::InputFloat("Y Position", &start_pos[1], 0.01f, 0.1f, 2);
+				start_pos[1] = glm::clamp(start_pos[1], -10.f, 10.f);
+
+				ImGui::InputFloat("Z Position", &start_pos[2], 0.01f, 0.1f, 2);
+				start_pos[2] = glm::clamp(start_pos[2], -10.f, 10.f);
+
+				ImGui::Text("Rows and Columns");
+				ImGui::InputInt("Rows", &rows_cols[0], 1, 10);
+				rows_cols[0] = glm::clamp(rows_cols[0], 0, 100);
+
+				ImGui::InputInt("Columns", &rows_cols[1], 1, 10);
+				rows_cols[1] = glm::clamp(rows_cols[1], 0, 100);
+
+				//ImGui::InputFloat3("Start velocity", start_vel, 3);
+
+				ImGui::Text("Start Velocity");
+				ImGui::InputFloat("X Velocity", &start_vel[0], 0.01f, 0.1f, 2);
+				start_vel[0] = glm::clamp(start_vel[0], -10.f, 10.f);
+
+				ImGui::InputFloat("Y Velocity", &start_vel[1], 0.01f, 0.1f, 2);
+				start_vel[1] = glm::clamp(start_vel[1], -10.f, 10.f);
+
+				ImGui::InputFloat("Z Velocity", &start_vel[2], 0.01f, 0.1f, 2);
+				start_vel[2] = glm::clamp(start_vel[2], -10.f, 10.f);
+
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Effects")) {
+				ImGui::Text("Gravity");
+				ImGui::InputFloat("", &gravity, 1, 1, 2);
+				gravity = glm::clamp(gravity, -100.f, 100.f);
+
+				//ImGui::InputFloat3("Wind", wind, 3);
+
+				ImGui::Text("Wind");
+				ImGui::InputFloat("X Velocity", &wind[0], 0.01f, 0.1f, 2);
+				wind[0] = glm::clamp(wind[0], -10.f, 10.f);
+
+				ImGui::InputFloat("Y Velocity", &wind[1], 0.01f, 0.1f, 2);
+				wind[1] = glm::clamp(wind[1], -10.f, 10.f);
+
+				ImGui::InputFloat("Z Velocity", &wind[2], 0.01f, 0.1f, 2);
+				wind[2] = glm::clamp(wind[2], -10.f, 10.f);
+
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Advanced options")) {
+				ImGui::InputInt("Max iter. (Divergence solv.)", &Miter_v);
+				Miter_v = glm::clamp(Miter_v, 10, 200);
+
+				ImGui::InputInt("Max iter. (Density solv.)", &Miter);
+				Miter = glm::clamp(Miter, 10, 200);
+
+				ImGui::InputFloat("Error (Divergence)", &div_error, 0.01f, 0.01f, 2);
+				div_error = glm::clamp(div_error, 0.01f, 0.2f);
+
+				ImGui::InputFloat("Error (Density)", &dens_error, 0.01f, 0.01f, 2);
+				dens_error = glm::clamp(div_error, 0.01f, 0.2f);
+
+				ImGui::InputFloat("CFL - Factor", &time_factor, 0.01f, 0.1f, 2);
+				time_factor = glm::clamp(time_factor, 0.4f, 0.6f);
+
+				ImGui::EndMenu();
+			}
 
 			ImGui::Checkbox("checkbox", &addImplicitSphere);
 			if (addImplicitSphere) {
-				ImGui::InputFloat("input x", &sphereX);
-				ImGui::InputFloat("input y", &sphereY);
-				ImGui::InputFloat("input z", &sphereZ);
-				ImGui::InputFloat("Radius", &sphereRad);
-				sph.setStaticSphere(sphereX, sphereY, sphereZ, sphereRad);
-				static_sphere.setRadius(sphereRad);
-				static_sphere.setPosition(glm::vec3(sphereX, sphereY, sphereZ));
-				
+				if (ImGui::BeginMenu("Implicit Surface Options")) {
+					ImGui::InputFloat("input x", &sphereX);
+					ImGui::InputFloat("input y", &sphereY);
+					ImGui::InputFloat("input z", &sphereZ);
+					ImGui::InputFloat("Radius", &sphere_rad);
+					sph.setStaticSphere(sphereX, sphereY, sphereZ, sphere_rad);
+					static_sphere.setRadius(sphere_rad);
+					static_sphere.setPosition(glm::vec3(sphereX, sphereY, sphereZ));
+					ImGui::EndMenu();
+				}
 			}
 
 			if (ImGui::Button("Start")) {
@@ -236,7 +303,7 @@ int main() {
 			float color[] = { 0.0f, 1.0f, 0.5f };
 			glUniform3fv(locationColor, 1, &color[0]);
 			MVstack.translate(static_sphere.getPosition());
-			MVstack.scale(static_sphere.getRadius()/(original_sphereRad+0.01f));
+			MVstack.scale(static_sphere.getRadius() / (original_sphere_rad + 0.01f));
 			glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
 			static_sphere.render();
 			MVstack.pop();
