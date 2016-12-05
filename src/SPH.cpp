@@ -250,7 +250,7 @@ void SPH::predict_velocities()
 {
 	static sphereConstaint sc;
 	sc.center.x = 0;
-	sc.center.y = -0.5;
+	sc.center.y = -0.2;
 	sc.center.z = 0;
 	sc.radius_2 = 0.05f;
 	static float dist;
@@ -258,9 +258,6 @@ void SPH::predict_velocities()
 	#pragma omp for
 	for (auto i = 0; i < current_n_particles; ++i)
 	{
-		sc.normal.x = m_particles.pos.x[i] - sc.center.x;
-		sc.normal.y = m_particles.pos.y[i] - sc.center.y;
-		sc.normal.z = m_particles.pos.z[i] - sc.center.z;
 		dist = ((m_particles.pos.x[i] - sc.center.x) * (m_particles.pos.x[i] - sc.center.x) +
 			(m_particles.pos.y[i] - sc.center.y) * (m_particles.pos.y[i] - sc.center.y) +
 			(m_particles.pos.z[i] - sc.center.z) * (m_particles.pos.z[i] - sc.center.z));

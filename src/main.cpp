@@ -54,6 +54,8 @@ int main() {
 
 	//Sphere* sphere;
 	Sphere sphere(0.0f, 0.0f, 0.0f, sph.get_particle_radius());
+	Sphere static_sphere(0.0f, -0.2f, 0.0f, 0.22f);
+
 
 	Camera mCamera;
 	mCamera.setPosition(&glm::vec3(0.f, 0.f, 1.0f));
@@ -75,7 +77,9 @@ int main() {
 	int Miter_v = 0;
 	int Miter = 0;
 
-	float dens_error, div_error, time_factor;
+	float dens_error = 0.01f;
+	float div_error = 0.1f;
+	float time_factor = 0.4f;
 
 	while (!glfwWindowShouldClose(currentWindow))
 	{
@@ -203,6 +207,14 @@ int main() {
 				MVstack.pop();
 			}
 		}
+
+		MVstack.push();
+		float color[] = { 0.0f, 1.0f, 0.5f};
+		glUniform3fv(locationColor, 1, &color[0]);
+		MVstack.translate(static_sphere.getPosition());
+		glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
+		static_sphere.render();
+		MVstack.pop();
 
 		MVstack.push();
 		MVstack.translate(bbox.getPosition());

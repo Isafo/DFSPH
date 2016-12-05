@@ -144,7 +144,6 @@ private:
 	struct sphereConstaint
 	{
 		Float3s center;
-		Float3s normal;
 		float radius_2;
 	};
 
