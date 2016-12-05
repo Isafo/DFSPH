@@ -101,13 +101,14 @@ int main() {
 			Miter_v = glm::clamp(Miter_v, 10, 200);
 			Miter = glm::clamp(Miter, 10, 200);
 			
-			ImGui::InputFloat("Error % (Divergence)", &div_error, 0.01f, 1);
-			ImGui::InputFloat("Error % (Density)", &dens_error, 0.01f, 1);
+			ImGui::InputFloat("Error % (Divergence)", &div_error, 0.01f, 1, 2);
+			ImGui::InputFloat("Error % (Density)", &dens_error, 0.01f, 1, 2);
 			div_error = glm::clamp(div_error, min_error, max_error);
 			dens_error = glm::clamp(dens_error, min_error, max_error);
 
-			ImGui::InputFloat("CFL - Factor", &time_factor, 0.01f, 1);
+			ImGui::InputFloat("CFL - Factor", &time_factor, 0.01f, 1, 2);
 			time_factor = glm::clamp(time_factor, 0.4f, 0.6f);
+			//ImGui::Spacing();
 
 			ImGui::Checkbox("checkbox", &addImplicitSphere);
 			if (addImplicitSphere) {
@@ -214,13 +215,13 @@ int main() {
 
 				if (i == dParticle)
 				{
-					float color[] = { 1.0f, 0.3f, 0.0f };
-					glUniform3fv(locationColor, 1, &color[0]);
+					float color[] = { 1.0f, 0.3f, 0.0f, 1.0f };
+					glUniform4fv(locationColor, 1, &color[0]);
 				}
 				else
 				{
-					float color[] = { 0.0f, 0.3f, 1.0f };
-					glUniform3fv(locationColor, 1, &color[0]);
+					float color[] = { 0.0f, 0.3f, 1.0f, 1.0f };
+					glUniform4fv(locationColor, 1, &color[0]);
 				}
 				MVstack.translate(&particlePos);
 				//MVstack.translate(particle.getPosition());
@@ -281,7 +282,7 @@ void GLcalls()
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-	//glDisable(GL_TEXTURE);
+	glDisable(GL_TEXTURE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	//glEnable(GL_BLEND);
