@@ -75,10 +75,10 @@ int main() {
 	int dParticle = 0;
 	int n_particles = 4000;
 
-	int Miter_v = 0;
-	int Miter = 0;
-	float dens_error = 0.01f;
-	float div_error = 0.1f;
+	int Miter_v = 200, Miter = 200;
+
+	float dens_error = 0.1f, div_error = 0.01f;
+	float max_error = 0.2f , min_error = 0.01f;
 	float time_factor = 0.4f;
 	static bool addImplicitSphere = false;
 	float original_sphereRad = 0.25f;
@@ -90,25 +90,36 @@ int main() {
 
 		ImGui_ImplGlfw_NewFrame();
 		{
-			ImGui::InputInt("Number of particles: ", &n_particles, 1, 100);
+
+		
+			ImGui::Text("Simulation properties");
+			ImGui::InputInt("Number of particles", &n_particles, 100, 1);
 			n_particles = glm::clamp(n_particles, 100, 4000);
 
-			if (ImGui::BeginMenu("Start Conditions")) {
-				ImGui::InputFloat3("Start position", start_pos, 2);
-				ImGui::InputFloat2("Rows and cells", rows_cells, 2);
-				ImGui::InputFloat3("Start velocity", start_vel, 3);
-				ImGui::EndMenu();
+			ImGui::InputInt("Max iter. (Divergence solv.)", &Miter_v, 10, 1);
+			ImGui::InputInt("Max iter. (Density solv.)", &Miter, 10, 1);
+			Miter_v = glm::clamp(Miter_v, 10, 200);
+			Miter = glm::clamp(Miter, 10, 200);
+			
+			ImGui::InputFloat("Error % (Divergence)", &div_error, 0.01f, 1);
+			ImGui::InputFloat("Error % (Density)", &dens_error, 0.01f, 1);
+			div_error = glm::clamp(div_error, min_error, max_error);
+			dens_error = glm::clamp(dens_error, min_error, max_error);
+
+			ImGui::InputFloat("CFL - Factor", &time_factor, 0.01f, 1);
+			time_factor = glm::clamp(time_factor, 0.4f, 0.6f);
+
+			ImGui::Checkbox("checkbox", &addImplicitSphere);
+			if (addImplicitSphere) {
+				ImGui::InputFloat("input x", &sphereX);
+				ImGui::InputFloat("input y", &sphereY);
+				ImGui::InputFloat("input z", &sphereZ);
+				ImGui::InputFloat("Radius", &sphereRad);
+				sph.setStaticSphere(sphereX, sphereY, sphereZ, sphereRad);
+				static_sphere.setRadius(sphereRad);
+				static_sphere.setPosition(glm::vec3(sphereX, sphereY, sphereZ));
+				
 			}
-
-			ImGui::SliderInt("Max iter. (Divergence solv.): ", &Miter_v, 10, 200);
-			ImGui::SliderInt("Max iter. (Density solv.):  ", &Miter, 10, 200);
-
-			ImGui::SliderFloat("Error (Divergence): ", &div_error, 0.01f, 0.2f);
-			ImGui::SliderFloat("Error (Density):  ", &dens_error, 0.01f, 0.2f);
-
-			ImGui::SliderFloat("CFL - Factor", &time_factor, 0.4f, 0.6f);
-
-			ImGui::Text("Simulation properties:");
 
 			if (ImGui::Button("Start")) {
 				sph.set_n_particles(n_particles);
