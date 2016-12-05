@@ -48,6 +48,17 @@ public:
 
 	Float3* get_particle_positions() { return &m_particles.pos; }
 
+	float get_dens_i(int i) const { return m_particles.dens[i]; }
+	float get_timestep() const { return m_delta_t; }
+	int	get_n_particles() const { return current_n_particles; }
+
+	void set_timestep(float timestep) { m_delta_t = timestep; }
+	void set_n_particles(int n_particles) { current_n_particles = n_particles; }
+	void set_max_dens_iter(int iter) { Viter_max = iter; }
+	void set_max_div_iter(int iter) { iter_max = iter; }
+	void set_divergence_error(float error) { divergence_error = error; }
+	void set_density_error(float error) { density_error = error; }
+
 	// for debug
 	Float3s get_pos_i(int i) const
 	{
@@ -89,18 +100,6 @@ public:
 
 		return i_f;
 	}
-
-	float get_dens_i(int i) const { return m_particles.dens[i]; }
-	float get_timestep() const { return m_delta_t; }
-
-	int current_n_particles;
-	int Viter_max{ 100 };
-	int iter_max{ 100 };
-
-	float divergence_error{ 0.10f };
-	float density_error{ 0.01f };
-	float time_factor{ 0.5f };
-
 
 private:
 
@@ -165,6 +164,14 @@ private:
 
 	float m_dens_derive_avg;
 	float m_pred_dens_avg;
+
+	int current_n_particles;
+	int Viter_max{ 100 };
+	int iter_max{ 100 };
+
+	float divergence_error{ 0.10f };
+	float density_error{ 0.01f };
+	float time_factor{ 0.5f };
 };
 
 inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data, const int N_PARTICLES);

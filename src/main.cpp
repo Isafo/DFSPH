@@ -72,43 +72,48 @@ int main() {
 
 	// GUI variables
 	int dParticle = 0;
-	int n_particles = 0;
+	int n_particles = 4000;
 
-	int Miter_v = 0;
-	int Miter = 0;
+	int Miter_v = 200, Miter = 200;
 
-	float dens_error = 0.01f;
-	float div_error = 0.1f;
+	float dens_error = 0.1f, div_error = 0.01f;
+	float max_error = 0.2f , min_error = 0.01f;
 	float time_factor = 0.4f;
 
 	while (!glfwWindowShouldClose(currentWindow))
 	{
 		// Loop for each frame...
+		glfwPollEvents();
 
 		ImGui_ImplGlfw_NewFrame();
 		{
-			ImGui::Text("Simulation properties:");
-			ImGui::SliderInt("Number of particles: ", &n_particles, 100, 4000);
+			ImGui::Text("Simulation properties");
+			ImGui::InputInt("Number of particles", &n_particles, 100, 1);
+			n_particles = glm::clamp(n_particles, 100, 4000);
 
-			ImGui::SliderInt("Max iter. (Divergence solv.): ", &Miter_v, 10, 200);
-			ImGui::SliderInt("Max iter. (Density solv.):  ", &Miter, 10, 200);
+			ImGui::InputInt("Max iter. (Divergence solv.)", &Miter_v, 10, 1);
+			ImGui::InputInt("Max iter. (Density solv.)", &Miter, 10, 1);
+			Miter_v = glm::clamp(Miter_v, 10, 200);
+			Miter = glm::clamp(Miter, 10, 200);
+			
+			ImGui::InputFloat("Error % (Divergence)", &div_error, 0.01f, 1);
+			ImGui::InputFloat("Error % (Density)", &dens_error, 0.01f, 1);
+			div_error = glm::clamp(div_error, min_error, max_error);
+			dens_error = glm::clamp(dens_error, min_error, max_error);
 
-			ImGui::SliderFloat("Error (Divergence): ", &div_error, 0.01f, 0.2f);
-			ImGui::SliderFloat("Error (Density):  ", &dens_error, 0.01f, 0.2f);
-
-			ImGui::SliderFloat("CFL - Factor", &time_factor, 0.4f, 0.6f);
+			ImGui::InputFloat("CFL - Factor", &time_factor, 0.01f, 1);
+			time_factor = glm::clamp(time_factor, 0.4f, 0.6f);
 
 			if (ImGui::Button("Start")) {
-				sph.current_n_particles = n_particles;
-				sph.iter_max = Miter;
-				sph.Viter_max = Miter;
-				sph.divergence_error = div_error;
-				sph.density_error = dens_error;
-				sph.time_factor = time_factor;
-
+				sph.set_n_particles(n_particles);
+				sph.set_max_dens_iter(Miter_v);
+				sph.set_max_div_iter(Miter);
+				sph.set_divergence_error(div_error);
+				sph.set_density_error(dens_error);
+				sph.set_timestep(time_factor);
+				
 				sph.reset();
 				sph.init_positions(0, 0, 0, 20, 20);
-				is_paused = true;
 				is_running = true;
 			}
 
@@ -138,7 +143,6 @@ int main() {
 			}
 		}
 
-		glfwPollEvents();
 		if (dT > 1.0 / 30.0) {
 			if (is_running && !is_paused) {
 				sph.update(dT);
@@ -182,7 +186,7 @@ int main() {
 		if (is_running) {
 
 			particle_pos = sph.get_particle_positions();
-			for (int i = 0; i < sph.current_n_particles; ++i) {
+			for (int i = 0; i < sph.get_n_particles(); ++i) {
 				MVstack.push();
 				particlePos = glm::vec3(
 					particle_pos->x[i],
