@@ -24,6 +24,11 @@ struct Neighbor_Data
 	unsigned int n;
 };
 
+struct sphereConstaint
+{
+	Float3s center;
+	float radius_2;
+};
 
 class SPH
 {
@@ -101,7 +106,16 @@ public:
 		return i_f;
 	}
 
+	void setStaticSphere(float x,float y ,float z,float radius)
+	{
+		sc.center.x = x;
+		sc.center.y = y;
+		sc.center.z = z;
+		sc.radius_2 = radius*radius;
+	}
+
 private:
+	sphereConstaint sc;
 
 	// Finds the neighbors of a particle within the given radius D_NEIGBBOR_RAD
 	void find_neighborhoods() const;
@@ -140,11 +154,6 @@ private:
 		float* dens;
 	};
 
-	struct sphereConstaint
-	{
-		Float3s center;
-		float radius_2;
-	};
 
 	float m_delta_t;
 	float m_mass;

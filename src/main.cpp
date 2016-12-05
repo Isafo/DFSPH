@@ -54,10 +54,10 @@ int main() {
 	sph.init();
 
 	//Sphere* sphere;
+
 	Sphere sphere(0.0f, 0.0f, 0.0f, sph.get_particle_radius());
-	Sphere static_sphere(0.0f, -0.2f, 0.0f, 0.22f);
-
-
+	Sphere static_sphere(0.0f, -0.5f, 0.0f, 0.25f);
+	
 	Camera mCamera;
 	mCamera.setPosition(&glm::vec3(0.f, 0.f, 1.0f));
 	mCamera.update();
@@ -75,27 +75,23 @@ int main() {
 	int dParticle = 0;
 	int n_particles = 4000;
 
-	int Miter_v = 200, Miter = 200;
-
-	float dens_error = 0.1f, div_error = 0.01f;
-	float max_error = 0.2f , min_error = 0.01f;
+	int Miter_v = 0;
+	int Miter = 0;
+	float dens_error = 0.01f;
+	float div_error = 0.1f;
 	float time_factor = 0.4f;
-
-	float start_pos[3] = { 0 };
-	float rows_cells[2] = { 0 };
-	float start_vel[3] = { 0 };
+	static bool addImplicitSphere = false;
+	float original_sphereRad = 0.25f;
+	float sphereX = 0.f, sphereY = -0.5f, sphereZ = 0.f,sphereRad = original_sphereRad;
 
 	while (!glfwWindowShouldClose(currentWindow))
 	{
-		// Loop for each frame...
-		glfwPollEvents();
-
 		glfwPollEvents();
 
 		ImGui_ImplGlfw_NewFrame();
 		{
 			ImGui::InputInt("Number of particles: ", &n_particles, 1, 100);
-			n_particles = glm::clamp(n_particles, 0, 4000);
+			n_particles = glm::clamp(n_particles, 100, 4000);
 
 			if (ImGui::BeginMenu("Start Conditions")) {
 				ImGui::InputFloat3("Start position", start_pos, 2);
@@ -103,6 +99,7 @@ int main() {
 				ImGui::InputFloat3("Start velocity", start_vel, 3);
 				ImGui::EndMenu();
 			}
+
 			ImGui::SliderInt("Max iter. (Divergence solv.): ", &Miter_v, 10, 200);
 			ImGui::SliderInt("Max iter. (Density solv.):  ", &Miter, 10, 200);
 
@@ -112,7 +109,6 @@ int main() {
 			ImGui::SliderFloat("CFL - Factor", &time_factor, 0.4f, 0.6f);
 
 			ImGui::Text("Simulation properties:");
-
 
 			if (ImGui::Button("Start")) {
 				sph.set_n_particles(n_particles);
@@ -151,6 +147,7 @@ int main() {
 				ImGui::Text("dens: %.4f", dens);
 				ImGui::Text("Time Step: %.4f", sph.get_timestep());
 			}
+		
 		}
 
 		if (dT > 1.0 / 30.0) {
@@ -222,13 +219,17 @@ int main() {
 			}
 		}
 
-		MVstack.push();
-		float color[] = { 0.0f, 1.0f, 0.5f };
-		glUniform3fv(locationColor, 1, &color[0]);
-		MVstack.translate(static_sphere.getPosition());
-		glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
-		static_sphere.render();
-		MVstack.pop();
+		if (addImplicitSphere) 
+		{
+			MVstack.push();
+			float color[] = { 0.0f, 1.0f, 0.5f };
+			glUniform3fv(locationColor, 1, &color[0]);
+			MVstack.translate(static_sphere.getPosition());
+			MVstack.scale(static_sphere.getRadius()/(original_sphereRad+0.01f));
+			glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
+			static_sphere.render();
+			MVstack.pop();
+		}
 
 		MVstack.push();
 		MVstack.translate(bbox.getPosition());
@@ -244,6 +245,7 @@ int main() {
 		glfwGetFramebufferSize(currentWindow, &display_w, &display_h);
 		glViewport(0, 0, display_w, display_h);
 		ImGui::Render();
+
 		glfwSwapBuffers(currentWindow);
 	}
 

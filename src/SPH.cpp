@@ -248,11 +248,7 @@ void SPH::calculate_time_step()
 
 void SPH::predict_velocities()
 {
-	static sphereConstaint sc;
-	sc.center.x = 0;
-	sc.center.y = -0.2;
-	sc.center.z = 0;
-	sc.radius_2 = 0.05f;
+
 	static float dist;
 	#pragma omp parallel
 	#pragma omp for
@@ -262,7 +258,7 @@ void SPH::predict_velocities()
 			(m_particles.pos.y[i] - sc.center.y) * (m_particles.pos.y[i] - sc.center.y) +
 			(m_particles.pos.z[i] - sc.center.z) * (m_particles.pos.z[i] - sc.center.z));
 
-		if (dist >= sc.radius_2 && dist <= (sc.radius_2+ 0.01f ))
+		if (dist == sc.radius_2 )
 		{
 			m_particles.pred_vel.x[i] = 4.f*(m_particles.pos.x[i]);// +m_particles.F_adv.x[i] * m_delta_t / m_mass;
 			m_particles.pred_vel.y[i] = 2.f*(m_particles.pos.y[i]);// +m_particles.F_adv.y[i] * m_delta_t / m_mass;
@@ -286,6 +282,7 @@ void SPH::predict_velocities()
 		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.5f)
 		{
 			m_particles.pred_vel.x[i] = 0.0f;
+		
 		}
 
 		if (abs(m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t) >= 0.5f)
@@ -296,6 +293,7 @@ void SPH::predict_velocities()
 		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.5f)
 		{
 			m_particles.pred_vel.z[i] = 0.0f;
+		
 		}
 	}
 }
