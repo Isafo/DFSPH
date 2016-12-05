@@ -6,9 +6,9 @@
 
 //Compact Search was written by
 //Dan Koschier, https://github.com/InteractiveComputerGraphics/CompactNSearch
-#include "CompactNSearch/include/CompactNSearch.h"
-#include "CompactNSearch/include/DataStructures.h"
-#include "imgui\imconfig.h"
+#include "include/CompactNSearch.h"
+#include "include/DataStructures.h"
+#include "imconfig.h"
 
 #define D_GRAVITY -9.82f
 #define D_PI 3.1415926559f;
@@ -243,13 +243,43 @@ void SPH::calculate_time_step()
 
 void SPH::predict_velocities()
 {
-#pragma omp parallel
-#pragma omp for
+	static sphereConstaint sc;
+	sc.center.x = 0;
+	sc.center.y = -0.5;
+	sc.center.z = 0;
+	sc.radius_2 = 0.05f;
+	static float dist;
+	#pragma omp parallel
+	#pragma omp for
 	for (auto i = 0; i < current_n_particles; ++i)
 	{
-		m_particles.pred_vel.x[i] = m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass;
-		m_particles.pred_vel.y[i] = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_mass;
-		m_particles.pred_vel.z[i] = m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_mass;
+		sc.normal.x = m_particles.pos.x[i] - sc.center.x;
+		sc.normal.y = m_particles.pos.y[i] - sc.center.y;
+		sc.normal.z = m_particles.pos.z[i] - sc.center.z;
+		dist = ((m_particles.pos.x[i] - sc.center.x) * (m_particles.pos.x[i] - sc.center.x) +
+			(m_particles.pos.y[i] - sc.center.y) * (m_particles.pos.y[i] - sc.center.y) +
+			(m_particles.pos.z[i] - sc.center.z) * (m_particles.pos.z[i] - sc.center.z));
+
+		if (dist == sc.radius_2)
+		{
+			m_particles.pred_vel.x[i] = 2.f*(m_particles.pos.x[i]);// +m_particles.F_adv.x[i] * m_delta_t / m_mass;
+			m_particles.pred_vel.y[i] = 2.f*(m_particles.pos.y[i]) + m_particles.F_adv.y[i] * m_delta_t / m_mass;
+			m_particles.pred_vel.z[i] = 2.f*(m_particles.pos.z[i]);// + m_particles.F_adv.z[i] * m_delta_t / m_mass;
+		}
+		else if(dist < sc.radius_2)
+		{
+			m_particles.pred_vel.x[i] = 4.f*(m_particles.pos.x[i]);// +m_particles.F_adv.x[i] * m_delta_t / m_mass;
+			m_particles.pred_vel.y[i] = 0.f*(m_particles.pos.y[i]);// + m_particles.F_adv.y[i] * m_delta_t / m_mass;
+			m_particles.pred_vel.z[i] = 4.f*(m_particles.pos.z[i]);// + m_particles.F_adv.z[i] * m_delta_t / m_mass;
+		}
+		else {
+			m_particles.pred_vel.x[i] = m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass;
+			m_particles.pred_vel.y[i] = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_mass;
+			m_particles.pred_vel.z[i] = m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_mass;
+		}
+
+		
+
 		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.5f)
 		{
 			m_particles.pred_vel.x[i] = 0.0f;

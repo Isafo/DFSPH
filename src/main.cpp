@@ -1,6 +1,6 @@
 #include "GL/glew.h"
-#include <imgui\imgui.h>
-#include "imgui\imgui_impl_glfw.h"
+#include <imgui.h>
+#include "imgui_impl_glfw.h"
 #include "glfwContext.h"
 
 #include "Shader.h"

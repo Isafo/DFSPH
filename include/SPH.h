@@ -133,6 +133,13 @@ private:
 		float* dens;
 	};
 
+	struct sphereConstaint
+	{
+		Float3s center;
+		Float3s normal;
+		float radius_2;
+	};
+
 	float m_delta_t;
 	float m_mass;
 	float m_rad;
