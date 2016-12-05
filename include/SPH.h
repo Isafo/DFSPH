@@ -91,8 +91,16 @@ public:
 	}
 
 	float get_dens_i(int i) const { return m_particles.dens[i]; }
+	float get_timestep() const { return m_delta_t; }
 
 	int current_n_particles;
+	int Viter_max{ 100 };
+	int iter_max{ 100 };
+
+	float divergence_error{ 0.10f };
+	float density_error{ 0.01f };
+	float time_factor{ 0.5f };
+
 
 private:
 

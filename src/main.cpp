@@ -72,6 +72,10 @@ int main() {
 	int dParticle = 0;
 	int n_particles = 0;
 
+	int Miter_v = 0;
+	int Miter = 0;
+
+	float dens_error, div_error, time_factor;
 
 	while (!glfwWindowShouldClose(currentWindow))
 	{
@@ -80,13 +84,27 @@ int main() {
 		ImGui_ImplGlfw_NewFrame();
 		{
 			ImGui::Text("Simulation properties:");
-			ImGui::SliderInt("Number of particles: ", &n_particles, 0, 4000);
+			ImGui::SliderInt("Number of particles: ", &n_particles, 100, 4000);
+
+			ImGui::SliderInt("Max iter. (Divergence solv.): ", &Miter_v, 10, 200);
+			ImGui::SliderInt("Max iter. (Density solv.):  ", &Miter, 10, 200);
+
+			ImGui::SliderFloat("Error (Divergence): ", &div_error, 0.01f, 0.2f);
+			ImGui::SliderFloat("Error (Density):  ", &dens_error, 0.01f, 0.2f);
+
+			ImGui::SliderFloat("CFL - Factor", &time_factor, 0.4f, 0.6f);
 
 			if (ImGui::Button("Start")) {
 				sph.current_n_particles = n_particles;
+				sph.iter_max = Miter;
+				sph.Viter_max = Miter;
+				sph.divergence_error = div_error;
+				sph.density_error = dens_error;
+				sph.time_factor = time_factor;
+
 				sph.reset();
 				sph.init_positions(0, 0, 0, 20, 20);
-
+				is_paused = true;
 				is_running = true;
 			}
 
@@ -104,14 +122,15 @@ int main() {
 				Float3s pos = sph.get_pos_i(dParticle);
 				Float3s vel = sph.get_vel_i(dParticle);
 				Float3s pred_vel = sph.get_predvel_i(dParticle);
-				Float3s F_adv = sph.get_F_adv_i(dParticle);
+				//Float3s F_adv = sph.get_F_adv_i(dParticle);
 				float dens = sph.get_dens_i(dParticle);
 
 				ImGui::Text("pos: %.4f %.4f %.4f", pos.x, pos.y, pos.z);
 				ImGui::Text("vel: %.4f %.4f %.4f", vel.x, vel.y, vel.z);
 				ImGui::Text("pred. vel: %.4f %.4f %.4f", pred_vel.x, pred_vel.y, pred_vel.z);
-				ImGui::Text("F_adv: %.4f %.4f %.4f", F_adv.x, F_adv.y, F_adv.z);
+				//ImGui::Text("F_adv: %.4f %.4f %.4f", F_adv.x, F_adv.y, F_adv.z);
 				ImGui::Text("dens: %.4f", dens);
+				ImGui::Text("Time Step: %.4f", sph.get_timestep());
 			}
 		}
 

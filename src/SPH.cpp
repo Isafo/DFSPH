@@ -14,7 +14,7 @@
 #define D_PI 3.1415926559f;
 #define D_EPSILON 10e-6f;
 //since force is low a higher radius is requiered for small number of particles
-#define D_SEARCH_RANGE 0.025f;
+#define D_SEARCH_RANGE 0.035f;
 
 SPH::SPH(int n_particles) : C_N_PARTICLES{ n_particles } {}
 
@@ -49,18 +49,23 @@ void SPH::init()
 
 	for (auto i = 0; i < C_N_PARTICLES; ++i)
 	{
-		m_particles.dens[i] = 0.f;
 		m_particles.pos.x[i] = 0.f;
 		m_particles.pos.y[i] = 0.f;
 		m_particles.pos.z[i] = 0.f;
+
 		m_particles.vel.x[i] = 0.f;
 		m_particles.vel.y[i] = 0.f;
 		m_particles.vel.z[i] = 0.f;
 
-		// predicted velocities
 		m_particles.pred_vel.x[i] = 0.f;
 		m_particles.pred_vel.y[i] = 0.f;
 		m_particles.pred_vel.z[i] = 0.f;
+
+		m_particles.F_adv.x[i] = 0.f;
+		m_particles.F_adv.y[i] = m_mass*D_GRAVITY;
+		m_particles.F_adv.z[i] = 0.f;
+
+		m_particles.dens[i] = 0.f;
 
 		m_alpha[i] = 0.0f;
 		m_dens_derive[i] = 0.0f;
@@ -129,7 +134,7 @@ void SPH::update(float dT)
 
 	calculate_time_step();
 
-	non_pressure_forces();
+	//non_pressure_forces();
 
 	predict_velocities();
 
@@ -154,8 +159,8 @@ void SPH::init_positions(int x_start, int y_start, int z_start, int rows, int co
 	float padding_factor{ 1.8f };
 	float x, y, z;
 
-#pragma omp parallel
-#pragma omp for
+	#pragma omp parallel
+	#pragma omp for
 	for (auto i = 0; i < current_n_particles; ++i)
 	{
 		x = i / (rows*cols);
@@ -207,8 +212,8 @@ void SPH::find_neighborhoods() const
 
 void SPH::non_pressure_forces() const
 {
-#pragma omp parallel
-#pragma omp for
+	#pragma omp parallel
+	#pragma omp for
 	for (auto i = 0; i < current_n_particles; ++i)
 	{
 		m_particles.F_adv.x[i] = 0.f;
@@ -231,7 +236,7 @@ void SPH::calculate_time_step()
 			v_max_2 = x_2 + y_2 + z_2;
 	}
 
-	m_delta_t = 0.5f * (2.f * m_rad) / (sqrtf(v_max_2) + 0.000001f);
+	m_delta_t = time_factor * (2.f * m_rad) / (sqrtf(v_max_2) + 0.000001f);
 	//m_delta_t = 0.003f;
 
 	if (m_delta_t > 0.005f)
@@ -302,8 +307,7 @@ void SPH::correct_density_error()
 {
 	int neighbor_ind;
 	int iter{ 0 };
-	float eta, max_error;
-	float dens_derive_avg, pred_dens_avg;
+	float eta;
 	float k_i, k_j, div_i, div_j, div_sum;
 	float pressure_acc_x, pressure_acc_y, pressure_acc_z;
 	float x, y, z;
@@ -318,7 +322,7 @@ void SPH::correct_density_error()
 		for (auto particle_ind = 0; particle_ind < current_n_particles; ++particle_ind)
 		{
 
-			k_i = fmax(inv_delta_t_2*(m_pred_dens[particle_ind] - C_REST_DENS) * m_alpha[particle_ind], 0.1f);
+			k_i = fmax(inv_delta_t_2*(m_pred_dens[particle_ind] - C_REST_DENS) * m_alpha[particle_ind], 0.25f);
 			div_i = k_i / m_particles.dens[particle_ind];
 
 			pressure_acc_x = pressure_acc_y = pressure_acc_z = 0.0f;
@@ -330,7 +334,7 @@ void SPH::correct_density_error()
 
 				//assert(m_particles.dens[neighbor_ind] != 0.0f, "n dens");
 
-				k_j = fmax(inv_delta_t_2*(m_pred_dens[neighbor_ind] - C_REST_DENS) * m_alpha[neighbor_ind], 0.1f);
+				k_j = fmax(inv_delta_t_2*(m_pred_dens[neighbor_ind] - C_REST_DENS) * m_alpha[neighbor_ind], 0.25f);
 
 				x = m_particles.pos.x[particle_ind] - m_particles.pos.x[neighbor_ind];
 				y = m_particles.pos.y[particle_ind] - m_particles.pos.y[neighbor_ind];
@@ -357,13 +361,8 @@ void SPH::correct_density_error()
 		}
 		calculate_derived_density_pred_dens(m_neighbor_data);
 		++iter;
-		max_error = 0.f;
-		for (int i = 0; i < current_n_particles; ++i)
-		{
-			if (max_error < m_dens_derive[i]) max_error = m_dens_derive[i];
-		}
-		eta = 0.01f * 0.01 * C_REST_DENS;
-	} while ((m_pred_dens_avg - C_REST_DENS > eta || iter < 2) && iter < 100);
+		eta = 0.01f * density_error * C_REST_DENS;
+	} while ((m_pred_dens_avg - C_REST_DENS > eta || iter < 2) && iter < Viter_max);
 }
 
 void SPH::update_positions() const
@@ -384,9 +383,8 @@ void SPH::update_positions() const
 void SPH::correct_divergence_error()
 {
 	int neighbor_ind;
-	int max_iter{ 0 };
+	int iter{ 0 };
 
-	float dens_derive_avg, pred_dens_avg;
 	float k_v_i, k_v_j, div_i, div_j, div_sum;
 	float pressure_acc_x, pressure_acc_y, pressure_acc_z;
 	float x, y, z;
@@ -441,10 +439,9 @@ void SPH::correct_divergence_error()
 
 		calculate_derived_density_pred_dens(m_neighbor_data);
 
-		eta = 0.01f * 0.01*C_REST_DENS * 1.f / m_delta_t;
-		++max_iter;
-
-	} while (m_dens_derive_avg > eta && max_iter < 100); // implicit condition: iter < 1 
+		eta = 0.01f * divergence_error * C_REST_DENS * 1.f / m_delta_t;
+		++iter;
+	} while (m_dens_derive_avg > eta && iter < iter_max); // implicit condition: iter < 1 
 }
 
 void SPH::update_velocities()
@@ -472,53 +469,58 @@ void SPH::update_density_and_factors(Neighbor_Data* neighbor_data)
 	float temporary_sum_abs;
 	const float min_denom{ 10e-6f };
 
+
 	//#pragma omp parallel default(shared)
-	//#pragma omp for schedule(static)  
-	for (auto particle = 0; particle < current_n_particles; ++particle)
 	{
-		nr_neighbors = neighbor_data[particle].n;
-		//added 1 * mass as particles own density as kernel is 1 at dist == 0
-		//this should atleast be the case, but needs to be checked
-		// => Does not seem to cause a problem when it is 0. So i followed the report
-
-		m_particles.dens[particle] = 12.000656593f;
-		for (auto neighbor = 0; neighbor < nr_neighbors; ++neighbor)
+		
+		//#pragma omp for schedule(static)  
+		for (auto particle = 0; particle < current_n_particles; ++particle)
 		{
-			neighbor_index = neighbor_data[particle].neighbor[neighbor];
+			nr_neighbors = neighbor_data[particle].n;
+			//added 1 * mass as particles own density as kernel is 1 at dist == 0
+			//this should atleast be the case, but needs to be checked
+			// => Does not seem to cause a problem when it is 0. So i followed the report
 
-			linear_ind = neighbor + D_MAX_NR_OF_NEIGHBORS*particle;
+			m_particles.dens[particle] = 12.000656593f;
+			for (auto neighbor = 0; neighbor < nr_neighbors; ++neighbor)
+			{
+				neighbor_index = neighbor_data[particle].neighbor[neighbor];
 
-			//Update density
-			m_particles.dens[particle] += m_mass*m_kernel_values[linear_ind];
+				linear_ind = neighbor + D_MAX_NR_OF_NEIGHBORS*particle;
 
-			dx = m_particles.pos.x[particle] - m_particles.pos.x[neighbor_index];
-			dy = m_particles.pos.y[particle] - m_particles.pos.y[neighbor_index];
-			dz = m_particles.pos.z[particle] - m_particles.pos.z[neighbor_index];
+				//Update density
+				m_particles.dens[particle] += m_mass*m_kernel_values[linear_ind];
 
-			scalar_value_mul_mass = m_mass*m_scalar_values[linear_ind];
+				dx = m_particles.pos.x[particle] - m_particles.pos.x[neighbor_index];
+				dy = m_particles.pos.y[particle] - m_particles.pos.y[neighbor_index];
+				dz = m_particles.pos.z[particle] - m_particles.pos.z[neighbor_index];
 
-			kernel_gradient_x = dx * scalar_value_mul_mass;
-			kernel_gradient_y = dy * scalar_value_mul_mass;
-			kernel_gradient_z = dz * scalar_value_mul_mass;
+				scalar_value_mul_mass = m_mass*m_scalar_values[linear_ind];
 
-			x += kernel_gradient_x;
-			y += kernel_gradient_y;
-			z += kernel_gradient_z;
+				kernel_gradient_x = dx * scalar_value_mul_mass;
+				kernel_gradient_y = dy * scalar_value_mul_mass;
+				kernel_gradient_z = dz * scalar_value_mul_mass;
 
-			temporary_sum_abs = sqrt(kernel_gradient_x*kernel_gradient_x + kernel_gradient_y*kernel_gradient_y + kernel_gradient_z*kernel_gradient_z);
+				x += kernel_gradient_x;
+				y += kernel_gradient_y;
+				z += kernel_gradient_z;
 
-			sum_abs_denom += temporary_sum_abs*temporary_sum_abs;
+				temporary_sum_abs = sqrt(kernel_gradient_x*kernel_gradient_x + kernel_gradient_y*kernel_gradient_y + kernel_gradient_z*kernel_gradient_z);
+
+				sum_abs_denom += temporary_sum_abs*temporary_sum_abs;
+			}
+
+			abs_sum_denom = sqrt(x*x + y*y + z*z);
+			denom = abs_sum_denom*abs_sum_denom + sum_abs_denom;
+
+			// set alpha to max(denom,min_denom)
+			//denom = denom < min_denom ? min_denom : denom;
+			denom = fmax(denom, 1.0e-6);
+			m_alpha[particle] = m_particles.dens[particle] / denom;
+
+			sum_abs_denom = 0.f;
+			x = y = z = 0.f;
 		}
-
-		abs_sum_denom = sqrt(x*x + y*y + z*z);
-		denom = abs_sum_denom*abs_sum_denom + sum_abs_denom;
-
-		// set alpha to max(denom,min_denom)
-		denom = denom < min_denom ? min_denom : denom;
-		m_alpha[particle] = m_particles.dens[particle] / denom;
-
-		sum_abs_denom = 0.f;
-		x = y = z = 0.f;
 	}
 }
 
@@ -533,13 +535,16 @@ void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neig
 	float x, y, z;
 	float q, q_2;
 	float length;
-	float kernel_val;
 	float search_area = D_SEARCH_RANGE;
 	float pi = D_PI;
 	float particle_pos_x, particle_pos_y, particle_pos_z;
 
 	float div = 1.0f / (search_area*search_area*search_area*pi);
 
+	//#pragma omp parallel default(shared)
+	//{
+
+	//#pragma omp for schedule(static)  
 	for (auto particle = 0; particle < N_PARTICLES; ++particle)
 	{
 		particle_pos_x = pos->x[particle];
@@ -561,6 +566,7 @@ void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neig
 			// length is always equal or smaller to D_SEARCH_RANGE => implicit intervall between [0, 1]
 			kernel_values[particle*D_MAX_NR_OF_NEIGHBORS + neighbor] = div*(1.0f - 1.5f*q_2 + 0.75f*q_2*q);;
 		}
+	//}
 	}
 }
 
@@ -579,37 +585,41 @@ void SPH::calculate_derived_density_pred_dens(Neighbor_Data* neighbor_data)
 	float x, y, z;
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
 
-	for (int i = 0; i < current_n_particles; ++i)
-	{
-		neighbor_length = neighbor_data[i].n;
-		for (int j = 0; j < neighbor_length; ++j)
+	//#pragma omp parallel default(shared)
+	//{
+	//	#pragma omp for schedule(static)  
+		for (int i = 0; i < current_n_particles; ++i)
 		{
-			neighbor_index = neighbor_data[i].neighbor[j];
-			linear_ind = neighbor_index + D_MAX_NR_OF_NEIGHBORS*i;
+			neighbor_length = neighbor_data[i].n;
+			for (int j = 0; j < neighbor_length; ++j)
+			{
+				neighbor_index = neighbor_data[i].neighbor[j];
+				linear_ind = neighbor_index + D_MAX_NR_OF_NEIGHBORS*i;
 
-			x = m_particles.pos.x[i] - m_particles.pos.x[neighbor_index];
-			y = m_particles.pos.y[i] - m_particles.pos.y[neighbor_index];
-			z = m_particles.pos.z[i] - m_particles.pos.z[neighbor_index];
+				x = m_particles.pos.x[i] - m_particles.pos.x[neighbor_index];
+				y = m_particles.pos.y[i] - m_particles.pos.y[neighbor_index];
+				z = m_particles.pos.z[i] - m_particles.pos.z[neighbor_index];
 
-			kernel_gradient_x = x * m_scalar_values[linear_ind];
-			kernel_gradient_y = y * m_scalar_values[linear_ind];
-			kernel_gradient_z = z * m_scalar_values[linear_ind];
+				kernel_gradient_x = x * m_scalar_values[linear_ind];
+				kernel_gradient_y = y * m_scalar_values[linear_ind];
+				kernel_gradient_z = z * m_scalar_values[linear_ind];
 
-			//equation 9 in DFSPH, changed 16-11-18
-			pressure_derived_x += m_mass * kernel_gradient_x * (m_particles.pred_vel.x[i] - m_particles.pred_vel.x[neighbor_index]);
-			pressure_derived_y += m_mass*kernel_gradient_y*(m_particles.pred_vel.y[i] - m_particles.pred_vel.y[neighbor_index]);
-			pressure_derived_z += m_mass*kernel_gradient_z*(m_particles.pred_vel.z[i] - m_particles.pred_vel.z[neighbor_index]);
+				//equation 9 in DFSPH, changed 16-11-18
+				pressure_derived_x += m_mass * kernel_gradient_x * (m_particles.pred_vel.x[i] - m_particles.pred_vel.x[neighbor_index]);
+				pressure_derived_y += m_mass*kernel_gradient_y*(m_particles.pred_vel.y[i] - m_particles.pred_vel.y[neighbor_index]);
+				pressure_derived_z += m_mass*kernel_gradient_z*(m_particles.pred_vel.z[i] - m_particles.pred_vel.z[neighbor_index]);
+			}
+
+			pressure_derived = pressure_derived_x + pressure_derived_y + pressure_derived_z;
+
+			m_dens_derive[i] = pressure_derived;
+			m_pred_dens[i] = m_particles.dens[i] + m_delta_t * m_dens_derive[i];
+
+			dens_derive_sum += m_dens_derive[i];
+			pred_dens_sum += m_pred_dens[i];
+			pressure_derived_x = pressure_derived_y = pressure_derived_z = 0.f;
 		}
-
-		pressure_derived = pressure_derived_x + pressure_derived_y + pressure_derived_z;
-
-		m_dens_derive[i] = pressure_derived;
-		m_pred_dens[i] = m_particles.dens[i] + m_delta_t * m_dens_derive[i];
-
-		dens_derive_sum += m_dens_derive[i];
-		pred_dens_sum += m_pred_dens[i];
-		pressure_derived_x = pressure_derived_y = pressure_derived_z = 0.f;
-	}
+	//}
 
 	m_dens_derive_avg = dens_derive_sum / current_n_particles;
 	m_pred_dens_avg = pred_dens_sum / current_n_particles;
@@ -633,7 +643,11 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 	float inv_range = 1.0f / D_SEARCH_RANGE;
 	float div = 1.0f / (search_area*search_area*search_area*pi);
 
+	//#pragma omp parallel default(shared)
+	//{
+	
 	//Loop through all particles
+	//#pragma omp for schedule(static)  
 	for (auto particle = 0; particle < N_PARTICLES; ++particle)
 	{
 		//Loop through particle neibors
@@ -656,4 +670,5 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 
 		}
 	}
+	//}
 }
