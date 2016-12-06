@@ -45,7 +45,7 @@ public:
 	void update();
 
 	// initializes the particles in a given grid formation
-	void init_positions(int x = 0, int y = 0, int z = 0, int rows = 3, int cols = 3) const;
+	void init_positions(float x = 0.0f, float y = 0.0f, float z = 0.0f, int rows = 3, int cols = 3) const;
 
 	int get_nr_of_particles() { return C_N_PARTICLES; }
 

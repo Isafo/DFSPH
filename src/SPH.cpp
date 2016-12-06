@@ -154,7 +154,7 @@ void SPH::update()
 	update_velocities();
 }
 
-void SPH::init_positions(int x_start, int y_start, int z_start, int rows, int cols) const
+void SPH::init_positions(float x_start, float y_start, float z_start, int rows, int cols) const
 {
 	int ind;
 
@@ -171,8 +171,8 @@ void SPH::init_positions(int x_start, int y_start, int z_start, int rows, int co
 		y = ind / rows;
 		z = ind % rows;
 
-		m_particles.pos.y[i] = x_start + x * dist_between;
-		m_particles.pos.x[i] = y_start + y * dist_between;
+		m_particles.pos.x[i] = x_start + x * dist_between;
+		m_particles.pos.y[i] = y_start + y * dist_between;
 		m_particles.pos.z[i] = z_start + z * dist_between;
 	}
 }
@@ -616,11 +616,19 @@ void SPH::calculate_derived_density_pred_dens(Neighbor_Data* neighbor_data)
 			kernel_gradient_y = y * m_scalar_values[linear_ind];
 			kernel_gradient_z = z * m_scalar_values[linear_ind];
 
+<<<<<<< HEAD
 			//equation 9 in DFSPH, changed 16-11-18
 			pressure_derived_x += m_mass * kernel_gradient_x * (m_particles.pred_vel.x[i] - m_particles.pred_vel.x[neighbor_index]);
 			pressure_derived_y += m_mass*kernel_gradient_y*(m_particles.pred_vel.y[i] - m_particles.pred_vel.y[neighbor_index]);
 			pressure_derived_z += m_mass*kernel_gradient_z*(m_particles.pred_vel.z[i] - m_particles.pred_vel.z[neighbor_index]);
 		}
+=======
+				//equation 9 in DFSPH, changed 16-11-18
+				pressure_derived_x += m_mass * kernel_gradient_x * (m_particles.pred_vel.x[i] - m_particles.pred_vel.x[neighbor_index]);
+				pressure_derived_y += m_mass * kernel_gradient_y * (m_particles.pred_vel.y[i] - m_particles.pred_vel.y[neighbor_index]);
+				pressure_derived_z += m_mass * kernel_gradient_z * (m_particles.pred_vel.z[i] - m_particles.pred_vel.z[neighbor_index]);
+			}
+>>>>>>> live update of offset pos, row and cols
 
 		pressure_derived = pressure_derived_x + pressure_derived_y + pressure_derived_z;
 
