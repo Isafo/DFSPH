@@ -300,8 +300,8 @@ int main() {
 		if (addImplicitSphere) 
 		{
 			MVstack.push();
-			float color[] = { 0.0f, 1.0f, 0.5f };
-			glUniform3fv(locationColor, 1, &color[0]);
+			float color[] = { 0.0f, 1.0f, 0.5f, 0.5f };
+			glUniform4fv(locationColor, 1, &color[0]);
 			MVstack.translate(static_sphere.getPosition());
 			MVstack.scale(static_sphere.getRadius() / (original_sphere_rad + 0.01f));
 			glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
@@ -351,6 +351,6 @@ void GLcalls()
 	glDisable(GL_TEXTURE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	//glEnable(GL_BLEND);
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
