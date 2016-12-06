@@ -181,6 +181,13 @@ private:
 	float divergence_error{ 0.10f };
 	float density_error{ 0.01f };
 	float time_factor{ 0.5f };
+
+	public:
+		Float3* get_vel()
+		{
+			return &m_particles.vel;
+		}
+
 };
 
 inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data, const int N_PARTICLES);
