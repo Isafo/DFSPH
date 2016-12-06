@@ -48,8 +48,8 @@ int main() {
 	MatrixStack MVstack; MVstack.init();
 
 	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
-
-	SPH sph(5000);
+	const int init_particles = 5000;
+	SPH sph(init_particles);
 	sph.init();
 
 	Sphere sphere(0.0f, 0.0f, 0.0f, sph.get_particle_radius());
@@ -70,7 +70,7 @@ int main() {
 
 	// GUI variables
 	int dParticle = 0;
-	int n_particles = 4000;
+	int n_particles = init_particles;
 
 	int Miter_v = 200, Miter = 200;
 
