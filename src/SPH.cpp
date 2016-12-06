@@ -155,8 +155,8 @@ void SPH::init_positions(int x_start, int y_start, int z_start, int rows, int co
 {
 	int ind;
 
-	float dist_between{ 1.2f * m_rad };
-	float padding_factor{ 1.8f };
+	float dist_between{ 2.25f * m_rad };
+	//float padding_factor{ 1.8f };
 	float x, y, z;
 
 	#pragma omp parallel
@@ -168,9 +168,9 @@ void SPH::init_positions(int x_start, int y_start, int z_start, int rows, int co
 		y = ind / rows;
 		z = ind % rows;
 
-		m_particles.pos.y[i] = x_start + x * dist_between*padding_factor;
-		m_particles.pos.x[i] = y_start + y * dist_between*padding_factor;
-		m_particles.pos.z[i] = z_start + z * dist_between*padding_factor;
+		m_particles.pos.y[i] = x_start + x * dist_between;
+		m_particles.pos.x[i] = y_start + y * dist_between;
+		m_particles.pos.z[i] = z_start + z * dist_between;
 	}
 }
 
