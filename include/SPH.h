@@ -64,6 +64,14 @@ public:
 	void set_divergence_error(float error) { divergence_error = error; }
 	void set_density_error(float error) { density_error = error; }
 
+	void set_wind(float w_x, float w_y, float w_z)
+	{
+		m_wind.x = w_x;
+		m_wind.y = w_y;
+		m_wind.z = w_z;
+	}
+	void set_gravity(float gravity) { m_gravity = gravity; }
+
 	// for debug
 	Float3s get_pos_i(int i) const
 	{
@@ -181,6 +189,10 @@ private:
 	float divergence_error{ 0.10f };
 	float density_error{ 0.01f };
 	float time_factor{ 0.5f };
+
+	// effects
+	Float3s m_wind;
+	float m_gravity;
 
 	public:
 		Float3* get_vel()

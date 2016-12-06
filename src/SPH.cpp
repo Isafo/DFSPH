@@ -10,7 +10,6 @@
 #include "CompactNSearch/include/DataStructures.h"
 #include "imconfig.h"
 
-#define D_GRAVITY -9.82f
 #define D_PI 3.1415926559f;
 #define D_EPSILON 10e-6f;
 //since force is low a higher radius is requiered for small number of particles
@@ -47,6 +46,10 @@ void SPH::init()
 	m_rad = 0.01f;
 	m_mass = 0.004218f;
 
+	// Effects
+	m_wind.x = m_wind.y = m_wind.z = 0.f;
+	m_gravity = 9.82f;
+
 	for (auto i = 0; i < C_N_PARTICLES; ++i)
 	{
 		m_particles.pos.x[i] = 0.f;
@@ -62,7 +65,7 @@ void SPH::init()
 		m_particles.pred_vel.z[i] = 0.f;
 
 		m_particles.F_adv.x[i] = 0.f;
-		m_particles.F_adv.y[i] = m_mass*D_GRAVITY;
+		m_particles.F_adv.y[i] = 0.f;
 		m_particles.F_adv.z[i] = 0.f;
 
 		m_particles.dens[i] = 0.f;
@@ -134,7 +137,7 @@ void SPH::update()
 
 	calculate_time_step();
 
-	//non_pressure_forces();
+	non_pressure_forces();
 
 	predict_velocities();
 
@@ -159,8 +162,8 @@ void SPH::init_positions(int x_start, int y_start, int z_start, int rows, int co
 	//float padding_factor{ 1.8f };
 	float x, y, z;
 
-	#pragma omp parallel
-	#pragma omp for
+#pragma omp parallel
+#pragma omp for
 	for (auto i = 0; i < current_n_particles; ++i)
 	{
 		x = i / (rows*cols);
@@ -182,8 +185,8 @@ void SPH::find_neighborhoods() const
 	CompactNSearch::NeighborhoodSearch nsearch(neigborhod_rad);
 	std::vector<std::array<double, 3>> positions(current_n_particles);
 
-	#pragma omp parallel
-	#pragma omp for
+#pragma omp parallel
+#pragma omp for
 	for (int i = 0; i < current_n_particles; ++i)
 	{
 		positions.at(i) = { m_particles.pos.x[i], m_particles.pos.y[i], m_particles.pos.z[i] };
@@ -212,13 +215,13 @@ void SPH::find_neighborhoods() const
 
 void SPH::non_pressure_forces() const
 {
-	#pragma omp parallel
-	#pragma omp for
+#pragma omp parallel
+#pragma omp for
 	for (auto i = 0; i < current_n_particles; ++i)
 	{
-		m_particles.F_adv.x[i] = 0.f;
-		m_particles.F_adv.y[i] = m_mass*D_GRAVITY;
-		m_particles.F_adv.z[i] = 0.f;
+		m_particles.F_adv.x[i] = m_mass*m_wind.x;
+		m_particles.F_adv.y[i] = m_mass*m_wind.y - m_mass * m_gravity;
+		m_particles.F_adv.z[i] = m_mass*m_wind.z;
 	}
 }
 
@@ -250,31 +253,31 @@ void SPH::predict_velocities()
 {
 
 	static float dist;
-	#pragma omp parallel
-	#pragma omp for
+#pragma omp parallel
+#pragma omp for
 	for (auto i = 0; i < current_n_particles; ++i)
 	{
 		dist = ((m_particles.pos.x[i] - sc.center.x) * (m_particles.pos.x[i] - sc.center.x) +
 			(m_particles.pos.y[i] - sc.center.y) * (m_particles.pos.y[i] - sc.center.y) +
 			(m_particles.pos.z[i] - sc.center.z) * (m_particles.pos.z[i] - sc.center.z));
 
-		if (dist == sc.radius_2 )
+		if (dist == sc.radius_2)
 		{
 			m_particles.pred_vel.x[i] = 4.f*(m_particles.pos.x[i]);// +m_particles.F_adv.x[i] * m_delta_t / m_mass;
 			m_particles.pred_vel.y[i] = 2.f*(m_particles.pos.y[i]);// +m_particles.F_adv.y[i] * m_delta_t / m_mass;
 			m_particles.pred_vel.z[i] = 4.f*(m_particles.pos.z[i]);// + m_particles.F_adv.z[i] * m_delta_t / m_mass;
 		}
-		else if(dist < sc.radius_2)
+		else if (dist < sc.radius_2)
 		{
 			m_particles.pred_vel.x[i] = 4.f*(m_particles.pos.x[i]);// +m_particles.F_adv.x[i] * m_delta_t / m_mass;
 			m_particles.pred_vel.y[i] = 0.f*(m_particles.pos.y[i]);// + m_particles.F_adv.y[i] * m_delta_t / m_mass;
 			m_particles.pred_vel.z[i] = 4.f*(m_particles.pos.z[i]);// + m_particles.F_adv.z[i] * m_delta_t / m_mass;
 		}
-		else 
+		else
 		{
-			if(m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass < -2.0f)
+			if (m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass < -2.0f)
 				m_particles.pred_vel.x[i] = -2.0f;
-			else if(m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass > 2.0f)
+			else if (m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass > 2.0f)
 				m_particles.pred_vel.x[i] = 2.0f;
 			else m_particles.pred_vel.x[i] = m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass;
 
@@ -292,11 +295,11 @@ void SPH::predict_velocities()
 
 		}
 
-		
+
 		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.5f)
 		{
 			m_particles.pred_vel.x[i] = 0.0f;
-		
+
 		}
 
 		if (abs(m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t) >= 0.5f)
@@ -307,7 +310,7 @@ void SPH::predict_velocities()
 		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.5f)
 		{
 			m_particles.pred_vel.z[i] = 0.0f;
-		
+
 		}
 	}
 }
@@ -481,7 +484,7 @@ void SPH::update_density_and_factors(Neighbor_Data* neighbor_data)
 
 	//#pragma omp parallel default(shared)
 	{
-		
+
 		//#pragma omp for schedule(static)  
 		for (auto particle = 0; particle < current_n_particles; ++particle)
 		{
@@ -575,7 +578,7 @@ void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neig
 			// length is always equal or smaller to D_SEARCH_RANGE => implicit intervall between [0, 1]
 			kernel_values[particle*D_MAX_NR_OF_NEIGHBORS + neighbor] = div*(1.0f - 1.5f*q_2 + 0.75f*q_2*q);;
 		}
-	//}
+		//}
 	}
 }
 
@@ -597,37 +600,37 @@ void SPH::calculate_derived_density_pred_dens(Neighbor_Data* neighbor_data)
 	//#pragma omp parallel default(shared)
 	//{
 	//	#pragma omp for schedule(static)  
-		for (int i = 0; i < current_n_particles; ++i)
+	for (int i = 0; i < current_n_particles; ++i)
+	{
+		neighbor_length = neighbor_data[i].n;
+		for (int j = 0; j < neighbor_length; ++j)
 		{
-			neighbor_length = neighbor_data[i].n;
-			for (int j = 0; j < neighbor_length; ++j)
-			{
-				neighbor_index = neighbor_data[i].neighbor[j];
-				linear_ind = neighbor_index + D_MAX_NR_OF_NEIGHBORS*i;
+			neighbor_index = neighbor_data[i].neighbor[j];
+			linear_ind = neighbor_index + D_MAX_NR_OF_NEIGHBORS*i;
 
-				x = m_particles.pos.x[i] - m_particles.pos.x[neighbor_index];
-				y = m_particles.pos.y[i] - m_particles.pos.y[neighbor_index];
-				z = m_particles.pos.z[i] - m_particles.pos.z[neighbor_index];
+			x = m_particles.pos.x[i] - m_particles.pos.x[neighbor_index];
+			y = m_particles.pos.y[i] - m_particles.pos.y[neighbor_index];
+			z = m_particles.pos.z[i] - m_particles.pos.z[neighbor_index];
 
-				kernel_gradient_x = x * m_scalar_values[linear_ind];
-				kernel_gradient_y = y * m_scalar_values[linear_ind];
-				kernel_gradient_z = z * m_scalar_values[linear_ind];
+			kernel_gradient_x = x * m_scalar_values[linear_ind];
+			kernel_gradient_y = y * m_scalar_values[linear_ind];
+			kernel_gradient_z = z * m_scalar_values[linear_ind];
 
-				//equation 9 in DFSPH, changed 16-11-18
-				pressure_derived_x += m_mass * kernel_gradient_x * (m_particles.pred_vel.x[i] - m_particles.pred_vel.x[neighbor_index]);
-				pressure_derived_y += m_mass*kernel_gradient_y*(m_particles.pred_vel.y[i] - m_particles.pred_vel.y[neighbor_index]);
-				pressure_derived_z += m_mass*kernel_gradient_z*(m_particles.pred_vel.z[i] - m_particles.pred_vel.z[neighbor_index]);
-			}
-
-			pressure_derived = pressure_derived_x + pressure_derived_y + pressure_derived_z;
-
-			m_dens_derive[i] = pressure_derived;
-			m_pred_dens[i] = m_particles.dens[i] + m_delta_t * m_dens_derive[i];
-
-			dens_derive_sum += m_dens_derive[i];
-			pred_dens_sum += m_pred_dens[i];
-			pressure_derived_x = pressure_derived_y = pressure_derived_z = 0.f;
+			//equation 9 in DFSPH, changed 16-11-18
+			pressure_derived_x += m_mass * kernel_gradient_x * (m_particles.pred_vel.x[i] - m_particles.pred_vel.x[neighbor_index]);
+			pressure_derived_y += m_mass*kernel_gradient_y*(m_particles.pred_vel.y[i] - m_particles.pred_vel.y[neighbor_index]);
+			pressure_derived_z += m_mass*kernel_gradient_z*(m_particles.pred_vel.z[i] - m_particles.pred_vel.z[neighbor_index]);
 		}
+
+		pressure_derived = pressure_derived_x + pressure_derived_y + pressure_derived_z;
+
+		m_dens_derive[i] = pressure_derived;
+		m_pred_dens[i] = m_particles.dens[i] + m_delta_t * m_dens_derive[i];
+
+		dens_derive_sum += m_dens_derive[i];
+		pred_dens_sum += m_pred_dens[i];
+		pressure_derived_x = pressure_derived_y = pressure_derived_z = 0.f;
+	}
 	//}
 
 	m_dens_derive_avg = dens_derive_sum / current_n_particles;
@@ -654,7 +657,7 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 
 	//#pragma omp parallel default(shared)
 	//{
-	
+
 	//Loop through all particles
 	//#pragma omp for schedule(static)  
 	for (auto particle = 0; particle < N_PARTICLES; ++particle)
