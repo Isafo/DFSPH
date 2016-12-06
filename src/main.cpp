@@ -139,6 +139,7 @@ int main() {
 				ImGui::Text("Gravity");
 				ImGui::InputFloat("", &gravity, 1, 1, 2);
 				gravity = glm::clamp(gravity, -100.f, 100.f);
+				sph.set_gravity(gravity);
 
 				//ImGui::InputFloat3("Wind", wind, 3);
 
@@ -151,6 +152,19 @@ int main() {
 
 				ImGui::InputFloat("Z Velocity", &wind[2], 0.01f, 0.1f, 2);
 				wind[2] = glm::clamp(wind[2], -10.f, 10.f);
+
+				sph.set_wind(wind[0], wind[1], wind[2]);
+
+				ImGui::Text("Impulse");
+
+				ImGui::InputFloat("X Impulse", &impulse[0], 0.01f, 0.1f, 2);
+				impulse[0] = glm::clamp(impulse[0], -10.f, 10.f);
+
+				ImGui::InputFloat("Y Impulse", &impulse[1], 0.01f, 0.1f, 2);
+				impulse[1] = glm::clamp(impulse[1], -10.f, 10.f);
+
+				ImGui::InputFloat("Z Impulse", &impulse[2], 0.01f, 0.1f, 2);
+				impulse[2] = glm::clamp(impulse[2], -10.f, 10.f);
 
 				ImGui::EndMenu();
 			}
@@ -227,10 +241,6 @@ int main() {
 				//ImGui::Text("F_adv: %.4f %.4f %.4f", F_adv.x, F_adv.y, F_adv.z);
 				ImGui::Text("dens: %.4f", dens);
 				ImGui::Text("Time Step: %.4f", sph.get_timestep());
-
-				// set effects
-				sph.set_wind(wind[0], wind[1], wind[2]);
-				sph.set_gravity(gravity);
 
 			}
 		
