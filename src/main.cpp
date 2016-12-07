@@ -48,8 +48,8 @@ int main() {
 	MatrixStack MVstack; MVstack.init();
 
 	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
-	const int init_particles = 5000;
-	SPH sph(init_particles);
+	const int MAX_N_PARTICLES = 8000;
+	SPH sph(MAX_N_PARTICLES);
 	sph.init();
 
 	Sphere sphere(0.0f, 0.0f, 0.0f, sph.get_particle_radius());
@@ -85,9 +85,9 @@ int main() {
 	float gravity = 9.82f;
 	float wind[3] = { 0.f };
 
-	bool addImplicitSphere = false;
-	float original_sphereRad = 1.0f;
-	float sphereX = 0.f, sphereY = -0.25f, sphereZ = 0.0f, sphereRad = 0.16f;
+	bool add_implicit_sphere = false;
+	float original_sphere_rad = 1.0f;
+	float sphere_x = 0.f, sphere_y = -0.25f, sphere_z = 0.0f, sphere_rad = 0.16f;
 
 
 	while (!glfwWindowShouldClose(currentWindow))
@@ -98,7 +98,8 @@ int main() {
 		{
 			ImGui::Text("Number of Particles");
 			ImGui::InputInt("", &n_particles, 10, 100);
-			n_particles = glm::clamp(n_particles, 100, init_particles);
+
+			n_particles = glm::clamp(n_particles, 100, MAX_N_PARTICLES);
 
 			if (ImGui::BeginMenu("Start Conditions")) {
 
@@ -175,7 +176,6 @@ int main() {
 
 			ImGui::Checkbox("Sphere", &add_implicit_sphere);
 			if (add_implicit_sphere) {
-
 				ImGui::InputFloat("input x", &sphere_x, 0.01f, 0.01f, 2);
 				ImGui::InputFloat("input y", &sphere_y, 0.01f, 0.01f, 2);
 				ImGui::InputFloat("input z", &sphere_z, 0.01f, 0.01f, 2);
@@ -292,7 +292,7 @@ int main() {
 					particle_pos->x[i],
 					particle_pos->y[i],
 					particle_pos->z[i]
-				);
+					);
 
 				if (i == dParticle)
 				{
