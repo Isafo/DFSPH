@@ -42,7 +42,7 @@ public:
 	~SPH();
 
 	// performs the simulation steps and updates the particles
-	void update();
+	void update(float windX, float windY, float windZ);
 
 	// initializes the particles in a given grid formation
 	void init_positions(float x = 0.0f, float y = 0.0f, float z = 0.0f, int rows = 3, int cols = 3) const;
@@ -135,7 +135,7 @@ private:
 	void calculate_time_step();
 
 	// Calculates an unstable predicted velocity
-	void predict_velocities();
+	void predict_velocities(float windX = 0.0f, float windY = 0.0f, float windZ = 0.0f);
 
 	void correct_density_error();
 

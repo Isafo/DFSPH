@@ -125,7 +125,7 @@ SPH::~SPH()
 	delete[] m_kernel_values;
 }
 
-void SPH::update()
+void SPH::update(float windX, float windY, float windZ)
 {
 	find_neighborhoods();
 
@@ -139,7 +139,7 @@ void SPH::update()
 
 	non_pressure_forces();
 
-	predict_velocities();
+	predict_velocities(windX, windY, windZ);
 
 	correct_density_error();
 
@@ -249,7 +249,7 @@ void SPH::calculate_time_step()
 
 }
 
-void SPH::predict_velocities()
+void SPH::predict_velocities(float windX, float windY, float windZ)
 {
 
 	static float dist;
@@ -279,19 +279,19 @@ void SPH::predict_velocities()
 				m_particles.pred_vel.x[i] = -2.0f;
 			else if (m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass > 2.0f)
 				m_particles.pred_vel.x[i] = 2.0f;
-			else m_particles.pred_vel.x[i] = m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass;
+			else m_particles.pred_vel.x[i] = m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass + windX;
 
 			if (m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_mass < -2.0f)
 				m_particles.pred_vel.y[i] = -2.0f;
 			else if (m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_mass > 2.0f)
 				m_particles.pred_vel.y[i] = 2.0f;
-			else m_particles.pred_vel.y[i] = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_mass;
+			else m_particles.pred_vel.y[i] = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_mass + windY;
 
 			if (m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_mass < -2.0f)
 				m_particles.pred_vel.z[i] = -2.0f;
 			else if (m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_mass > 2.0f)
 				m_particles.pred_vel.z[i] = 2.0f;
-			else m_particles.pred_vel.z[i] = m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_mass;
+			else m_particles.pred_vel.z[i] = m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_mass + windZ;
 
 		}
 
