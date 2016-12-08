@@ -162,7 +162,7 @@ int main() {
 				div_error = glm::clamp(div_error, min_error, max_error);
 
 				ImGui::InputFloat("Error (Density)", &dens_error, 0.01f, 0.01f, 2);
-				dens_error = glm::clamp(div_error, min_error, max_error);
+				dens_error = glm::clamp(dens_error, min_error, max_error);
 
 				ImGui::InputFloat("CFL - Factor", &time_factor, 0.01f, 0.1f, 2);
 				time_factor = glm::clamp(time_factor, 0.4f, 0.6f);
@@ -283,7 +283,7 @@ int main() {
 			particle_pos = sph.get_particle_positions();
 			Float3* vel = sph.get_vel();
 
-			for (int i = 0; i < sph.get_nr_of_particles(); ++i) {
+			for (int i = 0; i < sph.get_nr_of_particles() - 1; ++i) {
 				MVstack.push();
 				particlePos = glm::vec3(
 					particle_pos->x[i],
