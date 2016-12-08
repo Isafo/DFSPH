@@ -1,6 +1,6 @@
 #pragma once
 
-#define D_MAX_NR_OF_NEIGHBORS 50
+#define D_MAX_NR_OF_NEIGHBORS 100
 
 // A struct containing three arrays (SoA)
 struct Float3
@@ -36,10 +36,11 @@ public:
 
 	SPH(int n_particles);
 
-	void init();
-	void reset();
-	// Free the memory
 	~SPH();
+
+	void init();
+
+	void reset();
 
 	// performs the simulation steps and updates the particles
 	void update(float windX, float windY, float windZ);
@@ -47,7 +48,7 @@ public:
 	// initializes the particles in a given grid formation
 	void init_positions(float x = 0.0f, float y = 0.0f, float z = 0.0f, int rows = 3, int cols = 3) const;
 
-	int get_nr_of_particles() { return C_N_PARTICLES; }
+	int get_nr_of_particles() const { return get_n_particles(); }
 
 	float get_particle_radius() const { return m_rad; }
 
@@ -114,7 +115,12 @@ public:
 		return i_f;
 	}
 
-	void setStaticSphere(float x,float y ,float z,float radius)
+	Float3* get_vel()
+	{
+		return &m_particles.vel;
+	}
+
+	void setStaticSphere(float x, float y, float z, float radius)
 	{
 		sc.center.x = x;
 		sc.center.y = y;
@@ -128,13 +134,11 @@ private:
 	// Finds the neighbors of a particle within the given radius D_NEIGBBOR_RAD
 	void find_neighborhoods() const;
 
-	// Calculates the non-pressure forces: Gravity, surface-tension and vicosity
+	// Gravity and wind
 	void non_pressure_forces() const;
 
-	// Calculates a stable time-step
 	void calculate_time_step();
 
-	// Calculates an unstable predicted velocity
 	void predict_velocities(float windX = 0.0f, float windY = 0.0f, float windZ = 0.0f);
 
 	void correct_density_error();
@@ -145,10 +149,8 @@ private:
 
 	void update_velocities();
 
-	// former inline functions
 	void calculate_derived_density_pred_dens(Neighbor_Data* neighbor_data);
 
-	// calculates the density and the alpha particle factors
 	void update_density_and_factors(Neighbor_Data* neighbor_data);
 
 	struct Particles
@@ -193,12 +195,6 @@ private:
 	// effects
 	Float3s m_wind;
 	float m_gravity;
-
-	public:
-		Float3* get_vel()
-		{
-			return &m_particles.vel;
-		}
 
 };
 

@@ -10,8 +10,6 @@
 #include "BoundingBox.h"
 #include "SPH.h"
 
-#include <iostream>
-
 void inputHandler(GLFWwindow* _window, double _dT);
 void cameraHandler(GLFWwindow* _window, double _dT, Camera* _cam);
 void GLcalls();
@@ -53,8 +51,8 @@ int main() {
 	sph.init();
 
 	Sphere sphere(0.0f, 0.0f, 0.0f, sph.get_particle_radius());
-	Sphere static_sphere(0.0f, -0.5f, 0.0f, 0.25f);
-	
+	Sphere static_sphere(0.0f, -0.5f, 0.0f, 1.0f);
+
 	Camera mCamera;
 	mCamera.setPosition(&glm::vec3(0.f, 0.f, 1.0f));
 	mCamera.update();
@@ -89,7 +87,6 @@ int main() {
 	float original_sphere_rad = 1.0f;
 	float sphere_x = 0.f, sphere_y = -0.25f, sphere_z = 0.0f, sphere_rad = 0.16f;
 
-
 	while (!glfwWindowShouldClose(currentWindow))
 	{
 		glfwPollEvents();
@@ -98,7 +95,6 @@ int main() {
 		{
 			ImGui::Text("Number of Particles");
 			ImGui::InputInt("", &n_particles, 10, 100);
-
 			n_particles = glm::clamp(n_particles, 100, MAX_N_PARTICLES);
 
 			if (ImGui::BeginMenu("Start Conditions")) {
@@ -176,6 +172,7 @@ int main() {
 
 			ImGui::Checkbox("Sphere", &add_implicit_sphere);
 			if (add_implicit_sphere) {
+
 				ImGui::InputFloat("input x", &sphere_x, 0.01f, 0.01f, 2);
 				ImGui::InputFloat("input y", &sphere_y, 0.01f, 0.01f, 2);
 				ImGui::InputFloat("input z", &sphere_z, 0.01f, 0.01f, 2);
@@ -292,7 +289,7 @@ int main() {
 					particle_pos->x[i],
 					particle_pos->y[i],
 					particle_pos->z[i]
-					);
+				);
 
 				if (i == dParticle)
 				{
