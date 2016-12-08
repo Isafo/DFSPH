@@ -68,8 +68,8 @@ public:
 	void set_wind(Float3s wind)
 	{
 		m_wind.x = wind.x;
-		m_wind.y = wind.x;
-		m_wind.z = wind.x;
+		m_wind.y = wind.y;
+		m_wind.z = wind.z;
 	}
 	void set_gravity(float gravity) { m_gravity = gravity; }
 
