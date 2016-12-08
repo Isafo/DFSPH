@@ -269,7 +269,7 @@ void SPH::calculate_time_step()
 
 void SPH::predict_velocities(float windX, float windY, float windZ)
 {
-	float dist_2;
+	float dist_2, pos_x, pos_y, pos_z;
 
 #pragma omp parallel
 #pragma omp for
@@ -294,11 +294,15 @@ void SPH::predict_velocities(float windX, float windY, float windZ)
 		}
 		else
 		{
-			if (m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass < -2.0f)
+			pos_x = m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass;
+			pos_y = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_mass;
+			pos_z = m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_mass;
+
+			if (pos_x < -2.0f)
 			{
 				m_particles.pred_vel.x[i] = -2.0f;
 			}
-			else if (m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass > 2.0f)
+			else if (pos_x > 2.0f)
 			{
 				m_particles.pred_vel.x[i] = 2.0f;
 			}
@@ -307,11 +311,12 @@ void SPH::predict_velocities(float windX, float windY, float windZ)
 				m_particles.pred_vel.x[i] = m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass + windX;
 			}
 
-			if (m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_mass < -2.0f)
+			
+			if (pos_y < -2.0f)
 			{
 				m_particles.pred_vel.y[i] = -2.0f;
 			}
-			else if (m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_mass > 2.0f)
+			else if (pos_y > 2.0f)
 			{
 				m_particles.pred_vel.y[i] = 2.0f;
 			}
@@ -320,11 +325,12 @@ void SPH::predict_velocities(float windX, float windY, float windZ)
 				m_particles.pred_vel.y[i] = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_mass + windY;
 			}
 
-			if (m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_mass < -2.0f)
+			
+			if (pos_z < -2.0f)
 			{
 				m_particles.pred_vel.z[i] = -2.0f;
 			}
-			else if (m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_mass > 2.0f)
+			else if (pos_z > 2.0f)
 			{
 				m_particles.pred_vel.z[i] = 2.0f;
 			}
@@ -334,43 +340,33 @@ void SPH::predict_velocities(float windX, float windY, float windZ)
 			}
 		}
 
+		pos_x = m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t;
+		pos_y = m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t;
+		pos_z = m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t;
+
 		// Box
-		if (m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t >= 0.5f)
+		if (pos_x >= 0.5f && (m_wind.x > 0 || m_particles.pred_vel.x[i] > 0))
 		{
-			if (m_wind.x > 0 || m_particles.pred_vel.x[i] > 0)
-			{
-				m_particles.pred_vel.x[i] = 0.0f;
-			}
+			m_particles.pred_vel.x[i] = 0.0f;
 		}
-		else if (m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t <= -0.5f)
+		else if (pos_x <= -0.5f && (m_wind.x < 0 || m_particles.pred_vel.x[i] < 0))
 		{
-			if (m_wind.x < 0 || m_particles.pred_vel.x[i] < 0)
-			{
-				m_particles.pred_vel.x[i] = 0.0f;
-			}
+			m_particles.pred_vel.x[i] = 0.0f;
 		}
 
-		if (m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t <= -0.5f)
+		if (pos_y <= -0.5f && (m_wind.y < 0 || m_particles.pred_vel.y[i] < 0))
 		{
-			if (m_wind.y < 0 || m_particles.pred_vel.y[i] < 0)
-			{
-				m_particles.pred_vel.y[i] = 0.0f;
-			}
+			m_particles.pred_vel.y[i] = 0.0f;
 		}
 
-		if (m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t >= 0.5f)
+		if (pos_z >= 0.5f && (m_wind.z > 0 || m_particles.pred_vel.z[i] > 0))
 		{
-			if (m_wind.z > 0 || m_particles.pred_vel.z[i] > 0) 
-			{
-				m_particles.pred_vel.z[i] = 0.0f;
-			}
+			m_particles.pred_vel.z[i] = 0.0f;
+
 		}
-		else if (m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t <= -0.5f)
+		else if (pos_z <= -0.5f && (m_wind.z < 0 || m_particles.pred_vel.z[i] < 0))
 		{
-			if (m_wind.z < 0 || m_particles.pred_vel.z[i] < 0)
-			{
-				m_particles.pred_vel.z[i] = 0.0f;
-			}
+			m_particles.pred_vel.z[i] = 0.0f;
 		}
 	}
 }
