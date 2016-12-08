@@ -360,11 +360,12 @@ void SPH::predict_velocities(float windX, float windY, float windZ)
 
 		if (m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t >= 0.5f)
 		{
-			if (m_wind.z > 0 || m_particles.pred_vel.z[i] > 0) {
+			if (m_wind.z > 0 || m_particles.pred_vel.z[i] > 0) 
+			{
 				m_particles.pred_vel.z[i] = 0.0f;
 			}
 		}
-		else if ((m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) <= -0.5f)
+		else if (m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t <= -0.5f)
 		{
 			if (m_wind.z < 0 || m_particles.pred_vel.z[i] < 0)
 			{
