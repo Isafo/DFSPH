@@ -235,9 +235,32 @@ void SPH::non_pressure_forces()
 	float rad = m_rad;
 	float sphere_area = 4.0 * pi * rad*rad;
 
-	drag.x = rho * Cd * m_wind.x*m_wind.x * sphere_area;
-	drag.y = rho * Cd * m_wind.y*m_wind.y * sphere_area;
-	drag.z = rho * Cd * m_wind.z*m_wind.z * sphere_area;
+	if(m_wind.x > 0.0f)
+	{
+		drag.x = rho * Cd * m_wind.x*m_wind.x * sphere_area;
+	}
+	else
+	{
+		drag.x = -rho * Cd * m_wind.x*m_wind.x * sphere_area;
+	}
+
+	if (m_wind.y > 0.0f)
+	{
+		drag.y = rho * Cd * m_wind.y*m_wind.y * sphere_area;
+	}
+	else
+	{
+		drag.y = -rho * Cd * m_wind.y*m_wind.y * sphere_area;
+	}
+
+	if (m_wind.z > 0.0f)
+	{
+		drag.z = rho * Cd * m_wind.z*m_wind.z * sphere_area;
+	}
+	else
+	{
+		drag.z = -rho * Cd * m_wind.z*m_wind.z * sphere_area;
+	}
 
 #pragma omp parallel
 #pragma omp for
