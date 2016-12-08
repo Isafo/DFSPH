@@ -52,13 +52,14 @@ int main() {
 	Sphere static_sphere(0.0f, -0.5f, 0.0f, 1.0f);
 
 	Camera mCamera;
-	mCamera.setPosition(&glm::vec3(0.f, 0.f, 1.0f));
+	mCamera.setPosition(&glm::vec3(0.f, 0.f, 1.5f));
 	mCamera.update();
 
 	// Time related variables
 	bool is_running = false;
 	bool is_paused = false;
 
+	bool debug_info = false;
 	bool fpsResetBool = false;
 
 	double lastTime = glfwGetTime() - 0.001;
@@ -208,25 +209,26 @@ int main() {
 				is_paused = !is_paused;
 			}
 
-			if (is_running)
-			{
-				ImGui::Text("Simulation properties:");
-				ImGui::Separator();
-				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-				ImGui::Text("Simulation average %.3f ms/frame", dT);
 
+			
+
+			ImGui::Text("Simulation properties:");
+			ImGui::Separator();
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+			ImGui::Checkbox("Show debug info", &debug_info);
+			if (debug_info) 
+			{
 				ImGui::SliderInt("particle: ", &dParticle, 0, n_particles - 1);
 
 				Float3s pos = sph.get_pos_i(dParticle);
 				Float3s vel = sph.get_vel_i(dParticle);
 				Float3s pred_vel = sph.get_predvel_i(dParticle);
-				//Float3s F_adv = sph.get_F_adv_i(dParticle);
 				float dens = sph.get_dens_i(dParticle);
 
 				ImGui::Text("pos: %.4f %.4f %.4f", pos.x, pos.y, pos.z);
 				ImGui::Text("vel: %.4f %.4f %.4f", vel.x, vel.y, vel.z);
 				ImGui::Text("pred. vel: %.4f %.4f %.4f", pred_vel.x, pred_vel.y, pred_vel.z);
-				//ImGui::Text("F_adv: %.4f %.4f %.4f", F_adv.x, F_adv.y, F_adv.z);
 				ImGui::Text("dens: %.4f", dens);
 				ImGui::Text("Time Step: %.4f", sph.get_timestep());
 			}
@@ -270,61 +272,61 @@ int main() {
 
 		MVstack.push();//Camera transforms --<
 
-		glUniformMatrix4fv(locationP, 1, GL_FALSE, mCamera.getPerspective());
-		MVstack.multiply(mCamera.getTransformM());
+			glUniformMatrix4fv(locationP, 1, GL_FALSE, mCamera.getPerspective());
+			MVstack.multiply(mCamera.getTransformM());
 
-		// if there is a simulation running
-		glm::vec3 particlePos;
-		Float3* particle_pos;
-		if (is_running) {
-			const float MAX_VEL = 2;
-			particle_pos = sph.get_particle_positions();
-			Float3* vel = sph.get_vel();
+			// if there is a simulation running
+			glm::vec3 particlePos;
+			Float3* particle_pos;
+			if (is_running) {
+				const float MAX_VEL = 2;
+				particle_pos = sph.get_particle_positions();
+				Float3* vel = sph.get_vel();
 
-			for (int i = 0; i < sph.get_nr_of_particles() - 1; ++i) {
+				for (int i = 0; i < sph.get_nr_of_particles() - 1; ++i) {
+					MVstack.push();
+						particlePos = glm::vec3(
+							particle_pos->x[i],
+							particle_pos->y[i],
+							particle_pos->z[i]
+						);
+
+						if (i == dParticle)
+						{
+							float color[] = { 1.0f, 0.3f, 0.0f, 1.0f };
+							glUniform4fv(locationColor, 1, &color[0]);
+						}
+						else
+						{
+							float v = abs(vel->x[i] + vel->y[i] + vel->z[i]);
+							float c = 1 - (MAX_VEL - v) / MAX_VEL;
+							float color[] = { c, c, 1.0f, 0.75f };
+							glUniform4fv(locationColor, 1, &color[0]);
+						}
+						MVstack.translate(&particlePos);
+						glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
+						sphere.render();
+					MVstack.pop();
+				}
+			}
+
+			if (add_implicit_sphere)
+			{
 				MVstack.push();
-				particlePos = glm::vec3(
-					particle_pos->x[i],
-					particle_pos->y[i],
-					particle_pos->z[i]
-				);
-
-				if (i == dParticle)
-				{
-					float color[] = { 1.0f, 0.3f, 0.0f, 1.0f };
+					float color[] = { 0.0f, 1.0f, 0.5f, 0.5f };
 					glUniform4fv(locationColor, 1, &color[0]);
-				}
-				else
-				{
-					float v = abs(vel->x[i] + vel->y[i] + vel->z[i]);
-					float c = 1 - (MAX_VEL - v) / MAX_VEL;
-					float color[] = { c, c, 1.0f, 0.75f };
-					glUniform4fv(locationColor, 1, &color[0]);
-				}
-				MVstack.translate(&particlePos);
-				glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
-				sphere.render();
+					MVstack.translate(static_sphere.getPosition());
+					MVstack.scale(static_sphere.getRadius() / (original_sphere_rad + sph.get_particle_radius()));
+					glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
+					static_sphere.render();
 				MVstack.pop();
 			}
-		}
 
-		if (add_implicit_sphere)
-		{
 			MVstack.push();
-			float color[] = { 0.0f, 1.0f, 0.5f, 0.5f };
-			glUniform4fv(locationColor, 1, &color[0]);
-			MVstack.translate(static_sphere.getPosition());
-			MVstack.scale(static_sphere.getRadius() / (original_sphere_rad + sph.get_particle_radius()));
-			glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
-			static_sphere.render();
+				MVstack.translate(bbox.getPosition());
+				glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
+				bbox.render();
 			MVstack.pop();
-		}
-
-		MVstack.push();
-		MVstack.translate(bbox.getPosition());
-		glUniformMatrix4fv(locationMV, 1, GL_FALSE, MVstack.getCurrentMatrix());
-		bbox.render();
-		MVstack.pop();
 		MVstack.pop(); //Camera transforms >--
 
 		glUseProgram(0);
