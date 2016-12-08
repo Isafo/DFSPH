@@ -4,7 +4,7 @@ layout( location = 0 ) out vec4 FragColor;
 in vec3 Position;
 in vec3 Normal;
 
-uniform vec3 Color;
+uniform vec4 Color;
 
 const float shininess = 50.0;
 
@@ -21,7 +21,7 @@ void main () {
 
 	//Diffuse part-----------
 	float diff = max(dot(lightDir, normal), 0.0);
-	vec3 diffuse = diff * Color * lightIntensity;
+	vec3 diffuse = diff * vec3(Color) * lightIntensity;
 
 	//specular part-------------
 	//vec3 H = normalize(lightDir + viewDir);
@@ -30,9 +30,9 @@ void main () {
 	//vec3 specular = spec * white;
 
 	// Ambient-------------
-	vec3 ambient = 0.3*lightIntensity * Color;
+	vec3 ambient = 0.3*lightIntensity * vec3(Color);
 	
 	vec3 resultLight = ambient + diffuse;// + specular;
-	FragColor = vec4(resultLight, 1.0);
+	FragColor = vec4(resultLight, Color.a);
 }
 

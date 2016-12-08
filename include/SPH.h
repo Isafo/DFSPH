@@ -1,7 +1,6 @@
 #pragma once
 
-#define D_NR_OF_PARTICLES 4000
-#define D_MAX_NR_OF_NEIGHBORS 4000
+#define D_MAX_NR_OF_NEIGHBORS 100
 
 // A struct containing three arrays (SoA)
 struct Float3
@@ -25,27 +24,54 @@ struct Neighbor_Data
 	unsigned int n;
 };
 
+struct sphereConstaint
+{
+	Float3s center;
+	float radius_2;
+};
 
 class SPH
 {
 public:
 
-	SPH(int x, int y, int z);
-	
-	// Free the memory
+	SPH(int n_particles);
+
 	~SPH();
 
+	void init();
+
+	void reset();
+
 	// performs the simulation steps and updates the particles
-	void update(float dT);
+	void update();
 
 	// initializes the particles in a given grid formation
-	void init_positions(int x = 0, int y = 0, int z = 0, int rows = 3, int cols = 3) const;
+	void init_positions(Float3s pos, int rows = 3, int cols = 3) const;
 
-	static unsigned int get_nr_of_particles() { return D_NR_OF_PARTICLES; }
+	int get_nr_of_particles() const { return get_n_particles(); }
 
 	float get_particle_radius() const { return m_rad; }
-	
+
 	Float3* get_particle_positions() { return &m_particles.pos; }
+
+	float get_dens_i(int i) const { return m_particles.dens[i]; }
+	float get_timestep() const { return m_delta_t; }
+	int	get_n_particles() const { return current_n_particles; }
+
+	void set_timestep(float timestep) { m_delta_t = timestep; }
+	void set_n_particles(int n_particles) { current_n_particles = n_particles; }
+	void set_max_dens_iter(int iter) { Viter_max = iter; }
+	void set_max_div_iter(int iter) { iter_max = iter; }
+	void set_divergence_error(float error) { divergence_error = error; }
+	void set_density_error(float error) { density_error = error; }
+
+	void set_wind(Float3s wind)
+	{
+		m_wind.x = wind.x;
+		m_wind.y = wind.y;
+		m_wind.z = wind.z;
+	}
+	void set_gravity(float gravity) { m_gravity = gravity; }
 
 	// for debug
 	Float3s get_pos_i(int i) const
@@ -89,29 +115,43 @@ public:
 		return i_f;
 	}
 
-	float get_dens_i(int i) const { return m_particles.dens[i]; }
+	Float3* get_vel()
+	{
+		return &m_particles.vel;
+	}
+
+	void setStaticSphere(float pos_x, float pos_y, float pos_z, float radius)
+	{
+		sc.center.x = pos_x;
+		sc.center.y = pos_y;
+		sc.center.z = pos_z;
+		sc.radius_2 = radius*radius;
+	}
 
 private:
+	sphereConstaint sc;
 
 	// Finds the neighbors of a particle within the given radius D_NEIGBBOR_RAD
 	void find_neighborhoods() const;
 
-	// Calculates the non-pressure forces: Gravity, surface-tension and vicosity
-	void non_pressure_forces() const;
+	// Gravity and wind
+	void non_pressure_forces();
 
-	// Calculates a stable time-step
-	void calculate_time_step(float dT);
-	
-	// Calculates an unstable predicted velocity
+	void calculate_time_step();
+
 	void predict_velocities();
-	
-	void correct_density_error(float* pred_dens, float* dens_derive, float* scalar_values, float* alpha);
-	
+
+	void correct_density_error();
+
 	void update_positions() const;
-	
-	void correct_divergence_error(float* dens_derive, float* pred_dens, float* scalar_values, float* alpha);
+
+	void correct_divergence_error();
 
 	void update_velocities();
+
+	void calculate_derived_density_pred_dens(Neighbor_Data* neighbor_data);
+
+	void update_density_and_factors(Neighbor_Data* neighbor_data);
 
 	struct Particles
 	{
@@ -124,6 +164,7 @@ private:
 		float* dens;
 	};
 
+
 	float m_delta_t;
 	float m_mass;
 	float m_rad;
@@ -131,17 +172,33 @@ private:
 	Particles m_particles;
 	Neighbor_Data *m_neighbor_data;
 
-	const float C_REST_DENS{ 10000.f };
+	const float C_REST_DENS{ 1000.f };
+	const int C_N_PARTICLES;
+
+	float* m_alpha;
+	float* m_dens_derive;
+	float* m_pred_dens;
+	float* m_scalar_values;
+	float* m_kernel_values;
+
+	float m_dens_derive_avg;
+	float m_pred_dens_avg;
+
+	int current_n_particles;
+	int Viter_max{ 100 };
+	int iter_max{ 100 };
+
+	float divergence_error{ 0.10f };
+	float density_error{ 0.01f };
+	float time_factor{ 0.5f };
+
+	// effects
+	Float3s m_wind;
+	float m_gravity{ 9.82f };
+
 };
 
-// calculates the density and the alpha particle factors
-void update_density_and_factors(float mass, Float3* pos, float* dens, float* scalar_values,
-	Neighbor_Data* neighbor_data, float* alpha, float* kernel_values);
-
-void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data);
-
-void calculate_derived_density_pred_dens(float* dens_derive_avg, float* pred_dens_avg, float* derived_density, float* pred_dens, 
-	Float3* pred_vel, float mass, float* scalar_value, float* dens, Neighbor_Data* neighbor_data, Float3* pos, float delta_t);
+inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data, const int N_PARTICLES);
 
 // updates the scalar values g(q) for all particles
-void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values);
+inline void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* scalar_values, const int N_PARTICLES);
