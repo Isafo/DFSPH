@@ -162,8 +162,8 @@ void SPH::init_positions(float x_start, float y_start, float z_start, int rows, 
 	//float padding_factor{ 1.8f };
 	float x, y, z;
 
-#pragma omp parallel
-#pragma omp for
+	#pragma omp parallel
+	#pragma omp for
 	for (auto i = 0; i < current_n_particles; ++i)
 	{
 		x = i / (rows*cols);
@@ -185,8 +185,8 @@ void SPH::find_neighborhoods() const
 	CompactNSearch::NeighborhoodSearch nsearch(neigborhod_rad);
 	std::vector<std::array<double, 3>> positions(current_n_particles);
 
-#pragma omp parallel
-#pragma omp for
+	#pragma omp parallel
+	#pragma omp for
 	for (int i = 0; i < current_n_particles; ++i)
 	{
 		positions.at(i) = { m_particles.pos.x[i], m_particles.pos.y[i], m_particles.pos.z[i] };
@@ -215,8 +215,8 @@ void SPH::find_neighborhoods() const
 
 void SPH::non_pressure_forces() const
 {
-#pragma omp parallel
-#pragma omp for
+	#pragma omp parallel
+	#pragma omp for
 	for (auto i = 0; i < current_n_particles; ++i)
 	{
 		m_particles.F_adv.x[i] = m_mass*m_wind.x;
@@ -253,8 +253,8 @@ void SPH::predict_velocities(float windX, float windY, float windZ)
 {
 
 	static float dist;
-#pragma omp parallel
-#pragma omp for
+	#pragma omp parallel
+	#pragma omp for
 	for (auto i = 0; i < current_n_particles; ++i)
 	{
 		dist = ((m_particles.pos.x[i] - sc.center.x) * (m_particles.pos.x[i] - sc.center.x) +
@@ -379,8 +379,8 @@ void SPH::correct_density_error()
 
 void SPH::update_positions() const
 {
-#pragma omp parallel
-#pragma omp for
+	#pragma omp parallel
+	#pragma omp for
 	for (int i = 0; i < current_n_particles; ++i)
 	{
 		m_particles.pos.x[i] += m_particles.pred_vel.x[i] * m_delta_t;
@@ -458,8 +458,8 @@ void SPH::correct_divergence_error()
 
 void SPH::update_velocities()
 {
-#pragma omp parallel
-#pragma omp for
+	#pragma omp parallel
+	#pragma omp for
 	for (auto i = 0; i < current_n_particles; ++i)
 	{
 		m_particles.vel.x[i] = m_particles.pred_vel.x[i];
