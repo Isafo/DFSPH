@@ -1,5 +1,6 @@
 #pragma once
 
+#define D_MAX_NR_OF_PARTICLES 20000
 #define D_MAX_NR_OF_NEIGHBORS 100
 
 // A struct containing three arrays (SoA)
@@ -34,11 +35,9 @@ class SPH
 {
 public:
 
-	SPH(int n_particles);
+	SPH();
 
 	~SPH();
-
-	void init();
 
 	void reset();
 
@@ -48,22 +47,22 @@ public:
 	// initializes the particles in a given grid formation
 	void init_positions(Float3s pos, int rows = 3, int cols = 3) const;
 
-	int get_nr_of_particles() const { return get_n_particles(); }
-
 	float get_particle_radius() const { return m_rad; }
 
 	Float3* get_particle_positions() { return &m_particles.pos; }
 
 	float get_dens_i(int i) const { return m_particles.dens[i]; }
 	float get_timestep() const { return m_delta_t; }
-	int	get_n_particles() const { return current_n_particles; }
+	int	get_nr_of_particles() const { return m_simulated_particles; }
+	float get_gravity() const { return m_gravity; }
 
 	void set_timestep(float timestep) { m_delta_t = timestep; }
-	void set_n_particles(int n_particles) { current_n_particles = n_particles; }
-	void set_max_dens_iter(int iter) { Viter_max = iter; }
-	void set_max_div_iter(int iter) { iter_max = iter; }
-	void set_divergence_error(float error) { divergence_error = error; }
-	void set_density_error(float error) { density_error = error; }
+	void set_nr_of_particles(int n_particles) { m_simulated_particles = n_particles; }
+	void set_max_dens_iter(int iter) { m_Viter_max = iter; }
+	void set_max_div_iter(int iter) { m_iter_max = iter; }
+	void set_divergence_error(float error) { m_divergence_error = error; }
+	void set_density_error(float error) { m_density_error = error; }
+	void set_gravity(float gravity) { m_gravity = gravity; }
 
 	void set_wind(Float3s wind)
 	{
@@ -71,7 +70,6 @@ public:
 		m_wind.y = wind.y;
 		m_wind.z = wind.z;
 	}
-	void set_gravity(float gravity) { m_gravity = gravity; }
 
 	// for debug
 	Float3s get_pos_i(int i) const
@@ -173,7 +171,6 @@ private:
 	Neighbor_Data *m_neighbor_data;
 
 	const float C_REST_DENS{ 1000.f };
-	const int C_N_PARTICLES;
 
 	float* m_alpha;
 	float* m_dens_derive;
@@ -184,16 +181,16 @@ private:
 	float m_dens_derive_avg;
 	float m_pred_dens_avg;
 
-	int current_n_particles;
-	int Viter_max{ 100 };
-	int iter_max{ 100 };
+	int m_simulated_particles;
+	int m_Viter_max{ 100 };
+	int m_iter_max{ 100 };
 
-	float divergence_error{ 0.10f };
-	float density_error{ 0.01f };
-	float time_factor{ 0.5f };
+	float m_divergence_error{ 0.10f };
+	float m_density_error{ 0.01f };
+	float m_time_factor{ 0.5f };
 
 	// effects
-	Float3s m_wind;
+	Float3s m_wind{ 0.0f };
 	float m_gravity{ 9.82f };
 
 };

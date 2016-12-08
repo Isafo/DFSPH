@@ -46,9 +46,7 @@ int main() {
 	MatrixStack MVstack; MVstack.init();
 
 	BoundingBox bbox(0.f, 0.f, 0.f, 1.f, 1.f, 1.f);
-	const int MAX_N_PARTICLES = 8000;
-	SPH sph(MAX_N_PARTICLES);
-	sph.init();
+	SPH sph;
 
 	Sphere sphere(0.0f, 0.0f, 0.0f, sph.get_particle_radius());
 	Sphere static_sphere(0.0f, -0.5f, 0.0f, 1.0f);
@@ -80,7 +78,7 @@ int main() {
 	int rows_cols[2] = { 15, 15 };
 	Float3s start_vel = { 0.f };
 
-	float gravity{ 9.82f };
+	float gravity = sph.get_gravity();
 	Float3s wind{ 0.f };
 
 	bool add_implicit_sphere = false;
@@ -95,7 +93,7 @@ int main() {
 		{
 			ImGui::Text("Number of Particles");
 			ImGui::InputInt("", &n_particles, 10, 100);
-			n_particles = glm::clamp(n_particles, 100, MAX_N_PARTICLES);
+			n_particles = glm::clamp(n_particles, 100, D_MAX_NR_OF_PARTICLES);
 
 			if (ImGui::BeginMenu("Start Conditions")) {
 
@@ -188,7 +186,7 @@ int main() {
 			}
 
 			if (ImGui::Button("Start")) {
-				sph.set_n_particles(n_particles);
+				sph.set_nr_of_particles(n_particles);
 				sph.set_max_dens_iter(max_iter_div);
 				sph.set_max_div_iter(max_iter_dens);
 				sph.set_divergence_error(div_error);
