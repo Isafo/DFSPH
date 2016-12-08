@@ -6,8 +6,8 @@
 
 //Compact Search was written by
 //Dan Koschier, https://github.com/InteractiveComputerGraphics/CompactNSearch
-#include "CompactNSearch/include/CompactNSearch.h"
-#include "CompactNSearch/include/DataStructures.h"
+#include "include/CompactNSearch.h"
+#include "include/DataStructures.h"
 #include "imconfig.h"
 
 #define D_PI 3.1415926559f;
@@ -296,21 +296,41 @@ void SPH::predict_velocities(float windX, float windY, float windZ)
 		}
 
 
-		if (abs(m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.5f)
+		if ((m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) >= 0.5f)
 		{
-			m_particles.pred_vel.x[i] = 0.0f;
-
+			if(m_wind.x < 0 && m_particles.pred_vel.z[i] <= 0){}
+			else {
+				m_particles.pred_vel.x[i] = 0.0f;
+			}
 		}
-
-		if (abs(m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t) >= 0.5f)
+		else if((m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t) <= -0.5f)
 		{
-			m_particles.pred_vel.y[i] = 0.0f;
+			if (m_wind.x > 0 && m_particles.pred_vel.x[i] >= 0) {}
+			else {
+				m_particles.pred_vel.x[i] = 0.0f;
+			}
 		}
-
-		if (abs(m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.5f)
+		if ((m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t) <= -0.5f)
 		{
-			m_particles.pred_vel.z[i] = 0.0f;
-
+			if (m_wind.y > 0 && m_particles.pred_vel.y[i] >= 0) {}
+			else {
+				m_particles.pred_vel.y[i] = 0.0f;
+			}
+		}
+		if ((m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) >= 0.5f)
+		{
+			if (m_wind.z < 0 && m_particles.pred_vel.z[i] <= 0) {
+			}
+			else {
+				m_particles.pred_vel.z[i] = 0.0f;
+			}
+		}
+		else if ((m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t) <= -0.5f)
+		{
+			if (m_wind.z > 0 && m_particles.pred_vel.z[i] >= 0) {}
+			else {
+				m_particles.pred_vel.z[i] = 0.0f;
+			}
 		}
 	}
 }
@@ -383,6 +403,7 @@ void SPH::update_positions() const
 	#pragma omp for
 	for (int i = 0; i < current_n_particles; ++i)
 	{
+	
 		m_particles.pos.x[i] += m_particles.pred_vel.x[i] * m_delta_t;
 		m_particles.pos.y[i] += m_particles.pred_vel.y[i] * m_delta_t;
 		m_particles.pos.z[i] += m_particles.pred_vel.z[i] * m_delta_t;
@@ -491,8 +512,6 @@ void SPH::update_density_and_factors(Neighbor_Data* neighbor_data)
 			nr_neighbors = neighbor_data[particle].n;
 			//added 1 * mass as particles own density as kernel is 1 at dist == 0
 			//this should atleast be the case, but needs to be checked
-			// => Does not seem to cause a problem when it is 0. So i followed the report
-
 			m_particles.dens[particle] = 12.000656593f;
 			for (auto neighbor = 0; neighbor < nr_neighbors; ++neighbor)
 			{
