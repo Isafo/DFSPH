@@ -271,7 +271,7 @@ void SPH::non_pressure_forces()
 		m_particles.F_adv.z[i] = m_mass * drag.z;
 	}
 }
-// Drag = rho * Cd * v^2 * Area
+
 void SPH::calculate_time_step()
 {
 	float v_max_2{ 0 };
