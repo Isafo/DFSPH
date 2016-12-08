@@ -76,12 +76,12 @@ int main() {
 	float max_error = 0.2f, min_error = 0.01f;
 	float time_factor = 0.4f;
 
-	float offset_pos[3] = { 0.f, 0.f, 0.f };
+	Float3s offset_pos = { 0.f };
 	int rows_cols[2] = { 15, 15 };
-	float start_vel[3] = { 0.f };
+	Float3s start_vel = { 0.f };
 
-	float gravity = 9.82f;
-	float wind[3] = { 0.f };
+	float gravity{ 9.82f };
+	Float3s wind{ 0.f };
 
 	bool add_implicit_sphere = false;
 	float original_sphere_rad = 1.0f;
@@ -101,14 +101,14 @@ int main() {
 
 				ImGui::Text("Start Position");
 
-				ImGui::InputFloat("X Position", &offset_pos[0], 0.01f, 1.0f, 2);
-				offset_pos[0] = glm::clamp(offset_pos[0], -0.5f, 0.5f);
+				ImGui::InputFloat("X Position", &offset_pos.x, 0.01f, 1.0f, 2);
+				offset_pos.x = glm::clamp(offset_pos.x, -0.5f, 0.5f);
 
-				ImGui::InputFloat("Y Position", &offset_pos[1], 0.01f, 1.0f, 2);
-				offset_pos[1] = glm::clamp(offset_pos[1], -0.5f, 0.5f);
+				ImGui::InputFloat("Y Position", &offset_pos.y, 0.01f, 1.0f, 2);
+				offset_pos.y = glm::clamp(offset_pos.y, -0.5f, 0.5f);
 
-				ImGui::InputFloat("Z Position", &offset_pos[2], 0.01f, 1.0f, 2);
-				offset_pos[2] = glm::clamp(offset_pos[2], -0.5f, 0.5f);
+				ImGui::InputFloat("Z Position", &offset_pos.z, 0.01f, 1.0f, 2);
+				offset_pos.z = glm::clamp(offset_pos.z, -0.5f, 0.5f);
 
 				ImGui::Text("Rows and Columns");
 				ImGui::InputInt("Rows", &rows_cols[0], 1, 10);
@@ -118,14 +118,14 @@ int main() {
 				rows_cols[1] = glm::clamp(rows_cols[1], 1, 100);
 
 				ImGui::Text("Start Velocity");
-				ImGui::InputFloat("X Velocity", &start_vel[0], 0.01f, 0.1f, 2);
-				start_vel[0] = glm::clamp(start_vel[0], -10.f, 10.f);
+				ImGui::InputFloat("X Velocity", &start_vel.x, 0.01f, 0.1f, 2);
+				start_vel.x = glm::clamp(start_vel.x, -10.f, 10.f);
 
-				ImGui::InputFloat("Y Velocity", &start_vel[1], 0.01f, 0.1f, 2);
-				start_vel[1] = glm::clamp(start_vel[1], -10.f, 10.f);
+				ImGui::InputFloat("Y Velocity", &start_vel.y, 0.01f, 0.1f, 2);
+				start_vel.y = glm::clamp(start_vel.y, -10.f, 10.f);
 
-				ImGui::InputFloat("Z Velocity", &start_vel[2], 0.01f, 0.1f, 2);
-				start_vel[2] = glm::clamp(start_vel[2], -10.f, 10.f);
+				ImGui::InputFloat("Z Velocity", &start_vel.z, 0.01f, 0.1f, 2);
+				start_vel.z = glm::clamp(start_vel.z, -10.f, 10.f);
 
 				ImGui::EndMenu();
 			}
@@ -137,16 +137,16 @@ int main() {
 				sph.set_gravity(gravity);
 
 				ImGui::Text("Wind");
-				ImGui::InputFloat("X Velocity", &wind[0], 0.01f, 0.1f, 2);
-				wind[0] = glm::clamp(wind[0], -0.05f, 0.05f);
+				ImGui::InputFloat("X Velocity", &wind.x, 1.0f, 1.0f, 2);
+				wind.x = glm::clamp(wind.x, -100.0f, 100.0f);
 
-				ImGui::InputFloat("Y Velocity", &wind[1], 0.01f, 0.1f, 2);
-				wind[1] = glm::clamp(wind[1], -0.05f, 0.05f);
+				ImGui::InputFloat("Y Velocity", &wind.y, 1.0f, 1.0f, 2);
+				wind.y = glm::clamp(wind.y, -100.0f, 100.0f);
 
-				ImGui::InputFloat("Z Velocity", &wind[2], 0.01f, 0.1f, 2);
-				wind[2] = glm::clamp(wind[2], -0.05f, 0.05f);
+				ImGui::InputFloat("Z Velocity", &wind.z, 1.0f, 1.0f, 2);
+				wind.z = glm::clamp(wind.z, -100.0f, 100.0f);
 
-				sph.set_wind(wind[0], wind[1], wind[2]);
+				sph.set_wind(wind);
 
 				ImGui::EndMenu();
 			}
@@ -197,7 +197,7 @@ int main() {
 
 				sph.reset();
 
-				sph.init_positions(offset_pos[0], offset_pos[1], offset_pos[2], rows_cols[0], rows_cols[1]);
+				sph.init_positions(offset_pos, rows_cols[0], rows_cols[1]);
 
 				is_running = true;
 			}
@@ -238,7 +238,7 @@ int main() {
 		{
 			if (is_running && !is_paused)
 			{
-				sph.update(wind[0], wind[1], wind[2]);
+				sph.update();
 			}
 
 			lastTime = glfwGetTime();

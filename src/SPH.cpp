@@ -8,6 +8,7 @@
 #include "CompactNSearch/include/CompactNSearch.h"
 #include "CompactNSearch/include/DataStructures.h"
 #include "imconfig.h"
+#include "imgui.h"
 
 #define D_PI 3.1415926559f;
 #define D_EPSILON 10e-6f;
@@ -138,7 +139,7 @@ SPH::~SPH()
 	delete[] m_kernel_values;
 }
 
-void SPH::update(float windX, float windY, float windZ)
+void SPH::update()
 {
 	find_neighborhoods();
 
@@ -152,7 +153,7 @@ void SPH::update(float windX, float windY, float windZ)
 
 	non_pressure_forces();
 
-	predict_velocities(windX, windY, windZ);
+	predict_velocities();
 
 	correct_density_error();
 
@@ -167,7 +168,7 @@ void SPH::update(float windX, float windY, float windZ)
 	update_velocities();
 }
 
-void SPH::init_positions(float x_start, float y_start, float z_start, int rows, int cols) const
+void SPH::init_positions(Float3s start_pos, int rows, int cols) const
 {
 	int ind;
 
@@ -183,9 +184,9 @@ void SPH::init_positions(float x_start, float y_start, float z_start, int rows, 
 		y = ind / rows;
 		z = ind % rows;
 
-		m_particles.pos.x[i] = x_start + x * dist_between;
-		m_particles.pos.y[i] = y_start + y * dist_between;
-		m_particles.pos.z[i] = z_start + z * dist_between;
+		m_particles.pos.x[i] = start_pos.x + x * dist_between;
+		m_particles.pos.y[i] = start_pos.y + y * dist_between;
+		m_particles.pos.z[i] = start_pos.z + z * dist_between;
 	}
 }
 
@@ -225,18 +226,29 @@ void SPH::find_neighborhoods() const
 	}
 }
 
-void SPH::non_pressure_forces() const
+void SPH::non_pressure_forces()
 {
+	Float3s drag;
+
+	float Cd = 1.0f, rho = 1.0f;
+	float pi = D_PI;
+	float rad = m_rad;
+	float sphere_area = 4.0 * pi * rad*rad;
+
+	drag.x = rho * Cd * m_wind.x*m_wind.x * sphere_area;
+	drag.y = rho * Cd * m_wind.y*m_wind.y * sphere_area;
+	drag.z = rho * Cd * m_wind.z*m_wind.z * sphere_area;
+
 #pragma omp parallel
 #pragma omp for
 	for (auto i = 0; i < current_n_particles; ++i)
 	{
-		m_particles.F_adv.x[i] = 0.0f;// = m_mass * m_wind.x;
-		m_particles.F_adv.y[i] = m_mass * m_wind.y - m_mass * m_gravity;
-		m_particles.F_adv.z[i] = 0.0f;// = m_mass * m_wind.z;
+		m_particles.F_adv.x[i] = m_mass * drag.x;
+		m_particles.F_adv.y[i] = m_mass * (drag.y - m_gravity);
+		m_particles.F_adv.z[i] = m_mass * drag.z;
 	}
 }
-
+// Drag = rho * Cd * v^2 * Area
 void SPH::calculate_time_step()
 {
 	float v_max_2{ 0 };
@@ -267,7 +279,7 @@ void SPH::calculate_time_step()
 
 }
 
-void SPH::predict_velocities(float windX, float windY, float windZ)
+void SPH::predict_velocities()
 {
 	float dist_2, pos_x, pos_y, pos_z;
 
@@ -308,7 +320,7 @@ void SPH::predict_velocities(float windX, float windY, float windZ)
 			}
 			else
 			{
-				m_particles.pred_vel.x[i] = m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass + windX;
+				m_particles.pred_vel.x[i] = m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass;
 			}
 
 			
@@ -322,7 +334,7 @@ void SPH::predict_velocities(float windX, float windY, float windZ)
 			}
 			else
 			{
-				m_particles.pred_vel.y[i] = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_mass + windY;
+				m_particles.pred_vel.y[i] = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_mass;
 			}
 
 			
@@ -336,7 +348,7 @@ void SPH::predict_velocities(float windX, float windY, float windZ)
 			}
 			else
 			{
-				m_particles.pred_vel.z[i] = m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_mass + windZ;
+				m_particles.pred_vel.z[i] = m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_mass;
 			}
 		}
 

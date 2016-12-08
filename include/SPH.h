@@ -43,10 +43,10 @@ public:
 	void reset();
 
 	// performs the simulation steps and updates the particles
-	void update(float windX, float windY, float windZ);
+	void update();
 
 	// initializes the particles in a given grid formation
-	void init_positions(float x = 0.0f, float y = 0.0f, float z = 0.0f, int rows = 3, int cols = 3) const;
+	void init_positions(Float3s pos, int rows = 3, int cols = 3) const;
 
 	int get_nr_of_particles() const { return get_n_particles(); }
 
@@ -65,11 +65,11 @@ public:
 	void set_divergence_error(float error) { divergence_error = error; }
 	void set_density_error(float error) { density_error = error; }
 
-	void set_wind(float w_x, float w_y, float w_z)
+	void set_wind(Float3s wind)
 	{
-		m_wind.x = w_x;
-		m_wind.y = w_y;
-		m_wind.z = w_z;
+		m_wind.x = wind.x;
+		m_wind.y = wind.x;
+		m_wind.z = wind.x;
 	}
 	void set_gravity(float gravity) { m_gravity = gravity; }
 
@@ -120,11 +120,11 @@ public:
 		return &m_particles.vel;
 	}
 
-	void setStaticSphere(float x, float y, float z, float radius)
+	void setStaticSphere(float pos_x, float pos_y, float pos_z, float radius)
 	{
-		sc.center.x = x;
-		sc.center.y = y;
-		sc.center.z = z;
+		sc.center.x = pos_x;
+		sc.center.y = pos_y;
+		sc.center.z = pos_z;
 		sc.radius_2 = radius*radius;
 	}
 
@@ -135,11 +135,11 @@ private:
 	void find_neighborhoods() const;
 
 	// Gravity and wind
-	void non_pressure_forces() const;
+	void non_pressure_forces();
 
 	void calculate_time_step();
 
-	void predict_velocities(float windX = 0.0f, float windY = 0.0f, float windZ = 0.0f);
+	void predict_velocities();
 
 	void correct_density_error();
 
@@ -194,7 +194,7 @@ private:
 
 	// effects
 	Float3s m_wind;
-	float m_gravity;
+	float m_gravity{ 9.82f };
 
 };
 
