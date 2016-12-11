@@ -209,16 +209,14 @@ int main() {
 				is_paused = !is_paused;
 			}
 
-
-			
-
-			ImGui::Text("Simulation properties:");
-			ImGui::Separator();
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+			ImGui::Text("Debug properties:");
+			ImGui::Separator();			
 
 			ImGui::Checkbox("Show debug info", &debug_info);
 			if (debug_info) 
 			{
+				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
 				ImGui::SliderInt("particle: ", &dParticle, 0, n_particles - 1);
 
 				Float3s pos = sph.get_pos_i(dParticle);
