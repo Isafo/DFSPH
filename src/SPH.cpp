@@ -15,97 +15,66 @@
 //since force is low a higher radius is requiered for small number of particles
 #define D_SEARCH_RANGE 0.035f;
 
+
 SPH::SPH()
 {
-	m_particles.pos.x = new float[D_MAX_NR_OF_PARTICLES];
-	m_particles.pos.y = new float[D_MAX_NR_OF_PARTICLES];
-	m_particles.pos.z = new float[D_MAX_NR_OF_PARTICLES];
+	// parentheses initialize array to zero 
+	m_particles.pos.x = new float[D_MAX_NR_OF_PARTICLES]();
+	m_particles.pos.y = new float[D_MAX_NR_OF_PARTICLES]();
+	m_particles.pos.z = new float[D_MAX_NR_OF_PARTICLES]();
 
-	m_particles.vel.x = new float[D_MAX_NR_OF_PARTICLES];
-	m_particles.vel.y = new float[D_MAX_NR_OF_PARTICLES];
-	m_particles.vel.z = new float[D_MAX_NR_OF_PARTICLES];
+	m_particles.vel.x = new float[D_MAX_NR_OF_PARTICLES]();
+	m_particles.vel.y = new float[D_MAX_NR_OF_PARTICLES]();
+	m_particles.vel.z = new float[D_MAX_NR_OF_PARTICLES]();
 
-	m_particles.pred_vel.x = new float[D_MAX_NR_OF_PARTICLES];
-	m_particles.pred_vel.y = new float[D_MAX_NR_OF_PARTICLES];
-	m_particles.pred_vel.z = new float[D_MAX_NR_OF_PARTICLES];
+	m_particles.pred_vel.x = new float[D_MAX_NR_OF_PARTICLES]();
+	m_particles.pred_vel.y = new float[D_MAX_NR_OF_PARTICLES]();
+	m_particles.pred_vel.z = new float[D_MAX_NR_OF_PARTICLES]();
 
-	m_particles.F_adv.x = new float[D_MAX_NR_OF_PARTICLES];
-	m_particles.F_adv.y = new float[D_MAX_NR_OF_PARTICLES];
-	m_particles.F_adv.z = new float[D_MAX_NR_OF_PARTICLES];
+	m_particles.F_adv.x = new float[D_MAX_NR_OF_PARTICLES]();
+	m_particles.F_adv.y = new float[D_MAX_NR_OF_PARTICLES]();
+	m_particles.F_adv.z = new float[D_MAX_NR_OF_PARTICLES]();
 
-	m_particles.dens = new float[D_MAX_NR_OF_PARTICLES];
+	m_particles.dens = new float[D_MAX_NR_OF_PARTICLES]();
 
 	m_neighbor_data = new Neighbor_Data[D_MAX_NR_OF_PARTICLES];
 
-	m_alpha = new float[D_MAX_NR_OF_PARTICLES];
-	m_dens_derive = new float[D_MAX_NR_OF_PARTICLES];
-	m_pred_dens = new float[D_MAX_NR_OF_PARTICLES];
+	m_alpha = new float[D_MAX_NR_OF_PARTICLES]();
+	m_dens_derive = new float[D_MAX_NR_OF_PARTICLES]();
+	m_pred_dens = new float[D_MAX_NR_OF_PARTICLES]();
 
-	m_scalar_values = new float[D_MAX_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
-	m_kernel_values = new float[D_MAX_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS];
+	m_scalar_values = new float[D_MAX_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS]();
+	m_kernel_values = new float[D_MAX_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS]();
 
-	// particle constants
 	m_rad = 0.01f;
 	m_mass = 0.004218f;
 
-	// Effects
-	m_wind.x = m_wind.y = m_wind.z = 0.f;
+	m_wind.x = m_wind.y = m_wind.z = 0.0f;
 	m_gravity = 9.82f;
-
-	for (auto i = 0; i < D_MAX_NR_OF_PARTICLES; ++i)
-	{
-		m_particles.pos.x[i] = 0.f;
-		m_particles.pos.y[i] = 0.f;
-		m_particles.pos.z[i] = 0.f;
-
-		m_particles.vel.x[i] = 0.f;
-		m_particles.vel.y[i] = 0.f;
-		m_particles.vel.z[i] = 0.f;
-
-		m_particles.pred_vel.x[i] = 0.f;
-		m_particles.pred_vel.y[i] = 0.f;
-		m_particles.pred_vel.z[i] = 0.f;
-
-		m_particles.F_adv.x[i] = 0.f;
-		m_particles.F_adv.y[i] = 0.f;
-		m_particles.F_adv.z[i] = 0.f;
-
-		m_particles.dens[i] = 0.f;
-
-		m_alpha[i] = 0.0f;
-		m_dens_derive[i] = 0.0f;
-		m_pred_dens[i] = 0.0f;
-
-		m_scalar_values[i] = 0.0f;
-		m_kernel_values[i] = 0.0f;
-	}
 }
 
 void SPH::reset()
 {
-	for (auto i = 0; i < D_MAX_NR_OF_PARTICLES; ++i)
-	{
-		m_particles.pos.x[i] = 0.f;
-		m_particles.pos.y[i] = 0.f;
-		m_particles.pos.z[i] = 0.f;
+	memset(m_particles.pos.x, 0, D_MAX_NR_OF_PARTICLES * sizeof(*m_particles.pos.x));
+	memset(m_particles.pos.y, 0, D_MAX_NR_OF_PARTICLES * sizeof(*m_particles.pos.x));
+	memset(m_particles.pos.z, 0, D_MAX_NR_OF_PARTICLES * sizeof(*m_particles.pos.x));
 
-		m_particles.vel.x[i] = 0.f;
-		m_particles.vel.y[i] = 0.f;
-		m_particles.vel.z[i] = 0.f;
+	memset(m_particles.vel.x, 0, D_MAX_NR_OF_PARTICLES * sizeof(*m_particles.vel.x));
+	memset(m_particles.vel.y, 0, D_MAX_NR_OF_PARTICLES * sizeof(*m_particles.vel.x));
+	memset(m_particles.vel.z, 0, D_MAX_NR_OF_PARTICLES * sizeof(*m_particles.vel.x));
 
-		m_particles.pred_vel.x[i] = 0.f;
-		m_particles.pred_vel.y[i] = 0.f;
-		m_particles.pred_vel.z[i] = 0.f;
+	memset(m_particles.pred_vel.x, 0, D_MAX_NR_OF_PARTICLES * sizeof(*m_particles.pred_vel.x));
+	memset(m_particles.pred_vel.y, 0, D_MAX_NR_OF_PARTICLES * sizeof(*m_particles.pred_vel.x));
+	memset(m_particles.pred_vel.z, 0, D_MAX_NR_OF_PARTICLES * sizeof(*m_particles.pred_vel.x));
 
-		m_particles.dens[i] = 0.f;
+	memset(m_particles.dens, 0, D_MAX_NR_OF_PARTICLES * sizeof(*m_particles.dens));
 
-		m_alpha[i] = 0.0f;
-		m_dens_derive[i] = 0.0f;
-		m_pred_dens[i] = 0.0f;
+	memset(m_alpha, 0, D_MAX_NR_OF_PARTICLES * sizeof(*m_alpha));
+	memset(m_dens_derive, 0, D_MAX_NR_OF_PARTICLES * sizeof(*m_dens_derive));
+	memset(m_pred_dens, 0, D_MAX_NR_OF_PARTICLES * sizeof(*m_pred_dens));
 
-		m_scalar_values[i] = 0.0f;
-		m_kernel_values[i] = 0.0f;
-	}
+	memset(m_scalar_values, 0, D_MAX_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS * sizeof(*m_scalar_values));
+	memset(m_kernel_values, 0, D_MAX_NR_OF_PARTICLES * D_MAX_NR_OF_NEIGHBORS * sizeof(*m_kernel_values));
 }
 
 SPH::~SPH()
@@ -136,6 +105,7 @@ SPH::~SPH()
 	delete[] m_scalar_values;
 	delete[] m_kernel_values;
 }
+
 
 void SPH::update()
 {
@@ -170,37 +140,38 @@ void SPH::init_positions(Float3s start_pos, int rows, int cols) const
 {
 	int ind;
 
-	float dist_between{ 2.25f * m_rad };
 	float x, y, z;
+	float dist_between = 2.25f * m_rad;
 
-#pragma omp parallel
-#pragma omp for
-	for (auto i = 0; i < m_simulated_particles; ++i)
+	#pragma omp parallel
+	#pragma omp for
+	for (int particle_ind = 0; particle_ind < m_simulated_particles; ++particle_ind)
 	{
-		x = i / (rows * cols);
-		ind = i - x * rows * cols;
+		x = particle_ind / (rows * cols);
+		ind = particle_ind - x * rows * cols;
 		y = ind / rows;
 		z = ind % rows;
 
-		m_particles.pos.x[i] = start_pos.x + x * dist_between;
-		m_particles.pos.y[i] = start_pos.y + y * dist_between;
-		m_particles.pos.z[i] = start_pos.z + z * dist_between;
+		m_particles.pos.x[particle_ind] = start_pos.x + x * dist_between;
+		m_particles.pos.y[particle_ind] = start_pos.y + y * dist_between;
+		m_particles.pos.z[particle_ind] = start_pos.z + z * dist_between;
 	}
 }
 
 void SPH::find_neighborhoods() const
 {
+	int count = 0;
+
 	const float neigborhod_rad = D_SEARCH_RANGE;
-	int count{ 0 };
 
 	CompactNSearch::NeighborhoodSearch nsearch(neigborhod_rad);
 	std::vector<std::array<double, 3>> positions(m_simulated_particles);
 
-#pragma omp parallel
-#pragma omp for
-	for (int i = 0; i < m_simulated_particles; ++i)
+	#pragma omp parallel
+	#pragma omp for
+	for (int particle_ind = 0; particle_ind < m_simulated_particles; ++particle_ind)
 	{
-		positions.at(i) = { m_particles.pos.x[i], m_particles.pos.y[i], m_particles.pos.z[i] };
+		positions.at(particle_ind) = { m_particles.pos.x[particle_ind], m_particles.pos.y[particle_ind], m_particles.pos.z[particle_ind] };
 	}
 
 	unsigned int point_set_id = nsearch.add_point_set(positions.front().data(), positions.size());
@@ -208,18 +179,18 @@ void SPH::find_neighborhoods() const
 	nsearch.find_neighbors();
 
 	CompactNSearch::PointSet const& ps = nsearch.point_set(point_set_id);
-
-	for (auto i = 0; i < m_simulated_particles; ++i)
+	
+	for (int particle_ind = 0; particle_ind < m_simulated_particles; ++particle_ind)
 	{
-		for (auto n = 0; n < ps.n_neighbors(i); ++n)
+		for (int neighbor_ind = 0; neighbor_ind < ps.n_neighbors(particle_ind); ++neighbor_ind)
 		{
-			CompactNSearch::PointID const& pid = ps.neighbor(i, n);
+			CompactNSearch::PointID const& pid = ps.neighbor(particle_ind, neighbor_ind);
 
-			m_neighbor_data[i].neighbor[count] = pid.point_id;
+			m_neighbor_data[particle_ind].neighbor[count] = pid.point_id;
 			++count;
 		}
 		//save nr of neighbor to first position 
-		m_neighbor_data[i].n = count;
+		m_neighbor_data[particle_ind].n = count;
 		count = 0;
 	}
 }
@@ -231,7 +202,7 @@ void SPH::non_pressure_forces()
 	float Cd = 1.0f, rho = 1.0f;
 	float pi = D_PI;
 	float rad = m_rad;
-	float sphere_area = 4.0 * pi * rad*rad;
+	float sphere_area = 4.0f * pi * rad*rad;
 
 	if(m_wind.x > 0.0f)
 	{
@@ -260,26 +231,26 @@ void SPH::non_pressure_forces()
 		drag.z = -rho * Cd * m_wind.z*m_wind.z * sphere_area;
 	}
 
-#pragma omp parallel
-#pragma omp for
-	for (auto i = 0; i < m_simulated_particles; ++i)
+	#pragma omp parallel
+	#pragma omp for
+	for (int particle_ind = 0; particle_ind < m_simulated_particles; ++particle_ind)
 	{
-		m_particles.F_adv.x[i] = m_mass * drag.x;
-		m_particles.F_adv.y[i] = m_mass * (drag.y - m_gravity);
-		m_particles.F_adv.z[i] = m_mass * drag.z;
+		m_particles.F_adv.x[particle_ind] = m_mass * drag.x;
+		m_particles.F_adv.y[particle_ind] = m_mass * (drag.y - m_gravity);
+		m_particles.F_adv.z[particle_ind] = m_mass * drag.z;
 	}
 }
 
 void SPH::calculate_time_step()
 {
-	float v_max_2{ 0 };
+	float v_max_2 = 0;
 	float x_2, y_2, z_2;
 
-	for (auto i = 0; i < m_simulated_particles; ++i)
+	for (int particle_ind = 0; particle_ind < m_simulated_particles; ++particle_ind)
 	{
-		x_2 = m_particles.vel.x[i] * m_particles.vel.x[i];
-		y_2 = m_particles.vel.y[i] * m_particles.vel.y[i];
-		z_2 = m_particles.vel.z[i] * m_particles.vel.z[i];
+		x_2 = m_particles.vel.x[particle_ind] * m_particles.vel.x[particle_ind];
+		y_2 = m_particles.vel.y[particle_ind] * m_particles.vel.y[particle_ind];
+		z_2 = m_particles.vel.z[particle_ind] * m_particles.vel.z[particle_ind];
 
 		if (v_max_2 < x_2 + y_2 + z_2)
 		{
@@ -287,7 +258,7 @@ void SPH::calculate_time_step()
 		}
 	}
 
-	m_delta_t = m_time_factor * (2.f * m_rad) / (sqrtf(v_max_2) + 1e-6f);
+	m_delta_t = m_time_factor * (2.0f * m_rad) / (sqrtf(v_max_2) + 1e-6f);
 
 	if (m_delta_t > 0.005f)
 	{
@@ -300,106 +271,105 @@ void SPH::calculate_time_step()
 
 }
 
+
 void SPH::predict_velocities()
 {
 	float dist_2, pos_x, pos_y, pos_z;
 
-#pragma omp parallel
-#pragma omp for
-	for (auto i = 0; i < m_simulated_particles; ++i)
+	#pragma omp parallel
+	#pragma omp for
+	for (int particle_ind = 0; particle_ind < m_simulated_particles; ++particle_ind)
 	{
-		dist_2 = (m_particles.pos.x[i] - sc.center.x) * (m_particles.pos.x[i] - sc.center.x) +
-			(m_particles.pos.y[i] - sc.center.y) * (m_particles.pos.y[i] - sc.center.y) +
-			(m_particles.pos.z[i] - sc.center.z) * (m_particles.pos.z[i] - sc.center.z);
+		dist_2 = (m_particles.pos.x[particle_ind] - sc.center.x) * (m_particles.pos.x[particle_ind] - sc.center.x) +
+			(m_particles.pos.y[particle_ind] - sc.center.y) * (m_particles.pos.y[particle_ind] - sc.center.y) +
+			(m_particles.pos.z[particle_ind] - sc.center.z) * (m_particles.pos.z[particle_ind] - sc.center.z);
 
 		// Sphere
 		if (dist_2 == sc.radius_2)
 		{
-			m_particles.pred_vel.x[i] = 4.f * m_particles.pos.x[i];
-			m_particles.pred_vel.y[i] = 2.f * m_particles.pos.y[i];
-			m_particles.pred_vel.z[i] = 4.f * m_particles.pos.z[i];
+			m_particles.pred_vel.x[particle_ind] = 4.f * m_particles.pos.x[particle_ind];
+			m_particles.pred_vel.y[particle_ind] = 2.f * m_particles.pos.y[particle_ind];
+			m_particles.pred_vel.z[particle_ind] = 4.f * m_particles.pos.z[particle_ind];
 		}
 		else if (dist_2 < sc.radius_2)
 		{
-			m_particles.pred_vel.x[i] = 4.f * m_particles.pos.x[i];
-			m_particles.pred_vel.y[i] = 0.f * m_particles.pos.y[i];
-			m_particles.pred_vel.z[i] = 4.f * m_particles.pos.z[i];
+			m_particles.pred_vel.x[particle_ind] = 4.f * m_particles.pos.x[particle_ind];
+			m_particles.pred_vel.y[particle_ind] = 0.f * m_particles.pos.y[particle_ind];
+			m_particles.pred_vel.z[particle_ind] = 4.f * m_particles.pos.z[particle_ind];
 		}
 		else
 		{
-			pos_x = m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass;
-			pos_y = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_mass;
-			pos_z = m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_mass;
+			pos_x = m_particles.vel.x[particle_ind] + m_particles.F_adv.x[particle_ind] * m_delta_t / m_mass;
+			pos_y = m_particles.vel.y[particle_ind] + m_particles.F_adv.y[particle_ind] * m_delta_t / m_mass;
+			pos_z = m_particles.vel.z[particle_ind] + m_particles.F_adv.z[particle_ind] * m_delta_t / m_mass;
 
 			if (pos_x < -2.0f)
 			{
-				m_particles.pred_vel.x[i] = -2.0f;
+				m_particles.pred_vel.x[particle_ind] = -2.0f;
 			}
 			else if (pos_x > 2.0f)
 			{
-				m_particles.pred_vel.x[i] = 2.0f;
+				m_particles.pred_vel.x[particle_ind] = 2.0f;
 			}
 			else
 			{
-				m_particles.pred_vel.x[i] = m_particles.vel.x[i] + m_particles.F_adv.x[i] * m_delta_t / m_mass;
+				m_particles.pred_vel.x[particle_ind] = m_particles.vel.x[particle_ind] + m_particles.F_adv.x[particle_ind] * m_delta_t / m_mass;
 			}
 
-			
 			if (pos_y < -2.0f)
 			{
-				m_particles.pred_vel.y[i] = -2.0f;
+				m_particles.pred_vel.y[particle_ind] = -2.0f;
 			}
 			else if (pos_y > 2.0f)
 			{
-				m_particles.pred_vel.y[i] = 2.0f;
+				m_particles.pred_vel.y[particle_ind] = 2.0f;
 			}
 			else
 			{
-				m_particles.pred_vel.y[i] = m_particles.vel.y[i] + m_particles.F_adv.y[i] * m_delta_t / m_mass;
+				m_particles.pred_vel.y[particle_ind] = m_particles.vel.y[particle_ind] + m_particles.F_adv.y[particle_ind] * m_delta_t / m_mass;
 			}
 
-			
 			if (pos_z < -2.0f)
 			{
-				m_particles.pred_vel.z[i] = -2.0f;
+				m_particles.pred_vel.z[particle_ind] = -2.0f;
 			}
 			else if (pos_z > 2.0f)
 			{
-				m_particles.pred_vel.z[i] = 2.0f;
+				m_particles.pred_vel.z[particle_ind] = 2.0f;
 			}
 			else
 			{
-				m_particles.pred_vel.z[i] = m_particles.vel.z[i] + m_particles.F_adv.z[i] * m_delta_t / m_mass;
+				m_particles.pred_vel.z[particle_ind] = m_particles.vel.z[particle_ind] + m_particles.F_adv.z[particle_ind] * m_delta_t / m_mass;
 			}
 		}
 
-		pos_x = m_particles.pos.x[i] + m_particles.pred_vel.x[i] * m_delta_t;
-		pos_y = m_particles.pos.y[i] + m_particles.pred_vel.y[i] * m_delta_t;
-		pos_z = m_particles.pos.z[i] + m_particles.pred_vel.z[i] * m_delta_t;
+		pos_x = m_particles.pos.x[particle_ind] + m_particles.pred_vel.x[particle_ind] * m_delta_t;
+		pos_y = m_particles.pos.y[particle_ind] + m_particles.pred_vel.y[particle_ind] * m_delta_t;
+		pos_z = m_particles.pos.z[particle_ind] + m_particles.pred_vel.z[particle_ind] * m_delta_t;
 
 		// Box
-		if (pos_x >= 0.5f && (m_wind.x > 0 || m_particles.pred_vel.x[i] > 0))
+		if (pos_x >= 0.5f && (m_wind.x > 0.0f || m_particles.pred_vel.x[particle_ind] > 0.0f))
 		{
-			m_particles.pred_vel.x[i] = 0.0f;
+			m_particles.pred_vel.x[particle_ind] = 0.0f;
 		}
-		else if (pos_x <= -0.5f && (m_wind.x < 0 || m_particles.pred_vel.x[i] < 0))
+		else if (pos_x <= -0.5f && (m_wind.x < 0.0f || m_particles.pred_vel.x[particle_ind] < 0.0f))
 		{
-			m_particles.pred_vel.x[i] = 0.0f;
-		}
-
-		if (pos_y <= -0.5f && (m_wind.y < 0 || m_particles.pred_vel.y[i] < 0))
-		{
-			m_particles.pred_vel.y[i] = 0.0f;
+			m_particles.pred_vel.x[particle_ind] = 0.0f;
 		}
 
-		if (pos_z >= 0.5f && (m_wind.z > 0 || m_particles.pred_vel.z[i] > 0))
+		if (pos_y <= -0.5f && (m_wind.y < 0.0f || m_particles.pred_vel.y[particle_ind] < 0.0f))
 		{
-			m_particles.pred_vel.z[i] = 0.0f;
+			m_particles.pred_vel.y[particle_ind] = 0.0f;
+		}
+
+		if (pos_z >= 0.5f && (m_wind.z > 0.0f || m_particles.pred_vel.z[particle_ind] > 0.0f))
+		{
+			m_particles.pred_vel.z[particle_ind] = 0.0f;
 
 		}
-		else if (pos_z <= -0.5f && (m_wind.z < 0 || m_particles.pred_vel.z[i] < 0))
+		else if (pos_z <= -0.5f && (m_wind.z < 0.0f || m_particles.pred_vel.z[particle_ind] < 0.0f))
 		{
-			m_particles.pred_vel.z[i] = 0.0f;
+			m_particles.pred_vel.z[particle_ind] = 0.0f;
 		}
 	}
 }
@@ -407,34 +377,34 @@ void SPH::predict_velocities()
 void SPH::correct_density_error()
 {
 	int neighbor_ind, linear_ind;
-	int iter{ 0 };
-	float eta;
-	float k_i, k_j, div_i, div_j, div_sum;
-	float pressure_acc_x, pressure_acc_y, pressure_acc_z;
-	float x, y, z;
-	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
-	float scalar_value;
+	int iter = 0;
 
-	float inv_delta_t_2{ 1.f / (m_delta_t * m_delta_t) };
+	float eta;
+	float scalar_value;
+	float x, y, z;
+	float kappa_i, kappa_j, div_i, div_j, div_sum;
+	float pressure_acc_x, pressure_acc_y, pressure_acc_z;
+	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
+	float inv_delta_t_2 = 1.0f / (m_delta_t * m_delta_t);
 
 	calculate_derived_density_pred_dens(m_neighbor_data);
 
 	do
 	{
-		for (auto particle_ind = 0; particle_ind < m_simulated_particles; ++particle_ind)
+		for (int particle_ind = 0; particle_ind < m_simulated_particles; ++particle_ind)
 		{
-			k_i = fmax(inv_delta_t_2 * (m_pred_dens[particle_ind] - C_REST_DENS) * m_alpha[particle_ind], 0.25f);
+			kappa_i = fmax(inv_delta_t_2 * (m_pred_dens[particle_ind] - C_REST_DENS) * m_alpha[particle_ind], 0.25f);
 
-			div_i = k_i / m_particles.dens[particle_ind];
+			div_i = kappa_i / m_particles.dens[particle_ind];
 
 			pressure_acc_x = pressure_acc_y = pressure_acc_z = 0.0f;
 
-			for (auto j = 0; j < m_neighbor_data[particle_ind].n; ++j)
+			for (int neighbor = 0; neighbor < m_neighbor_data[particle_ind].n; ++neighbor)
 			{
-				linear_ind = j + D_MAX_NR_OF_NEIGHBORS * particle_ind;
-				neighbor_ind = m_neighbor_data[particle_ind].neighbor[j];
+				linear_ind = neighbor + D_MAX_NR_OF_NEIGHBORS * particle_ind;
+				neighbor_ind = m_neighbor_data[particle_ind].neighbor[neighbor];
 
-				k_j = fmax(inv_delta_t_2 * (m_pred_dens[neighbor_ind] - C_REST_DENS) * m_alpha[neighbor_ind], 0.25f);
+				kappa_j = fmax(inv_delta_t_2 * (m_pred_dens[neighbor_ind] - C_REST_DENS) * m_alpha[neighbor_ind], 0.25f);
 
 				x = m_particles.pos.x[particle_ind] - m_particles.pos.x[neighbor_ind];
 				y = m_particles.pos.y[particle_ind] - m_particles.pos.y[neighbor_ind];
@@ -446,7 +416,7 @@ void SPH::correct_density_error()
 				kernel_gradient_y = y * scalar_value;
 				kernel_gradient_z = z * scalar_value;
 
-				div_j = k_j / m_particles.dens[neighbor_ind];
+				div_j = kappa_j / m_particles.dens[neighbor_ind];
 
 				div_sum = div_i + div_j;
 
@@ -469,13 +439,13 @@ void SPH::correct_density_error()
 
 void SPH::update_positions() const
 {
-#pragma omp parallel
-#pragma omp for
-	for (int i = 0; i < m_simulated_particles; ++i)
+	#pragma omp parallel
+	#pragma omp for
+	for (int particle_ind = 0; particle_ind < m_simulated_particles; ++particle_ind)
 	{
-		m_particles.pos.x[i] += m_particles.pred_vel.x[i] * m_delta_t;
-		m_particles.pos.y[i] += m_particles.pred_vel.y[i] * m_delta_t;
-		m_particles.pos.z[i] += m_particles.pred_vel.z[i] * m_delta_t;
+		m_particles.pos.x[particle_ind] += m_particles.pred_vel.x[particle_ind] * m_delta_t;
+		m_particles.pos.y[particle_ind] += m_particles.pred_vel.y[particle_ind] * m_delta_t;
+		m_particles.pos.z[particle_ind] += m_particles.pred_vel.z[particle_ind] * m_delta_t;
 	}
 }
 
@@ -485,34 +455,34 @@ void SPH::update_positions() const
 void SPH::correct_divergence_error()
 {
 	int neighbor_ind, linear_ind;
-	int iter{ 0 };
+	int iter = 0;
 
-	float k_v_i, k_v_j, div_i, div_j, div_sum;
-	float pressure_acc_x, pressure_acc_y, pressure_acc_z;
-	float x, y, z;
-	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
-	float scalar_value;
 	float eta;
-	float inv_delta_t = { 1.f / m_delta_t };
+	float scalar_value;
+	float x, y, z;
+	float kappa_v_i, kappa_v_j, div_i, div_j, div_sum;
+	float pressure_acc_x, pressure_acc_y, pressure_acc_z;
+	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
+	float inv_delta_t = 1.f / m_delta_t;
 
 	calculate_derived_density_pred_dens(m_neighbor_data);
 
 	do
 	{
-		for (auto particle_ind = 0; particle_ind < m_simulated_particles; ++particle_ind)
+		for (int particle_ind = 0; particle_ind < m_simulated_particles; ++particle_ind)
 		{
-			k_v_i = 0.5f * fmax(inv_delta_t * m_dens_derive[particle_ind] * m_alpha[particle_ind], 0.5f);
+			kappa_v_i = 0.5f * fmax(inv_delta_t * m_dens_derive[particle_ind] * m_alpha[particle_ind], 0.5f);
 
-			div_i = k_v_i / m_particles.dens[particle_ind];
+			div_i = kappa_v_i / m_particles.dens[particle_ind];
 
 			pressure_acc_x = pressure_acc_y = pressure_acc_z = 0.0f;
 
-			for (auto j = 0; j < m_neighbor_data[particle_ind].n; ++j)
+			for (int neighbor = 0; neighbor < m_neighbor_data[particle_ind].n; ++neighbor)
 			{
-				linear_ind = j + D_MAX_NR_OF_NEIGHBORS * particle_ind;
-				neighbor_ind = m_neighbor_data[particle_ind].neighbor[j];
+				linear_ind = neighbor + D_MAX_NR_OF_NEIGHBORS * particle_ind;
+				neighbor_ind = m_neighbor_data[particle_ind].neighbor[neighbor];
 
-				k_v_j = 0.5f * fmax(inv_delta_t * m_dens_derive[neighbor_ind] * m_alpha[neighbor_ind], 0.5f);
+				kappa_v_j = 0.5f * fmax(inv_delta_t * m_dens_derive[neighbor_ind] * m_alpha[neighbor_ind], 0.5f);
 
 				x = m_particles.pos.x[particle_ind] - m_particles.pos.x[neighbor_ind];
 				y = m_particles.pos.y[particle_ind] - m_particles.pos.y[neighbor_ind];
@@ -524,7 +494,7 @@ void SPH::correct_divergence_error()
 				kernel_gradient_y = y * scalar_value;
 				kernel_gradient_z = z * scalar_value;
 
-				div_j = k_v_j / m_particles.dens[neighbor_ind];
+				div_j = kappa_v_j / m_particles.dens[neighbor_ind];
 
 				div_sum = div_i + div_j;
 
@@ -538,84 +508,79 @@ void SPH::correct_divergence_error()
 		}
 
 		calculate_derived_density_pred_dens(m_neighbor_data);
-
-		eta = 0.01f * m_divergence_error * C_REST_DENS * 1.f / m_delta_t;
-
+		eta = 0.01f * m_divergence_error * C_REST_DENS * 1.0f / m_delta_t;
 		++iter;
+
 	} while (m_dens_derive_avg > eta && iter < m_iter_max); // implicit condition: iter < 1 
 }
 
 void SPH::update_velocities()
 {
-#pragma omp parallel
-#pragma omp for
-	for (auto i = 0; i < m_simulated_particles; ++i)
+	#pragma omp parallel
+	#pragma omp for
+	for (int particle_ind = 0; particle_ind < m_simulated_particles; ++particle_ind)
 	{
-		m_particles.vel.x[i] = m_particles.pred_vel.x[i];
-		m_particles.vel.y[i] = m_particles.pred_vel.y[i];
-		m_particles.vel.z[i] = m_particles.pred_vel.z[i];
+		m_particles.vel.x[particle_ind] = m_particles.pred_vel.x[particle_ind];
+		m_particles.vel.y[particle_ind] = m_particles.pred_vel.y[particle_ind];
+		m_particles.vel.z[particle_ind] = m_particles.pred_vel.z[particle_ind];
 	}
 }
 
+
 void SPH::update_density_and_factors(Neighbor_Data* neighbor_data)
 {
-	int nr_neighbors, neighbor_index, linear_ind;
+	int neighbor_ind, linear_ind;
 
-	float abs_sum_denom, sum_abs_denom{ 0 };
 	float denom;
-	float dx, dy, dz;
-	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
+	float abs_sum_denom, sum_abs_denom = 0;
+	float x, y, z;
 	float scalar_value_mul_mass;
-	float x{ 0.f }, y{ 0.f }, z{ 0.f };
-	float temporary_sum_abs;
-
+	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z, kernel_gradient_abs;
+	float kernel_gradient_x_sum = 0.0f, kernel_gradient_y_sum = 0.0f, kernel_gradient_z_sum = 0.0f;
+	
+	for (auto particle_ind = 0; particle_ind < m_simulated_particles; ++particle_ind)
 	{
-		for (auto particle = 0; particle < m_simulated_particles; ++particle)
+		//added 1 * mass as particles own density as kernel is 1 at dist == 0
+		//this should atleast be the case, but needs to be checked
+		m_particles.dens[particle_ind] = 12.000656593f;
+		for (auto neighbor = 0; neighbor < neighbor_data[particle_ind].n; ++neighbor)
 		{
-			nr_neighbors = neighbor_data[particle].n;
+			neighbor_ind = neighbor_data[particle_ind].neighbor[neighbor];
 
-			//added 1 * mass as particles own density as kernel is 1 at dist == 0
-			//this should atleast be the case, but needs to be checked
-			m_particles.dens[particle] = 12.000656593f;
-			for (auto neighbor = 0; neighbor < nr_neighbors; ++neighbor)
-			{
-				neighbor_index = neighbor_data[particle].neighbor[neighbor];
+			linear_ind = neighbor + D_MAX_NR_OF_NEIGHBORS * particle_ind;
 
-				linear_ind = neighbor + D_MAX_NR_OF_NEIGHBORS * particle;
+			//Update density
+			m_particles.dens[particle_ind] += m_mass * m_kernel_values[linear_ind];
 
-				//Update density
-				m_particles.dens[particle] += m_mass * m_kernel_values[linear_ind];
+			x = m_particles.pos.x[particle_ind] - m_particles.pos.x[neighbor_ind];
+			y = m_particles.pos.y[particle_ind] - m_particles.pos.y[neighbor_ind];
+			z = m_particles.pos.z[particle_ind] - m_particles.pos.z[neighbor_ind];
 
-				dx = m_particles.pos.x[particle] - m_particles.pos.x[neighbor_index];
-				dy = m_particles.pos.y[particle] - m_particles.pos.y[neighbor_index];
-				dz = m_particles.pos.z[particle] - m_particles.pos.z[neighbor_index];
+			scalar_value_mul_mass = m_mass * m_scalar_values[linear_ind];
 
-				scalar_value_mul_mass = m_mass * m_scalar_values[linear_ind];
+			kernel_gradient_x = x * scalar_value_mul_mass;
+			kernel_gradient_y = y * scalar_value_mul_mass;
+			kernel_gradient_z = z * scalar_value_mul_mass;
 
-				kernel_gradient_x = dx * scalar_value_mul_mass;
-				kernel_gradient_y = dy * scalar_value_mul_mass;
-				kernel_gradient_z = dz * scalar_value_mul_mass;
+			kernel_gradient_x_sum += kernel_gradient_x;
+			kernel_gradient_y_sum += kernel_gradient_y;
+			kernel_gradient_z_sum += kernel_gradient_z;
 
-				x += kernel_gradient_x;
-				y += kernel_gradient_y;
-				z += kernel_gradient_z;
+			kernel_gradient_abs = sqrt(kernel_gradient_x * kernel_gradient_x + kernel_gradient_y * kernel_gradient_y + kernel_gradient_z * kernel_gradient_z);
 
-				temporary_sum_abs = sqrt(kernel_gradient_x * kernel_gradient_x + kernel_gradient_y * kernel_gradient_y + kernel_gradient_z * kernel_gradient_z);
-
-				sum_abs_denom += temporary_sum_abs * temporary_sum_abs;
-			}
-
-			abs_sum_denom = sqrt(x*x + y*y + z*z);
-
-			denom = abs_sum_denom * abs_sum_denom + sum_abs_denom;
-			denom = fmax(denom, 1.0e-6f);
-
-			m_alpha[particle] = m_particles.dens[particle] / denom;
-
-			sum_abs_denom = 0.f;
-			x = y = z = 0.f;
+			sum_abs_denom += kernel_gradient_abs * kernel_gradient_abs;
 		}
-	}
+
+		abs_sum_denom = sqrt(kernel_gradient_x_sum*kernel_gradient_x_sum + kernel_gradient_y_sum*kernel_gradient_y_sum + kernel_gradient_z_sum*kernel_gradient_z_sum);
+
+		denom = abs_sum_denom * abs_sum_denom + sum_abs_denom;
+		denom = fmax(denom, 1e-6f);
+
+		m_alpha[particle_ind] = m_particles.dens[particle_ind] / denom;
+
+		sum_abs_denom = 0.f;
+		kernel_gradient_x_sum = kernel_gradient_y_sum = kernel_gradient_z_sum = 0.f;
+	}	
 }
 
 /*
@@ -624,37 +589,31 @@ void SPH::update_density_and_factors(Neighbor_Data* neighbor_data)
 */
 void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data, const int N_PARTICLES)
 {
-	int ind;
+	int neighbor_ind;
 
 	float x, y, z;
 	float h, h_2;
-	float length;
+	float dist;
 	float search_area = D_SEARCH_RANGE;
 	float pi = D_PI;
-	float particle_pos_x, particle_pos_y, particle_pos_z;
-
 	float div = 1.0f / (search_area * search_area * search_area * pi);
 
-	for (auto particle = 0; particle < N_PARTICLES; ++particle)
+	for (int particle_ind = 0; particle_ind < N_PARTICLES; ++particle_ind)
 	{
-		particle_pos_x = pos->x[particle];
-		particle_pos_y = pos->y[particle];
-		particle_pos_z = pos->z[particle];
-
-		for (auto neighbor = 0; neighbor < neighbor_data[particle].n; ++neighbor)
+		for (int neighbor = 0; neighbor < neighbor_data[particle_ind].n; ++neighbor)
 		{
-			ind = neighbor_data[particle].neighbor[neighbor];
+			neighbor_ind = neighbor_data[particle_ind].neighbor[neighbor];
 
-			x = pos->x[ind] - particle_pos_x;
-			y = pos->y[ind] - particle_pos_y;
-			z = pos->z[ind] - particle_pos_z;
+			x = pos->x[particle_ind] - pos->x[neighbor_ind];
+			y = pos->y[particle_ind] - pos->y[neighbor_ind];
+			z = pos->z[particle_ind] - pos->z[neighbor_ind];
 
-			length = sqrt(x*x + y*y + z*z);
-			h = length / D_SEARCH_RANGE;
+			dist = sqrt(x*x + y*y + z*z);
+			h = dist / D_SEARCH_RANGE;
 			h_2 = h * h;
 
 			// length is always equal or smaller to D_SEARCH_RANGE => implicit intervall between [0, 1]
-			kernel_values[particle * D_MAX_NR_OF_NEIGHBORS + neighbor] = div * (1.0f - 1.5f*h_2 + 0.75f*h_2*h);
+			kernel_values[particle_ind * D_MAX_NR_OF_NEIGHBORS + neighbor] = div * (1.0f - 1.5f*h_2 + 0.75f*h_2*h);
 		}
 	}
 }
@@ -665,51 +624,50 @@ void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neig
 */
 void SPH::calculate_derived_density_pred_dens(Neighbor_Data* neighbor_data)
 {
-	int neighbor_index, linear_ind;
-	int neighbor_length;
+	int neighbor_ind, linear_ind;
 
 	float pressure_derived;
-	float dens_derive_sum{ 0.f }, pred_dens_sum{ 0.f };
-	float pressure_derived_x{ 0.f }, pressure_derived_y{ 0.f }, pressure_derived_z{ 0.f };
+	float dens_derive_sum = 0.0f, pred_dens_sum = 0.0f;
 	float x, y, z;
 	float kernel_gradient_x, kernel_gradient_y, kernel_gradient_z;
+	float pressure_derived_x = 0.0f, pressure_derived_y = 0.0f, pressure_derived_z = 0.0f;
 
-	for (int i = 0; i < m_simulated_particles; ++i)
+	for (int particle_ind = 0; particle_ind < m_simulated_particles; ++particle_ind)
 	{
-		neighbor_length = neighbor_data[i].n;
-		for (int j = 0; j < neighbor_length; ++j)
+		for (int neighbor = 0; neighbor < neighbor_data[particle_ind].n; ++neighbor)
 		{
-			neighbor_index = neighbor_data[i].neighbor[j];
-			linear_ind = neighbor_index + D_MAX_NR_OF_NEIGHBORS * i;
+			neighbor_ind = neighbor_data[particle_ind].neighbor[neighbor];
+			linear_ind = neighbor + D_MAX_NR_OF_NEIGHBORS * particle_ind;
 
-			x = m_particles.pos.x[i] - m_particles.pos.x[neighbor_index];
-			y = m_particles.pos.y[i] - m_particles.pos.y[neighbor_index];
-			z = m_particles.pos.z[i] - m_particles.pos.z[neighbor_index];
+			x = m_particles.pos.x[particle_ind] - m_particles.pos.x[neighbor_ind];
+			y = m_particles.pos.y[particle_ind] - m_particles.pos.y[neighbor_ind];
+			z = m_particles.pos.z[particle_ind] - m_particles.pos.z[neighbor_ind];
 
 			kernel_gradient_x = x * m_scalar_values[linear_ind];
 			kernel_gradient_y = y * m_scalar_values[linear_ind];
 			kernel_gradient_z = z * m_scalar_values[linear_ind];
 
 			//equation 9 in DFSPH, changed 16-11-18
-			pressure_derived_x += m_mass * kernel_gradient_x * (m_particles.pred_vel.x[i] - m_particles.pred_vel.x[neighbor_index]);
-			pressure_derived_y += m_mass * kernel_gradient_y * (m_particles.pred_vel.y[i] - m_particles.pred_vel.y[neighbor_index]);
-			pressure_derived_z += m_mass * kernel_gradient_z * (m_particles.pred_vel.z[i] - m_particles.pred_vel.z[neighbor_index]);
+			pressure_derived_x += m_mass * kernel_gradient_x * (m_particles.pred_vel.x[particle_ind] - m_particles.pred_vel.x[neighbor_ind]);
+			pressure_derived_y += m_mass * kernel_gradient_y * (m_particles.pred_vel.y[particle_ind] - m_particles.pred_vel.y[neighbor_ind]);
+			pressure_derived_z += m_mass * kernel_gradient_z * (m_particles.pred_vel.z[particle_ind] - m_particles.pred_vel.z[neighbor_ind]);
 		}
 
 		pressure_derived = pressure_derived_x + pressure_derived_y + pressure_derived_z;
 
-		m_dens_derive[i] = pressure_derived;
+		m_dens_derive[particle_ind] = pressure_derived;
 
-		m_pred_dens[i] = m_particles.dens[i] + m_delta_t * m_dens_derive[i];
+		m_pred_dens[particle_ind] = m_particles.dens[particle_ind] + m_delta_t * m_dens_derive[particle_ind];
 
-		dens_derive_sum += m_dens_derive[i];
-		pred_dens_sum += m_pred_dens[i];
+		dens_derive_sum += m_dens_derive[particle_ind];
+		pred_dens_sum += m_pred_dens[particle_ind];
 
-		pressure_derived_x = pressure_derived_y = pressure_derived_z = 0.f;
+		pressure_derived_x = pressure_derived_y = pressure_derived_z = 0.0f;
 	}
 	m_dens_derive_avg = dens_derive_sum / m_simulated_particles;
 	m_pred_dens_avg = pred_dens_sum / m_simulated_particles;
 }
+
 
 
 /*
@@ -724,24 +682,21 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 	float search_area = D_SEARCH_RANGE;
 	float pi = D_PI;
 	float h, dist;
-	float dx, dy, dz;
-
+	float x, y, z;
 	float inv_range = 1.0f / D_SEARCH_RANGE;
 	float div = 1.0f / (search_area * search_area * search_area * pi);
 
-
-	for (auto particle = 0; particle < N_PARTICLES; ++particle)
+	for (int particle_ind = 0; particle_ind < N_PARTICLES; ++particle_ind)
 	{
-		//Loop through particle neibors
-		for (auto neighbor = 0; neighbor < neighbor_data[particle].n; ++neighbor)
+		for (int neighbor = 0; neighbor < neighbor_data[particle_ind].n; ++neighbor)
 		{
-			neighbor_ind = neighbor_data[particle].neighbor[neighbor];
+			neighbor_ind = neighbor_data[particle_ind].neighbor[neighbor];
 
-			dx = pos->x[particle] - pos->x[neighbor_ind];
-			dy = pos->y[particle] - pos->y[neighbor_ind];
-			dz = pos->z[particle] - pos->z[neighbor_ind];
+			x = pos->x[particle_ind] - pos->x[neighbor_ind];
+			y = pos->y[particle_ind] - pos->y[neighbor_ind];
+			z = pos->z[particle_ind] - pos->z[neighbor_ind];
 
-			dist = sqrt(dx * dx + dy * dy + dz * dz);
+			dist = sqrt(x*x + y*y + z*z);
 
 			h = dist * inv_range;
 
@@ -750,7 +705,7 @@ void update_scalar_function(Float3* pos, Neighbor_Data* neighbor_data, float* sc
 
 			scalar_value = kernel_derive / (search_area * dist);
 
-			scalar_values[particle * D_MAX_NR_OF_NEIGHBORS + neighbor] = scalar_value;
+			scalar_values[particle_ind * D_MAX_NR_OF_NEIGHBORS + neighbor] = scalar_value;
 		}
 	}
 }

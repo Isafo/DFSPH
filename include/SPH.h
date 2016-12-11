@@ -1,7 +1,7 @@
 #pragma once
 
 #define D_MAX_NR_OF_PARTICLES 20000
-#define D_MAX_NR_OF_NEIGHBORS 100
+#define D_MAX_NR_OF_NEIGHBORS 30
 
 // A struct containing three arrays (SoA)
 struct Float3
@@ -192,7 +192,6 @@ private:
 	// effects
 	Float3s m_wind{ 0.0f };
 	float m_gravity{ 9.82f };
-
 };
 
 inline void update_kernel_values(float* kernel_values, Float3* pos, Neighbor_Data* neighbor_data, const int N_PARTICLES);
