@@ -10,3 +10,11 @@ To run the simulation a few external librarys need to be included:
 * The GLM library is used for some caluclations. 
 * [CompactNSearch](https://github.com/InteractiveComputerGraphics/CompactNSearch) is used for neighboor search.
 * [Imgui](https://github.com/ocornut/imgui) was used to create a interface.
+
+
+Video:
+
+https://youtu.be/7Vduk3ByZug
+<a href="https://www.youtube.com/watch?v=7Vduk3ByZug&feature=youtu.be
+" target="_blank"><img src="https://www.youtube.com/watch?v=7Vduk3ByZug&feature=youtu.be" 
+alt="" width="240" height="180" border="10" /></a>
