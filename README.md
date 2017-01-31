@@ -14,7 +14,6 @@ To run the simulation a few external librarys need to be included:
 
 Video:
 
-https://youtu.be/7Vduk3ByZug
-<a href="https://www.youtube.com/watch?v=7Vduk3ByZug&feature=youtu.be
-" target="_blank"><img src="https://www.youtube.com/watch?v=7Vduk3ByZug&feature=youtu.be" 
-alt="" width="240" height="180" border="10" /></a>
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=https://www.youtube.com/watch?v=7Vduk3ByZug&feature=youtu.be
+" target="_blank"><img src="http://img.youtube.com/vi/https://www.youtube.com/watch?v=7Vduk3ByZug&feature=youtu.be/0.jpg" 
+alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
